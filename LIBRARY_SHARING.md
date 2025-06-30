@@ -1,9 +1,11 @@
 \# Rewind Library Sharing Specifications
 
 ## Overview
+
 This document outlines the library sharing feature for Rewind, enabling users to generate a unique, read-only URL to share their subscribed podcast list with others. The feature supports the mobile-first PWA design for podcast enthusiasts aged 35+, aligning with UI requirements \(see UI_DESIGN.md\) and backend APIs \(see BACKEND_API.md\).
 
 ## UI Implementation
+
 - **Access Points**:
   - “Share Library” button in the header or side menu (per UI_DESIGN.md).
   - Triggered from the Library screen or Side Menu.
@@ -23,6 +25,7 @@ This document outlines the library sharing feature for Rewind, enabling users to
   - Skeleton screens during URL generation.
 
 ## Backend Implementation
+
 - **API Endpoints**:
   - **Generate Share Link** (`POST /share/generate`):
     - Request: `\`{ "podcastIds": ["67890", "69123"] }\``
@@ -43,9 +46,10 @@ This document outlines the library sharing feature for Rewind, enabling users to
   - Public endpoint serves read-only data via API Gateway.
 
 ## Testing
+
 - **Unit Tests**:
   - Verify URL generation and validation (Vitest).
-  - Test duplicate podcast handling (Jest).
+  - Test duplicate podcast handling (Vitest).
 - **Integration Tests**:
   - Simulate share generation and addition flow.
   - Test expired `shareId` rejection.
@@ -54,11 +58,13 @@ This document outlines the library sharing feature for Rewind, enabling users to
   - Verify copy button functionality.
 
 ## Security
+
 - **Access Control**: JWT authentication for generation, public read-only for shared view.
 - **TTL**: 30-day expiration on `shareId`.
 - **Data Exposure**: Limit to podcast metadata, no personal data.
 
 ## Notes for AI Agent
+
 - Implement UI modal with React and Tailwind CSS.
 - Develop Lambda function with Node.js and TypeScript.
 - Use UUID v4 for `shareId` generation.
@@ -66,6 +72,7 @@ This document outlines the library sharing feature for Rewind, enabling users to
 - Report issues (e.g., URL format needs) in PLAN.md.
 
 ## References
+
 - UI_DESIGN.md: Share button and view design.
 - UI_TECH.md: Frontend setup.
 - BACKEND_API.md: Share endpoints.

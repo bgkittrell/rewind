@@ -58,10 +58,12 @@ This document outlines the recommendation engine for Rewind, designed to help us
 
 ## Optimization
 - **Performance**:
-  - Cache recommendations in Redis for 1 hour.
+  - Cache recommendations in Lambda memory during execution.
   - Batch Personalize calls for multiple users.
+  - Use DynamoDB for caching with TTL for recommendations.
 - **Cost**:
   - Use free tier where available, batch inference for large datasets.
+  - Consider simplified recommendation logic for MVP to reduce Personalize costs.
 
 ## Notes for AI Agent
 - Configure Personalize datasets and campaign via AWS CDK (see AWS_CONFIG.md).

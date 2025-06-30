@@ -8,56 +8,14 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
 - **Development**: `http://localhost:3000/v1`
 
 ## Authentication
-- **Method**: JWT-based authentication.
-- **Header**: `Authorization: Bearer <token>`
-- **Endpoints**:
-  - **Login**:
-    - URL: `/auth/login`
-    - Method: `POST`
-    - Request Body:
-      \```
-      {
-        "email": "user@example.com",
-        "password": "securepassword"
-      }
-      \```
-    - Response:
-      \```
-      {
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-        "userId": "12345",
-        "email": "user@example.com"
-      }
-      \```
-    - Status Codes:
-      - `200`: Success
-      - `401`: Invalid credentials
-  - **Register**:
-    - URL: `/auth/register`
-    - Method: `POST`
-    - Request Body:
-      \```
-      {
-        "email": "user@example.com",
-        "password": "securepassword",
-        "name": "John Doe"
-      }
-      \```
-    - Response:
-      \```
-      {
-        "userId": "12345",
-        "email": "user@example.com",
-        "message": "Registration successful"
-      }
-      \```
-    - Status Codes:
-      - `201`: Created
-      - `400`: Invalid data
+- **Method**: Auth0 JWT-based authentication
+- **Header**: `Authorization: Bearer <auth0_token>`
+- **Token Validation**: All protected endpoints validate Auth0 JWT tokens
+- **User Identification**: User ID extracted from Auth0 token claims
 
 ## Podcast Management
 - **Add Podcast**:
-  - URL: `/podcasts/add`
+  - URL: `/podcasts`
   - Method: `POST`
   - Authorization: Required
   - Request Body:
@@ -71,18 +29,20 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
     {
       "podcastId": "67890",
       "title": "Sample Podcast",
-      "rssUrl": "http://example.com/podcast.rss"
+      "rssUrl": "http://example.com/podcast.rss",
+      "message": "Podcast added successfully"
     }
     \```
   - Status Codes:
-    - `200`: Success
+    - `201`: Created
     - `400`: Invalid RSS URL
+    - `409`: Podcast already exists
 - **Get Podcasts**:
   - URL: `/podcasts`
   - Method: `GET`
   - Authorization: Required
   - Query Parameters:
-    - `limit`: Number of results (default: 10)
+    - `limit`: Number of results (default: 50)
     - `offset`: Pagination offset (default: 0)
   - Response:
     \```
@@ -92,10 +52,15 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
           "podcastId": "67890",
           "title": "Sample Podcast",
           "rssUrl": "http://example.com/podcast.rss",
-          "unreadCount": 5
+          "imageUrl": "http://example.com/image.jpg",
+          "description": "Podcast description",
+          "episodeCount": 42,
+          "unreadCount": 5,
+          "lastSynced": "2024-01-15T10:30:00Z"
         }
       ],
-      "total": 1
+      "total": 1,
+      "hasMore": false
     }
     \```
   - Status Codes:
@@ -108,7 +73,41 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
   - Response:
     \```
     {
-      "message": "Podcast removed"
+      "message": "Podcast removed successfully"
+    }
+    \```
+  - Status Codes:
+    - `200`: Success
+    - `404`: Podcast not found
+    - `403`: Unauthorized to delete this podcast
+
+## Episodes
+- **Get Episodes for Podcast**:
+  - URL: `/podcasts/:podcastId/episodes`
+  - Method: `GET`
+  - Authorization: Required
+  - Query Parameters:
+    - `limit`: Number of episodes (default: 50)
+    - `offset`: Pagination offset (default: 0)
+    - `sort`: Sort order (`newest`, `oldest`, default: `newest`)
+  - Response:
+    \```
+    {
+      "episodes": [
+        {
+          "episodeId": "ep123",
+          "title": "Episode Title",
+          "description": "Episode description",
+          "audioUrl": "http://example.com/episode.mp3",
+          "duration": "45:30",
+          "releaseDate": "2023-01-15T08:00:00Z",
+          "imageUrl": "http://example.com/episode-image.jpg",
+          "isListened": false,
+          "playbackPosition": 0
+        }
+      ],
+      "total": 150,
+      "hasMore": true
     }
     \```
   - Status Codes:
@@ -121,32 +120,40 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
   - Method: `GET`
   - Authorization: Required
   - Query Parameters:
-    - `limit`: Number of recommendations (default: 5)
-    - `filters`: Comma-separated tags (e.g., `history,tech`)
+    - `limit`: Number of recommendations (default: 10)
+    - `filters`: Comma-separated filters (`not_recent`, `favorites`, `comedy`, etc.)
   - Response:
     \```
-    [
-      {
-        "id": "1",
-        "title": "Test Episode",
-        "podcastName": "Test Podcast",
-        "releaseDate": "2023-01-15",
-        "duration": "45 min",
-        "audioUrl": "http://example.com/episode.mp3"
-      }
-    ]
+    {
+      "recommendations": [
+        {
+          "episodeId": "ep123",
+          "title": "Test Episode",
+          "podcastName": "Test Podcast",
+          "podcastId": "pod456",
+          "releaseDate": "2023-01-15T08:00:00Z",
+          "duration": "45:30",
+          "audioUrl": "http://example.com/episode.mp3",
+          "imageUrl": "http://example.com/image.jpg",
+          "description": "Episode description",
+          "reason": "You haven't listened to this comedy episode in 3 months",
+          "confidence": 0.85
+        }
+      ],
+      "total": 10
+    }
     \```
   - Status Codes:
     - `200`: Success
     - `401`: Unauthorized
 - **Submit Feedback**:
-  - URL: `/recommendations/feedback`
+  - URL: `/episodes/:episodeId/feedback`
   - Method: `POST`
   - Authorization: Required
   - Request Body:
     \```
     {
-      "episodeId": "1",
+      "type": "like|dislike|favorite",
       "rating": 4,
       "comment": "Great episode!"
     }
@@ -154,16 +161,58 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
   - Response:
     \```
     {
-      "message": "Feedback submitted"
+      "message": "Feedback submitted successfully",
+      "feedbackId": "fb789"
+    }
+    \```
+  - Status Codes:
+    - `201`: Created
+    - `400`: Invalid data
+    - `404`: Episode not found
+
+## Playback
+- **Save Playback Position**:
+  - URL: `/episodes/:episodeId/playback`
+  - Method: `PUT`
+  - Authorization: Required
+  - Request Body:
+    \```
+    {
+      "position": 1230.5,
+      "duration": 2700.0,
+      "isCompleted": false
+    }
+    \```
+  - Response:
+    \```
+    {
+      "message": "Playback position saved"
     }
     \```
   - Status Codes:
     - `200`: Success
-    - `400`: Invalid data
+    - `404`: Episode not found
+
+- **Get Playback Position**:
+  - URL: `/episodes/:episodeId/playback`
+  - Method: `GET`
+  - Authorization: Required
+  - Response:
+    \```
+    {
+      "position": 1230.5,
+      "duration": 2700.0,
+      "isCompleted": false,
+      "lastPlayed": "2024-01-15T14:30:00Z"
+    }
+    \```
+  - Status Codes:
+    - `200`: Success
+    - `404`: Episode not found or no playback history
 
 ## Library Sharing
 - **Generate Share Link**:
-  - URL: `/share/generate`
+  - URL: `/share`
   - Method: `POST`
   - Authorization: Required
   - Request Body:
@@ -176,49 +225,85 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
     \```
     {
       "shareId": "abc123",
-      "url": "https://rewindpodcast.com/share/abc123"
+      "url": "https://rewindpodcast.com/share/abc123",
+      "expiresAt": "2024-02-15T10:00:00Z"
+    }
+    \```
+  - Status Codes:
+    - `201`: Created
+    - `400`: Invalid podcast IDs
+
+- **Get Shared Library**:
+  - URL: `/share/:shareId`
+  - Method: `GET`
+  - Authorization: Not required (public)
+  - Response:
+    \```
+    {
+      "podcasts": [
+        {
+          "podcastId": "67890",
+          "title": "Sample Podcast",
+          "imageUrl": "http://example.com/image.jpg",
+          "description": "Podcast description"
+        }
+      ],
+      "shareId": "abc123",
+      "createdAt": "2024-01-15T10:00:00Z"
     }
     \```
   - Status Codes:
     - `200`: Success
-    - `400`: Invalid podcast IDs
+    - `404`: Share not found or expired
+
 - **Add Podcasts from Share**:
-  - URL: `/share/:shareId`
+  - URL: `/share/:shareId/add`
   - Method: `POST`
   - Authorization: Required
   - Response:
     \```
     {
       "message": "Podcasts added to library",
-      "addedPodcastIds": ["67890", "69123"]
+      "addedPodcastIds": ["67890"],
+      "skippedPodcastIds": ["69123"],
+      "addedCount": 1
     }
     \```
   - Status Codes:
     - `200`: Success
-    - `404`: Share ID not found
+    - `404`: Share not found or expired
 
 ## Error Handling
 - **Common Errors**:
-  - `400`: Bad Request (e.g., invalid JSON)
-  - `401`: Unauthorized (e.g., missing or invalid token)
+  - `400`: Bad Request (e.g., invalid JSON, validation errors)
+  - `401`: Unauthorized (e.g., missing or invalid Auth0 token)
   - `403`: Forbidden (e.g., insufficient permissions)
   - `404`: Not Found (e.g., resource does not exist)
+  - `409`: Conflict (e.g., resource already exists)
+  - `429`: Too Many Requests (rate limiting)
   - `500`: Internal Server Error
 - **Error Response Format**:
   \```
   {
-    "error": "Detailed error message",
-    "code": "error_code"
+    "error": {
+      "message": "Detailed error message",
+      "code": "ERROR_CODE",
+      "details": {}
+    },
+    "timestamp": "2024-01-15T10:30:00Z",
+    "path": "/api/podcasts"
   }
   \```
 
 ## Notes for AI Agent
-- Implement endpoints with Express.js or similar framework.
-- Use JWT middleware for authentication (e.g., `jsonwebtoken`).
-- Validate all request bodies using a schema (e.g., Joi or Yup).
-- Return consistent JSON responses with appropriate status codes.
-- Store podcast data and user libraries in a database (see DATABASE.md).
+- Implement endpoints using AWS Lambda with Node.js and TypeScript.
+- Use Auth0 JWT validation middleware for protected endpoints.
+- Validate all request bodies using a schema library (e.g., Joi or Zod).
+- Return consistent JSON responses with standardized error format.
+- Store data in DynamoDB following the schema in DATABASE.md.
 - Mock endpoints with MSW during frontend development (see UI_TECH.md).
+- Implement rate limiting and proper error handling.
+- Add comprehensive logging for debugging and monitoring.
 - Commit changes to Git after implementing each endpoint.
 - Report issues (e.g., unclear data format) in PLAN.md.
 

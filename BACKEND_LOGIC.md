@@ -1,25 +1,27 @@
 \# Rewind Backend Logic Specifications
 
 ## Overview
+
 This document outlines the business logic for the Rewind backend, supporting a mobile-first Progressive Web App \(PWA\) for podcast enthusiasts aged 35\+. The logic handles podcast ingestion, recommendation generation, library sharing, and user authentication, integrating with the API endpoints \(see BACKEND_API.md\) and database \(see DATABASE.md\).
 
 ## Authentication Logic
-- **Login Workflow**:
-  - Validate email and password against stored user credentials.
-  - Generate a JWT token with user ID and email, signed with a secret key (e.g., using `jsonwebtoken`).
-  - Return token and user details on success.
-  - Handle failures with `401` status if credentials are invalid.
-- **Registration Workflow**:
-  - Validate email format, password strength, and uniqueness.
-  - Hash password using bcrypt before storing in the database.
-  - Create new user record with generated ID.
-  - Return user ID and confirmation message on success.
+
+- **Auth0 Integration**:
+  - All authentication handled by Auth0 service.
+  - Users authenticate via Auth0 hosted login page or SDK.
+  - Auth0 returns JWT tokens with user claims (sub, email, name).
 - **Token Validation**:
-  - Middleware checks JWT in `Authorization` header.
-  - Verify token signature and extract user ID.
-  - Attach user ID to request object for subsequent logic.
+  - Lambda authorizer validates Auth0 JWT tokens.
+  - Verify token signature using Auth0 public keys (JWKS).
+  - Extract user ID from token `sub` claim.
+  - Attach user ID to request context for Lambda functions.
+- **User Profile Management**:
+  - Create user profile in DynamoDB on first login using Auth0 claims.
+  - Update profile information from Auth0 token on subsequent requests.
+  - Store app-specific preferences and settings.
 
 ## Podcast Processing Logic
+
 - **RSS Feed Ingestion**:
   - Fetch RSS feed from provided URL using `rss-parser` or similar library.
   - Extract podcast metadata (title, description, image) and episode details (title, audio URL, duration, release date).
@@ -34,6 +36,7 @@ This document outlines the business logic for the Rewind backend, supporting a m
   - Invalidate any cached data or recommendations tied to the podcast.
 
 ## Recommendation Logic
+
 - **Algorithm**:
   - Use a hybrid approach combining collaborative filtering and content-based filtering.
   - Analyze user feedback (ratings, comments) and podcast metadata (tags, genres).
@@ -49,6 +52,7 @@ This document outlines the business logic for the Rewind backend, supporting a m
   - Trigger re-computation of recommendations if rating threshold is met.
 
 ## Library Sharing Logic
+
 - **Generate Share Link**:
   - Validate provided podcast IDs belong to the user.
   - Generate a unique `shareId` (e.g., UUID).
@@ -61,6 +65,7 @@ This document outlines the business logic for the Rewind backend, supporting a m
   - Return success message with added podcast IDs.
 
 ## Error Handling Logic
+
 - **Validation**:
   - Use schema validation (e.g., Joi) for all request bodies.
   - Return `400` with error details if validation fails.
@@ -68,29 +73,40 @@ This document outlines the business logic for the Rewind backend, supporting a m
   - Catch and log database connection or query errors.
   - Return `500` with generic error message to client.
 - **Rate Limiting**:
-  - Implement rate limiting (e.g., 100 requests/hour) using `express-rate-limit`.
-  - Return `429` if limit is exceeded.
+  - Implement rate limiting at API Gateway level (10,000 requests/second).
+  - Use DynamoDB for user-specific rate limiting if needed.
+  - Return `429` if limit is exceeded with retry-after headers.
 
 ## Performance Optimization
+
+- **Lambda Performance**:
+  - Use provisioned concurrency for frequently accessed functions.
+  - Optimize cold start times with minimal dependencies.
+  - Implement connection pooling for DynamoDB operations.
+- **Database Optimization**:
+  - Use DynamoDB Global Secondary Indexes for efficient queries.
+  - Implement batch operations to reduce API calls.
+  - Use DynamoDB Streams for real-time data processing.
 - **Caching**:
-  - Cache frequent queries (e.g., user podcasts, recommendations) using Redis.
-  - Set expiration times (e.g., 1 hour for recommendations, 24 hours for podcasts).
-- **Asynchronous Processing**:
-  - Use queues (e.g., Bull) for RSS ingestion and recommendation updates.
-  - Process tasks in the background to avoid blocking API responses.
-- **Indexing**:
-  - Create database indexes on `userId`, `podcastId`, and `releaseDate` for faster queries.
+  - Use Lambda memory for short-term caching during execution.
+  - Implement CloudFront caching for static responses.
+  - Cache Auth0 JWKS keys with TTL.
 
 ## Notes for AI Agent
-- Implement logic with Node.js and Express.js.
-- Use `bcrypt` for password hashing and `jsonwebtoken` for JWT management.
-- Integrate with database schema from DATABASE.md.
+
+- Implement logic with Node.js Lambda functions and TypeScript.
+- Use Auth0 JWT validation with `jsonwebtoken` and `jwks-client` libraries.
+- Integrate with DynamoDB schema from DATABASE.md.
+- Use AWS SDK v3 for all database operations.
+- Implement proper error handling and logging.
 - Mock API responses with MSW during development (see UI_TECH.md).
-- Test logic with unit tests (e.g., Jest) and integration tests.
+- Test logic with unit tests (Vitest) and integration tests.
+- Use dependency injection patterns for testability.
 - Commit changes to Git after implementing each module.
 - Report issues (e.g., unclear algorithm requirements) in PLAN.md.
 
 ## References
+
 - BACKEND_API.md: API endpoint definitions.
 - UI_TECH.md: Frontend integration details.
 - DATABASE.md: Database schema and storage.
