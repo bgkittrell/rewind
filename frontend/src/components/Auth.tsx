@@ -61,19 +61,19 @@ export function Auth({ onAuthStateChange }: AuthProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-4">
-        <div className="text-gray-600">Loading...</div>
+      <div className="flex items-center justify-end">
+        <div className="text-xs text-gray-300">Loading...</div>
       </div>
     )
   }
 
   if (user) {
     return (
-      <div className="flex items-center gap-3 p-4">
-        <span className="text-sm text-gray-700">Welcome, {user.username}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-gray-200 hidden sm:inline">Welcome, {user.username}</span>
         <button
           onClick={handleSignOut}
-          className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+          className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
         >
           Sign Out
         </button>
@@ -82,10 +82,10 @@ export function Auth({ onAuthStateChange }: AuthProps) {
   }
 
   return (
-    <div className="flex items-center gap-3 p-4">
+    <div className="flex items-center">
       <button
         onClick={handleSignIn}
-        className="px-4 py-2 bg-teal text-white rounded hover:bg-teal-600 transition-colors"
+        className="px-2 py-1 text-xs bg-red text-white rounded hover:bg-red/90 transition-colors"
       >
         Sign In
       </button>

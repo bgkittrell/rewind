@@ -6,7 +6,7 @@ import { SideMenu } from './components/SideMenu'
 import { OfflineStatus } from './components/OfflineStatus'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { PlayerProvider, usePlayer } from './context/PlayerContext'
-import { IconMenu2, IconHome, IconBooks, IconSearch } from '@tabler/icons-react'
+import { IconMenu2, IconHome, IconSpeakerphone, IconSearch } from '@tabler/icons-react'
 
 function AppContent() {
   const location = useLocation()
@@ -31,13 +31,17 @@ function AppContent() {
         </button>
 
         {/* Title */}
-        <div className="flex-1 text-center">
+        <div className="absolute left-1/2 transform -translate-x-1/2">
           <h1 className="text-lg font-semibold">Rewind</h1>
         </div>
-        <Auth />
+        
+        {/* Auth */}
+        <div className="ml-auto">
+          <Auth />
+        </div>
       </header>
 
-      <main className="container mx-auto p-4">
+      <main className="px-2 py-4 sm:px-4">
         <Outlet />
       </main>
 
@@ -72,7 +76,7 @@ function AppContent() {
               location.pathname === '/library' ? 'text-red bg-red/10' : 'text-gray-600 hover:text-red'
             }`}
           >
-            <IconBooks className="w-6 h-6 mb-1" />
+            <IconSpeakerphone className="w-6 h-6 mb-1" />
             <span className="text-xs">Library</span>
           </Link>
           <Link
