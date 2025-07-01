@@ -55,7 +55,7 @@ describe('EpisodeCard', () => {
     const episodeWithProgress = { ...mockEpisode, progress: 0.5 }
     render(<EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
 
-    const progressBar = document.querySelector('.bg-teal.h-1')
+    const progressBar = document.querySelector('.bg-red.h-1')
     expect(progressBar).toBeInTheDocument()
     expect(progressBar).toHaveStyle('width: 50%')
   })

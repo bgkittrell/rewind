@@ -38,7 +38,9 @@ This document details the technical implementation of the Rewind frontend, a mob
     theme: {
     extend: {
     colors: {
-    teal: "#26A69A", // Placeholder, TBD by design team
+    red: "#eb4034", // Primary red color
+    primary: "#eb4034",
+    secondary: "#c72e20",
     },
     },
     },

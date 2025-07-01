@@ -1,18 +1,38 @@
 import { Outlet, Link, useLocation } from 'react-router'
+import { useState } from 'react'
 import { Auth } from './components/Auth'
 import { FloatingMediaPlayer } from './components/FloatingMediaPlayer'
+import { SideMenu } from './components/SideMenu'
+import { OfflineStatus } from './components/OfflineStatus'
+import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { PlayerProvider, usePlayer } from './context/PlayerContext'
+import { IconMenu2, IconHome, IconBooks, IconSearch } from '@tabler/icons-react'
 
 function AppContent() {
   const location = useLocation()
   const player = usePlayer()
+  const [isSideMenuOpen, setIsSideMenuOpen] = useState(false)
+
+  const handleMenuAction = (action: string) => {
+    console.log(`Menu action: ${action}`)
+    // TODO: Implement menu actions
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-teal text-white p-4 flex justify-between items-center">
-        <div>
-          <h1 className="text-xl font-bold">Rewind</h1>
-          <p className="text-sm opacity-90">Rediscover older podcast episodes</p>
+      <header className="bg-red text-white p-4 flex justify-between items-center h-14">
+        {/* Menu Button */}
+        <button
+          onClick={() => setIsSideMenuOpen(true)}
+          className="p-2 hover:bg-red/20 rounded-lg transition-colors"
+          aria-label="Open navigation menu"
+        >
+          <IconMenu2 className="w-6 h-6" />
+        </button>
+
+        {/* Title */}
+        <div className="flex-1 text-center">
+          <h1 className="text-lg font-semibold">Rewind</h1>
         </div>
         <Auth />
       </header>
@@ -40,32 +60,49 @@ function AppContent() {
           <Link
             to="/"
             className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-              location.pathname === '/' ? 'text-teal bg-teal/10' : 'text-gray-600 hover:text-teal'
+              location.pathname === '/' ? 'text-red bg-red/10' : 'text-gray-600 hover:text-red'
             }`}
           >
-            <span className="text-xl mb-1">🏠</span>
+            <IconHome className="w-6 h-6 mb-1" />
             <span className="text-xs">Home</span>
           </Link>
           <Link
             to="/library"
             className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-              location.pathname === '/library' ? 'text-teal bg-teal/10' : 'text-gray-600 hover:text-teal'
+              location.pathname === '/library' ? 'text-red bg-red/10' : 'text-gray-600 hover:text-red'
             }`}
           >
-            <span className="text-xl mb-1">📚</span>
+            <IconBooks className="w-6 h-6 mb-1" />
             <span className="text-xs">Library</span>
           </Link>
           <Link
             to="/search"
             className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-              location.pathname === '/search' ? 'text-teal bg-teal/10' : 'text-gray-600 hover:text-teal'
+              location.pathname === '/search' ? 'text-red bg-red/10' : 'text-gray-600 hover:text-red'
             }`}
           >
-            <span className="text-xl mb-1">🔍</span>
+            <IconSearch className="w-6 h-6 mb-1" />
             <span className="text-xs">Search</span>
           </Link>
         </div>
       </nav>
+
+      {/* Offline Status */}
+      <OfflineStatus />
+
+      {/* Side Menu */}
+      <SideMenu
+        isOpen={isSideMenuOpen}
+        onClose={() => setIsSideMenuOpen(false)}
+        onProfile={() => handleMenuAction('profile')}
+        onAddPodcast={() => handleMenuAction('addPodcast')}
+        onShareLibrary={() => handleMenuAction('shareLibrary')}
+        onSettings={() => handleMenuAction('settings')}
+        onLogout={() => handleMenuAction('logout')}
+      />
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
 
       {/* Bottom padding to account for fixed navigation and media player */}
       <div className={`${player.state.currentEpisode ? 'h-32' : 'h-20'}`}></div>

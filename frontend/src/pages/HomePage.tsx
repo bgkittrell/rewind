@@ -51,7 +51,7 @@ export function HomePage() {
               key={filter.id}
               onClick={() => setActiveFilter(filter.id)}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                activeFilter === filter.id ? 'bg-teal text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                activeFilter === filter.id ? 'bg-red text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
               aria-label={`Filter by ${filter.label}`}
             >
@@ -80,7 +80,7 @@ export function HomePage() {
             <p className="text-gray-500">No episodes found for the selected filter.</p>
             <button
               onClick={() => setActiveFilter('not-recent')}
-              className="mt-2 text-teal hover:text-teal-600 font-medium"
+              className="mt-2 text-red hover:text-red-600 font-medium"
             >
               Reset filters
             </button>

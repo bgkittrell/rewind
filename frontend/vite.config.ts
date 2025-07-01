@@ -12,7 +12,7 @@ export default defineConfig({
         name: 'Rewind',
         short_name: 'Rewind',
         description: 'Rediscover older podcast episodes',
-        theme_color: '#26A69A',
+        theme_color: '#eb4034',
         background_color: '#FFFFFF',
         display: 'standalone',
         start_url: '/',
@@ -32,6 +32,42 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         maximumFileSizeToCacheInBytes: 5000000,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.(mp3|wav|m4a|ogg)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'audio-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/.*\.(jpg|jpeg|png|gif|webp)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+              },
+            },
+          },
+          {
+            urlPattern: /\/api\//,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 5 * 60, // 5 minutes
+              },
+              networkTimeoutSeconds: 3,
+            },
+          },
+        ],
       },
     }),
   ],

@@ -102,6 +102,8 @@ This is a documentation-heavy project currently in the planning phase. The archi
 - Use MSW to mock API calls during development and testing
 - Follow mobile-first responsive design principles
 - Implement PWA features early (service worker, offline capability)
+- Use @tabler/icons-react for all icons (consistent, accessible icon system)
+- Follow red color scheme (#eb4034 primary, #c72e20 secondary)
 
 ### Backend Development
 

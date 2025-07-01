@@ -4,9 +4,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        teal: '#26A69A',
-        primary: '#26A69A',
-        secondary: '#004D40',
+        red: '#eb4034',
+        primary: '#eb4034',
+        secondary: '#c72e20',
       },
       screens: {
         xs: '320px',
