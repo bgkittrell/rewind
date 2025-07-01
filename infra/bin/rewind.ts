@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 import { RewindDataStack } from '../lib/rewind-data-stack';
 import { RewindAuthStack } from '../lib/rewind-auth-stack';
 import { RewindBackendStack } from '../lib/rewind-backend-stack';
+import { RewindPersonalizeStack } from '../lib/rewind-personalize-stack';
 // import { RewindFrontendStack } from '../lib/rewind-frontend-stack';
 
 const app = new cdk.App();
@@ -23,6 +24,12 @@ const dataStack = new RewindDataStack(app, 'RewindDataStack', {
 const authStack = new RewindAuthStack(app, 'RewindAuthStack', {
   env,
   description: 'Authentication infrastructure with Cognito for Rewind'
+});
+
+// Personalize stack - ML recommendation engine
+const personalizeStack = new RewindPersonalizeStack(app, 'RewindPersonalizeStack', {
+  env,
+  description: 'AWS Personalize recommendation engine for Rewind'
 });
 
 // Backend stack - Lambda functions and API Gateway
@@ -51,6 +58,7 @@ const tags = {
 Object.entries(tags).forEach(([key, value]) => {
   cdk.Tags.of(dataStack).add(key, value);
   cdk.Tags.of(authStack).add(key, value);
+  cdk.Tags.of(personalizeStack).add(key, value);
   cdk.Tags.of(backendStack).add(key, value);
   // cdk.Tags.of(frontendStack).add(key, value);
 });
