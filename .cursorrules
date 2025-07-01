@@ -1,0 +1,113 @@
+# Rewind Project - Cursor AI Rules
+
+## Project Overview
+Rewind is a mobile-first Progressive Web App (PWA) for podcast enthusiasts aged 35+ to rediscover older episodes. Built with React Router v7, TypeScript, AWS serverless architecture, and Auth0 authentication.
+
+## Technology Stack
+- **Frontend**: React Router v7, TypeScript, Tailwind CSS, Vite, PWA
+- **Backend**: Node.js Lambda functions, TypeScript, DynamoDB, Auth0 JWT
+- **Infrastructure**: AWS CDK v2, S3, CloudFront, API Gateway, Lambda, DynamoDB
+- **Testing**: Storybook (component testing), Vitest (unit/integration tests), MSW (API mocking)
+
+## Coding Standards
+
+### General
+- Use TypeScript for all code
+- Follow mobile-first responsive design principles
+- Implement proper error handling and logging
+- Write comprehensive tests for all new functionality
+- Use semantic HTML and ARIA labels for accessibility
+
+### Frontend
+- Use React Router v7 with clientLoader and clientAction patterns
+- Business logic in service layer (src/services/)
+- State management with React Context and IndexedDB for persistence
+- Component testing with Storybook, unit tests with Vitest
+- Mock API calls with MSW during development and testing
+- Follow the component structure defined in UI_TECH.md
+
+### Backend
+- Implement Lambda functions with proper TypeScript typing
+- Use Auth0 JWT validation for protected endpoints
+- Follow DynamoDB best practices with proper partition keys
+- Implement standardized error responses per BACKEND_API.md
+- Use AWS SDK v3 for all AWS operations
+- Add comprehensive logging for debugging
+
+### Infrastructure
+- Use AWS CDK v2 with TypeScript
+- Follow least privilege IAM principles
+- Implement proper monitoring and alerting
+- Use environment variables for all configuration
+- Follow the stack structure defined in AWS_CONFIG.md
+
+## File Organization
+- All documentation in `docs/` directory
+- Frontend code in `frontend/` with src/components, src/routes, src/services
+- Backend code in `backend/` with src/handlers, src/services, src/utils
+- Infrastructure code in `infra/` with bin/ and lib/ directories
+- Tests in `tests/` with unit/ and integration/ subdirectories
+
+## Code Style
+- Use Prettier for formatting
+- Use ESLint for linting
+- Prefer const over let, avoid var
+- Use descriptive variable and function names
+- Add JSDoc comments for public functions
+- Use async/await over Promise chains
+
+## Authentication
+- All authentication handled by Auth0
+- Extract user ID from JWT sub claim
+- No custom password handling or storage
+- Validate JWT tokens in Lambda authorizer
+
+## Database
+- Use DynamoDB with pay-per-request billing
+- Follow the schema defined in DATABASE.md
+- Implement proper GSI usage for efficient queries
+- Use batch operations to reduce API calls
+- Handle DynamoDB errors with proper retry logic
+
+## API Design
+- Follow RESTful conventions
+- Use consistent error response format
+- Implement proper HTTP status codes
+- Add request validation and sanitization
+- Include proper CORS headers
+
+## Testing
+- Write Storybook stories for all UI components
+- Unit test all service functions and utilities
+- Integration test API endpoints and workflows
+- Test error scenarios and edge cases
+- Aim for >80% code coverage
+
+## Performance
+- Optimize Lambda cold starts with minimal dependencies
+- Use DynamoDB efficiently with proper partition key design
+- Implement CloudFront caching for static assets
+- Lazy load non-critical components and assets
+- Optimize images and use WebP when possible
+
+## Security
+- Never commit secrets or API keys to version control
+- Use environment variables for all configuration
+- Implement proper input validation and sanitization
+- Follow OWASP security best practices
+- Regularly update dependencies
+
+## Documentation
+- Keep README files updated
+- Document API changes in BACKEND_API.md
+- Update component documentation in Storybook
+- Maintain clear commit messages
+- Reference the comprehensive documentation in docs/
+
+## When in doubt, refer to:
+- docs/PLAN.md for project tasks and milestones
+- docs/UI_TECH.md for frontend implementation details
+- docs/BACKEND_API.md for API specifications
+- docs/DATABASE.md for database schema and queries
+- docs/AWS_CONFIG.md for infrastructure setup
+- docs/CLAUDE.md for project context and current status

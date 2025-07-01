@@ -1,0 +1,42 @@
+{
+  "name": "rewind",
+  "version": "0.1.0",
+  "description": "Mobile-first PWA for podcast enthusiasts to rediscover older episodes",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "infra"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "postinstall": "npm run setup --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/rewind.git"
+  },
+  "keywords": [
+    "podcast",
+    "pwa",
+    "react",
+    "aws",
+    "serverless",
+    "typescript"
+  ],
+  "author": "Rewind Team",
+  "license": "MIT"
+}

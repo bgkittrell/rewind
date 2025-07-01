@@ -11,10 +11,10 @@ This document outlines the business logic for the Rewind backend, supporting a m
   - Users authenticate via Auth0 hosted login page or SDK.
   - Auth0 returns JWT tokens with user claims (sub, email, name).
 - **Token Validation**:
-  - Lambda authorizer validates Auth0 JWT tokens.
-  - Verify token signature using Auth0 public keys (JWKS).
-  - Extract user ID from token `sub` claim.
-  - Attach user ID to request context for Lambda functions.
+  - API Gateway HTTP API validates Auth0 JWT tokens automatically.
+  - Built-in JWT authorizer verifies token signature using Auth0 issuer.
+  - User ID from token `sub` claim available in Lambda event context.
+  - No Lambda function needed for token validation.
 - **User Profile Management**:
   - Create user profile in DynamoDB on first login using Auth0 claims.
   - Update profile information from Auth0 token on subsequent requests.

@@ -39,10 +39,11 @@ This document defines the AWS CDK configuration for Rewind, a mobile-first Progr
   - Automatic CloudFront invalidation on deploy.
 
 ### RewindBackendStack
-- **Description**: Manages Lambda functions, API Gateway, and DynamoDB.
+- **Description**: Manages Lambda functions, API Gateway HTTP API, and DynamoDB.
 - **Resources**:
-  - **API Gateway**:
-    - REST API with CORS enabled for all origins in development.
+  - **API Gateway HTTP API**:
+    - HTTP API with CORS enabled for all origins in development.
+    - Built-in JWT authorizer for Auth0 integration (no Lambda required).
     - Stages: `dev`, `prod`.
     - Custom domain: `api.rewindpodcast.com` (optional).
     - Request validation and throttling (10000 requests/second).
@@ -53,17 +54,16 @@ This document defines the AWS CDK configuration for Rewind, a mobile-first Progr
       - `episodeHandler`: Manages episode operations and playback tracking.
       - `recommendationHandler`: Provides episode recommendations.
       - `shareHandler`: Handles library sharing functionality.
-      - `authHandler`: Validates Auth0 JWT tokens.
     - Packaging: TypeScript compiled with esbuild, deployed via CDK.
-    - Environment variables: `DYNAMODB_TABLE_PREFIX`, `AUTH0_DOMAIN`, `AUTH0_AUDIENCE`.
+    - Environment variables: `DYNAMODB_TABLE_PREFIX` (Auth0 validation handled by API Gateway).
     - Memory: 512 MB, timeout: 30 seconds.
     - Dead letter queues for error handling.
   - **EventBridge**:
     - Rule: Daily schedule (Cron: `0 8 * * ? *` UTC) for RSS feed updates.
     - Target: `podcastHandler` Lambda with specific event payload.
-  - **Lambda Authorizer**:
-    - Custom authorizer for Auth0 JWT validation.
-    - Caches authorization decisions for 5 minutes.
+  - **JWT Authorizer**:
+    - Built-in API Gateway JWT authorizer using Auth0 issuer and audience.
+    - No Lambda function required for token validation.
 
 ### RewindDataStack
 - **Description**: Manages DynamoDB tables and related infrastructure.
@@ -253,7 +253,9 @@ export class RewindDataStack extends cdk.Stack {
 \```typescript
 // lib/rewind-backend-stack.ts
 import * as cdk from 'aws-cdk-lib';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as apigateway from 'aws-cdk-lib/aws-apigatewayv2';
+import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import * as authorizers from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as events from 'aws-cdk-lib/aws-events';
@@ -284,26 +286,26 @@ export class RewindBackendStack extends cdk.Stack {
       table.grantReadWriteData(lambdaRole);
     });
 
-    // Common Lambda environment variables
+    // Common Lambda environment variables (Auth0 handled by API Gateway)
     const commonEnv = {
       DYNAMODB_TABLE_PREFIX: 'Rewind',
-      AUTH0_DOMAIN: process.env.AUTH0_DOMAIN || '',
-      AUTH0_AUDIENCE: process.env.AUTH0_AUDIENCE || '',
     };
 
-    // Auth0 JWT Authorizer
-    const authorizerFunction = new lambda.Function(this, 'AuthorizerFunction', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromAsset('backend/dist/auth'),
-      role: lambdaRole,
-      environment: commonEnv,
-      timeout: cdk.Duration.seconds(10),
+    // HTTP API with built-in JWT authorizer
+    const httpApi = new apigateway.HttpApi(this, 'RewindHttpApi', {
+      apiName: 'Rewind API',
+      description: 'HTTP API for Rewind podcast app',
+      corsPreflight: {
+        allowOrigins: ['*'],
+        allowMethods: [apigateway.CorsHttpMethod.ANY],
+        allowHeaders: ['Content-Type', 'Authorization'],
+      },
     });
 
-    const authorizer = new apigateway.TokenAuthorizer(this, 'Auth0Authorizer', {
-      handler: authorizerFunction,
-      resultsCacheTtl: cdk.Duration.minutes(5),
+    // JWT Authorizer for Auth0
+    const jwtAuthorizer = new apigateway.HttpJwtAuthorizer('Auth0Authorizer', 
+      process.env.AUTH0_DOMAIN || 'https://your-domain.auth0.com/', {
+      jwtAudience: [process.env.AUTH0_AUDIENCE || 'your-api-audience'],
     });
 
     // Lambda functions
@@ -347,76 +349,74 @@ export class RewindBackendStack extends cdk.Stack {
       memorySize: 256,
     });
 
-    // API Gateway
-    const api = new apigateway.RestApi(this, 'RewindApi', {
-      restApiName: 'Rewind API',
-      description: 'API for Rewind podcast app',
-      defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS,
-        allowMethods: apigateway.Cors.ALL_METHODS,
-        allowHeaders: ['Content-Type', 'Authorization'],
-      },
+    // HTTP API routes with JWT authorization
+    httpApi.addRoutes({
+      path: '/v1/podcasts',
+      methods: [apigateway.HttpMethod.GET, apigateway.HttpMethod.POST],
+      integration: new apigateway.HttpLambdaIntegration('PodcastIntegration', podcastFunction),
+      authorizer: jwtAuthorizer,
     });
 
-    // API routes
-    const v1 = api.root.addResource('v1');
-
-    // Podcasts routes
-    const podcasts = v1.addResource('podcasts');
-    podcasts.addMethod('GET', new apigateway.LambdaIntegration(podcastFunction), {
-      authorizer,
-    });
-    podcasts.addMethod('POST', new apigateway.LambdaIntegration(podcastFunction), {
-      authorizer,
-    });
-
-    const podcast = podcasts.addResource('{podcastId}');
-    podcast.addMethod('DELETE', new apigateway.LambdaIntegration(podcastFunction), {
-      authorizer,
+    httpApi.addRoutes({
+      path: '/v1/podcasts/{podcastId}',
+      methods: [apigateway.HttpMethod.DELETE],
+      integration: new apigateway.HttpLambdaIntegration('PodcastDeleteIntegration', podcastFunction),
+      authorizer: jwtAuthorizer,
     });
 
     // Episodes routes
-    const podcastEpisodes = podcast.addResource('episodes');
-    podcastEpisodes.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
-      authorizer,
+    httpApi.addRoutes({
+      path: '/v1/podcasts/{podcastId}/episodes',
+      methods: [apigateway.HttpMethod.GET],
+      integration: new apigateway.HttpLambdaIntegration('PodcastEpisodesIntegration', episodeFunction),
+      authorizer: jwtAuthorizer,
     });
 
-    const episodes = v1.addResource('episodes');
-    const episode = episodes.addResource('{episodeId}');
-    
-    // Playback routes
-    const playback = episode.addResource('playback');
-    playback.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
-      authorizer,
-    });
-    playback.addMethod('PUT', new apigateway.LambdaIntegration(episodeFunction), {
-      authorizer,
+    // Episode playback routes
+    httpApi.addRoutes({
+      path: '/v1/episodes/{episodeId}/playback',
+      methods: [apigateway.HttpMethod.GET, apigateway.HttpMethod.PUT],
+      integration: new apigateway.HttpLambdaIntegration('EpisodePlaybackIntegration', episodeFunction),
+      authorizer: jwtAuthorizer,
     });
 
-    // Feedback routes
-    const feedback = episode.addResource('feedback');
-    feedback.addMethod('POST', new apigateway.LambdaIntegration(episodeFunction), {
-      authorizer,
+    // Episode feedback routes
+    httpApi.addRoutes({
+      path: '/v1/episodes/{episodeId}/feedback',
+      methods: [apigateway.HttpMethod.POST],
+      integration: new apigateway.HttpLambdaIntegration('EpisodeFeedbackIntegration', episodeFunction),
+      authorizer: jwtAuthorizer,
     });
 
     // Recommendations routes
-    const recommendations = v1.addResource('recommendations');
-    recommendations.addMethod('GET', new apigateway.LambdaIntegration(recommendationFunction), {
-      authorizer,
+    httpApi.addRoutes({
+      path: '/v1/recommendations',
+      methods: [apigateway.HttpMethod.GET],
+      integration: new apigateway.HttpLambdaIntegration('RecommendationIntegration', recommendationFunction),
+      authorizer: jwtAuthorizer,
     });
 
     // Share routes
-    const share = v1.addResource('share');
-    share.addMethod('POST', new apigateway.LambdaIntegration(shareFunction), {
-      authorizer,
+    httpApi.addRoutes({
+      path: '/v1/share',
+      methods: [apigateway.HttpMethod.POST],
+      integration: new apigateway.HttpLambdaIntegration('ShareCreateIntegration', shareFunction),
+      authorizer: jwtAuthorizer,
     });
 
-    const shareItem = share.addResource('{shareId}');
-    shareItem.addMethod('GET', new apigateway.LambdaIntegration(shareFunction));
-    
-    const addFromShare = shareItem.addResource('add');
-    addFromShare.addMethod('POST', new apigateway.LambdaIntegration(shareFunction), {
-      authorizer,
+    // Public share access (no auth required)
+    httpApi.addRoutes({
+      path: '/v1/share/{shareId}',
+      methods: [apigateway.HttpMethod.GET],
+      integration: new apigateway.HttpLambdaIntegration('ShareGetIntegration', shareFunction),
+    });
+
+    // Add shared content to user library (auth required)
+    httpApi.addRoutes({
+      path: '/v1/share/{shareId}/add',
+      methods: [apigateway.HttpMethod.POST],
+      integration: new apigateway.HttpLambdaIntegration('ShareAddIntegration', shareFunction),
+      authorizer: jwtAuthorizer,
     });
 
     // EventBridge rule for RSS updates
@@ -432,7 +432,7 @@ export class RewindBackendStack extends cdk.Stack {
     }));
 
     // Output API URL
-    this.apiUrl = api.url;
+    this.apiUrl = httpApi.url || '';
 
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: this.apiUrl,
