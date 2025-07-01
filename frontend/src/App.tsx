@@ -1,8 +1,11 @@
 import { Outlet, Link, useLocation } from 'react-router'
 import { Auth } from './components/Auth'
+import { FloatingMediaPlayer } from './components/FloatingMediaPlayer'
+import { PlayerProvider, usePlayer } from './context/PlayerContext'
 
-function App() {
+function AppContent() {
   const location = useLocation()
+  const player = usePlayer()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -18,8 +21,21 @@ function App() {
         <Outlet />
       </main>
 
+      {/* Floating Media Player */}
+      <FloatingMediaPlayer
+        state={player.state}
+        onTogglePlayPause={player.togglePlayPause}
+        onSeek={player.seek}
+        onSkipForward={player.skipForward}
+        onSkipBackward={player.skipBackward}
+        onExpand={player.expand}
+        onMinimize={player.minimize}
+        onSetVolume={player.setVolume}
+        onSetPlaybackRate={player.setPlaybackRate}
+      />
+
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-30">
         <div className="flex justify-around">
           <Link
             to="/"
@@ -51,9 +67,17 @@ function App() {
         </div>
       </nav>
 
-      {/* Bottom padding to account for fixed navigation */}
-      <div className="h-20"></div>
+      {/* Bottom padding to account for fixed navigation and media player */}
+      <div className={`${player.state.currentEpisode ? 'h-32' : 'h-20'}`}></div>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <PlayerProvider>
+      <AppContent />
+    </PlayerProvider>
   )
 }
 
