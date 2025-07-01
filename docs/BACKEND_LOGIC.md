@@ -6,18 +6,18 @@ This document outlines the business logic for the Rewind backend, supporting a m
 
 ## Authentication Logic
 
-- **Auth0 Integration**:
-  - All authentication handled by Auth0 service.
-  - Users authenticate via Auth0 hosted login page or SDK.
-  - Auth0 returns JWT tokens with user claims (sub, email, name).
+- **Cognito Integration**:
+  - All authentication handled by Cognito User Pool service.
+  - Users authenticate via Cognito hosted UI or AWS Amplify SDK.
+  - Cognito returns JWT tokens with user claims (sub, email, name).
 - **Token Validation**:
-  - API Gateway HTTP API validates Auth0 JWT tokens automatically.
-  - Built-in JWT authorizer verifies token signature using Auth0 issuer.
+  - API Gateway HTTP API validates Cognito JWT tokens automatically.
+  - Built-in JWT authorizer verifies token signature using Cognito issuer.
   - User ID from token `sub` claim available in Lambda event context.
   - No Lambda function needed for token validation.
 - **User Profile Management**:
-  - Create user profile in DynamoDB on first login using Auth0 claims.
-  - Update profile information from Auth0 token on subsequent requests.
+  - Create user profile in DynamoDB on first login using Cognito claims.
+  - Update profile information from Cognito token on subsequent requests.
   - Store app-specific preferences and settings.
 
 ## Podcast Processing Logic
@@ -90,12 +90,12 @@ This document outlines the business logic for the Rewind backend, supporting a m
 - **Caching**:
   - Use Lambda memory for short-term caching during execution.
   - Implement CloudFront caching for static responses.
-  - Cache Auth0 JWKS keys with TTL.
+  - Cache Cognito JWKS keys with TTL.
 
 ## Notes for AI Agent
 
 - Implement logic with Node.js Lambda functions and TypeScript.
-- Use Auth0 JWT validation with `jsonwebtoken` and `jwks-client` libraries.
+- Use Cognito JWT validation with API Gateway built-in authorizer (no additional libraries needed).
 - Integrate with DynamoDB schema from DATABASE.md.
 - Use AWS SDK v3 for all database operations.
 - Implement proper error handling and logging.

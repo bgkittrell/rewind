@@ -8,10 +8,10 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
 - **Development**: `http://localhost:3000/v1`
 
 ## Authentication
-- **Method**: Auth0 JWT-based authentication
-- **Header**: `Authorization: Bearer <auth0_token>`
-- **Token Validation**: All protected endpoints validate Auth0 JWT tokens
-- **User Identification**: User ID extracted from Auth0 token claims
+- **Method**: Amazon Cognito JWT-based authentication
+- **Header**: `Authorization: Bearer <cognito_jwt_token>`
+- **Token Validation**: All protected endpoints validate Cognito JWT tokens via API Gateway
+- **User Identification**: User ID extracted from Cognito token claims (sub field)
 
 ## Podcast Management
 - **Add Podcast**:

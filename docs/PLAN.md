@@ -13,7 +13,7 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 ### Technology Stack
 
 - **Frontend**: React Router v7, TypeScript, Tailwind CSS, Vite, PWA.
-- **Backend**: Node.js Lambdas, TypeScript, DynamoDB, Auth0 JWT, RESTful APIs.
+- **Backend**: Node.js Lambdas, TypeScript, DynamoDB, Cognito JWT, RESTful APIs.
 - **Infrastructure**: AWS (S3, CloudFront, API Gateway, Lambda, Personalize), AWS CDK v2.
 - **Testing**: Storybook (component testing), Vitest (unit/integration tests).
 
@@ -22,7 +22,7 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 - [x] Planning and Design (2 weeks)
   - Finalize requirements, wireframes, DynamoDB schema, CDK stacks.
 - [ ] Project Setup (3 days)
-  - Create directory structure, initialize projects, configure Auth0.
+  - Create directory structure, initialize projects, configure Cognito.
 - [ ] Frontend Development (6 weeks)
   - Build UI components, PWA features, and audio playback.
 - [ ] Backend Development (6 weeks)
@@ -41,7 +41,7 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 - [x] Create wireframes for Home, Library, and Search screens ([UI_DESIGN.md](#home-screen)).
 - [x] Design DynamoDB schema for podcasts and episodes ([DATABASE.md](#schema-design)).
 - [x] Define AWS CDK stacks for infrastructure ([AWS_CONFIG.md](#cdk-stacks)).
-- [ ] Set up Auth0 tenant and application configuration.
+- [ ] Set up Cognito User Pool and application configuration.
 - [ ] Create development environment and repository structure.
 
 ### Project Setup
@@ -51,7 +51,7 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 - [ ] Initialize frontend project with Vite and React Router v7.
 - [ ] Initialize backend project with TypeScript and AWS Lambda setup.
 - [ ] Initialize infrastructure project with AWS CDK v2.
-- [ ] Configure Auth0 tenant for development and production.
+- [ ] Configure Cognito User Pool for development and production.
 - [ ] Set up environment variables and configuration files.
 - [ ] Initialize testing frameworks (Vitest, Storybook, MSW).
 - [ ] Create initial CI/CD workflow structure.
@@ -76,7 +76,7 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 - [ ] Create library sharing API (`POST /library/share`) ([LIBRARY_SHARING.md](#backend)).
 - [ ] Set up DynamoDB tables for users, podcasts, and share links ([DATABASE.md](#schema-design)).
 - [ ] Implement error handling for APIs ([ERROR_HANDLING.md](#api-errors)).
-- [ ] Configure Auth0 for social login ([THIRD_PARTY_INTEGRATIONS.md](#auth0)).
+- [ ] Configure Cognito for social login ([THIRD_PARTY_INTEGRATIONS.md](#amazon-cognito-authentication)).
 
 ### Testing
 

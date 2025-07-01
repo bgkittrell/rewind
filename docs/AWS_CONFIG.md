@@ -43,7 +43,7 @@ This document defines the AWS CDK configuration for Rewind, a mobile-first Progr
 - **Resources**:
   - **API Gateway HTTP API**:
     - HTTP API with CORS enabled for all origins in development.
-    - Built-in JWT authorizer for Auth0 integration (no Lambda required).
+    - Built-in JWT authorizer for Amazon Cognito integration (no Lambda required).
     - Stages: `dev`, `prod`.
     - Custom domain: `api.rewindpodcast.com` (optional).
     - Request validation and throttling (10000 requests/second).
@@ -55,14 +55,14 @@ This document defines the AWS CDK configuration for Rewind, a mobile-first Progr
       - `recommendationHandler`: Provides episode recommendations.
       - `shareHandler`: Handles library sharing functionality.
     - Packaging: TypeScript compiled with esbuild, deployed via CDK.
-    - Environment variables: `DYNAMODB_TABLE_PREFIX` (Auth0 validation handled by API Gateway).
+    - Environment variables: `DYNAMODB_TABLE_PREFIX` (Cognito validation handled by API Gateway).
     - Memory: 512 MB, timeout: 30 seconds.
     - Dead letter queues for error handling.
   - **EventBridge**:
     - Rule: Daily schedule (Cron: `0 8 * * ? *` UTC) for RSS feed updates.
     - Target: `podcastHandler` Lambda with specific event payload.
   - **JWT Authorizer**:
-    - Built-in API Gateway JWT authorizer using Auth0 issuer and audience.
+    - Built-in API Gateway JWT authorizer using Cognito User Pool issuer and client ID.
     - No Lambda function required for token validation.
 
 ### RewindDataStack
@@ -286,7 +286,7 @@ export class RewindBackendStack extends cdk.Stack {
       table.grantReadWriteData(lambdaRole);
     });
 
-    // Common Lambda environment variables (Auth0 handled by API Gateway)
+    // Common Lambda environment variables (Cognito handled by API Gateway)
     const commonEnv = {
       DYNAMODB_TABLE_PREFIX: 'Rewind',
     };
@@ -302,10 +302,10 @@ export class RewindBackendStack extends cdk.Stack {
       },
     });
 
-    // JWT Authorizer for Auth0
-    const jwtAuthorizer = new apigateway.HttpJwtAuthorizer('Auth0Authorizer', 
-      process.env.AUTH0_DOMAIN || 'https://your-domain.auth0.com/', {
-      jwtAudience: [process.env.AUTH0_AUDIENCE || 'your-api-audience'],
+    // JWT Authorizer for Amazon Cognito
+    const jwtAuthorizer = new apigateway.HttpJwtAuthorizer('CognitoAuthorizer', 
+      `https://cognito-idp.${this.region}.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`, {
+      jwtAudience: [process.env.COGNITO_CLIENT_ID],
     });
 
     // Lambda functions
@@ -544,8 +544,9 @@ export class RewindFrontendStack extends cdk.Stack {
 
 ## Environment Variables
 - **Required Environment Variables**:
-  - `AUTH0_DOMAIN`: Auth0 tenant domain
-  - `AUTH0_AUDIENCE`: Auth0 API audience identifier
+  - `COGNITO_USER_POOL_ID`: Cognito User Pool ID
+  - `COGNITO_CLIENT_ID`: Cognito App Client ID
+  - `COGNITO_REGION`: AWS region for Cognito service
   - `CDK_DEFAULT_ACCOUNT`: AWS account ID
   - `CDK_DEFAULT_REGION`: AWS region (e.g., us-east-1)
 

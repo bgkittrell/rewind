@@ -3,7 +3,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  console.log('Podcast handler called', event);
+  console.log('Episode handler called', event);
   
   return {
     statusCode: 200,
@@ -12,7 +12,7 @@ export const handler = async (
       'Access-Control-Allow-Origin': '*',
     },
     body: JSON.stringify({
-      message: 'Podcast handler placeholder',
+      message: 'Episode handler placeholder',
       event: event.httpMethod,
     }),
   };

@@ -7,10 +7,13 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 
 interface RewindBackendStackProps extends cdk.StackProps {
   dynamoTables: { [key: string]: dynamodb.Table };
+  userPool: cognito.UserPool;
+  userPoolClient: cognito.UserPoolClient;
 }
 
 export class RewindBackendStack extends cdk.Stack {
@@ -32,9 +35,11 @@ export class RewindBackendStack extends cdk.Stack {
       table.grantReadWriteData(lambdaRole);
     });
 
-    // Common Lambda environment variables (Auth0 handled by API Gateway)
+    // Common Lambda environment variables (Cognito handled by API Gateway)
     const commonEnv = {
       DYNAMODB_TABLE_PREFIX: 'Rewind',
+      COGNITO_USER_POOL_ID: props.userPool.userPoolId,
+      COGNITO_CLIENT_ID: props.userPoolClient.userPoolClientId,
     };
 
     // HTTP API with built-in JWT authorizer
@@ -48,17 +53,17 @@ export class RewindBackendStack extends cdk.Stack {
       },
     });
 
-    // JWT Authorizer for Auth0
-    const jwtAuthorizer = new authorizers.HttpJwtAuthorizer('Auth0Authorizer', 
-      process.env.AUTH0_DOMAIN || 'https://your-domain.auth0.com/', {
-      jwtAudience: [process.env.AUTH0_AUDIENCE || 'your-api-audience'],
+    // JWT Authorizer for Amazon Cognito
+    const jwtAuthorizer = new authorizers.HttpJwtAuthorizer('CognitoAuthorizer', 
+      `https://cognito-idp.${this.region}.amazonaws.com/${props.userPool.userPoolId}`, {
+      jwtAudience: [props.userPoolClient.userPoolClientId],
     });
 
     // Lambda functions
     const podcastFunction = new lambda.Function(this, 'PodcastFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'podcast.handler',
-      code: lambda.Code.fromAsset('backend/dist'),
+      handler: 'handlers/podcast.handler',
+      code: lambda.Code.fromAsset('../backend/src'),
       role: lambdaRole,
       environment: commonEnv,
       timeout: cdk.Duration.seconds(30),
@@ -67,8 +72,8 @@ export class RewindBackendStack extends cdk.Stack {
 
     const episodeFunction = new lambda.Function(this, 'EpisodeFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'episode.handler',
-      code: lambda.Code.fromAsset('backend/dist'),
+      handler: 'handlers/episode.handler',
+      code: lambda.Code.fromAsset('../backend/src'),
       role: lambdaRole,
       environment: commonEnv,
       timeout: cdk.Duration.seconds(30),
@@ -77,8 +82,8 @@ export class RewindBackendStack extends cdk.Stack {
 
     const recommendationFunction = new lambda.Function(this, 'RecommendationFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'recommendation.handler',
-      code: lambda.Code.fromAsset('backend/dist'),
+      handler: 'handlers/recommendation.handler',
+      code: lambda.Code.fromAsset('../backend/src'),
       role: lambdaRole,
       environment: commonEnv,
       timeout: cdk.Duration.seconds(30),
@@ -87,8 +92,8 @@ export class RewindBackendStack extends cdk.Stack {
 
     const shareFunction = new lambda.Function(this, 'ShareFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'share.handler',
-      code: lambda.Code.fromAsset('backend/dist'),
+      handler: 'handlers/share.handler',
+      code: lambda.Code.fromAsset('../backend/src'),
       role: lambdaRole,
       environment: commonEnv,
       timeout: cdk.Duration.seconds(15),

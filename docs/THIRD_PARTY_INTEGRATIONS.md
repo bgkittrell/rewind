@@ -3,36 +3,40 @@
 ## Overview
 This document outlines the third-party services and integrations used in Rewind, a mobile-first Progressive Web App (PWA) for podcast enthusiasts aged 35+. The integrations support authentication, content delivery, and analytics while maintaining security and performance standards.
 
-## Auth0 Authentication
+## Amazon Cognito Authentication
 
 ### Configuration
-- **Domain**: Configured via environment variable `AUTH0_DOMAIN`
-- **Audience**: API identifier configured via `AUTH0_AUDIENCE`
-- **Client ID**: Frontend application identifier
-- **Client Secret**: Not needed for public SPA applications
+- **User Pool ID**: Configured via environment variable `COGNITO_USER_POOL_ID`
+- **Client ID**: Frontend application identifier via `COGNITO_CLIENT_ID`
+- **Region**: AWS region for Cognito service via `COGNITO_REGION`
+- **Identity Pool ID**: Optional for federated identities via `COGNITO_IDENTITY_POOL_ID`
 
 ### Implementation
 - **Frontend Integration**:
-  - Use Auth0 React SDK for authentication flows
-  - Handle login/logout redirects
-  - Store tokens securely in memory or secure storage
+  - Use AWS Amplify Auth for authentication flows
+  - Handle login/logout with built-in UI components or custom forms
+  - Store tokens securely using Amplify's secure storage
+  - Support social logins (Google, Facebook, Apple) if configured
 - **Backend Integration**:
-  - Validate JWT tokens using Auth0 public keys (JWKS)
-  - Extract user information from token claims
-  - Handle token expiration and refresh
+  - Validate JWT tokens using Cognito's JWKS endpoint
+  - Extract user information from token claims (sub, email, custom attributes)
+  - Handle token expiration and refresh automatically
+  - Use API Gateway JWT authorizer for seamless validation
 
 ### Security Considerations
-- Use HTTPS for all Auth0 communication
+- Use HTTPS for all Cognito communication
 - Validate audience and issuer in JWT tokens
-- Implement proper CORS settings
-- Use secure redirect URLs
-- Enable MFA for admin accounts
+- Implement proper CORS settings for Cognito endpoints
+- Use secure redirect URLs for hosted UI
+- Enable MFA for additional security
+- Configure password policies and account lockout
 
 ### Error Handling
-- Handle Auth0 service outages gracefully
+- Handle Cognito service outages gracefully
 - Provide clear error messages for authentication failures
 - Implement retry logic for transient failures
 - Log authentication errors for monitoring
+- Handle specific Cognito errors (user not confirmed, password reset required)
 
 ## RSS Feed Processing
 
@@ -127,11 +131,13 @@ This document outlines the third-party services and integrations used in Rewind,
 
 ## Integration Testing
 
-### Auth0 Testing
+### Cognito Testing
 - Test authentication flows in different browsers
 - Verify token validation and refresh
-- Test error scenarios (invalid tokens, expired sessions)
+- Test error scenarios (invalid tokens, expired sessions, unconfirmed users)
 - Load test authentication endpoints
+- Test MFA flows if enabled
+- Verify social login integrations
 
 ### RSS Feed Testing
 - Test with various podcast feed formats
@@ -149,31 +155,34 @@ This document outlines the third-party services and integrations used in Rewind,
 
 ### Development Environment
 ```bash
-AUTH0_DOMAIN=dev-rewind.auth0.com
-AUTH0_AUDIENCE=https://api.rewind.dev
-AUTH0_CLIENT_ID=dev_client_id
+COGNITO_USER_POOL_ID=us-east-1_devABCDEF
+COGNITO_CLIENT_ID=dev_client_id_abcdefghijk
+COGNITO_REGION=us-east-1
+COGNITO_IDENTITY_POOL_ID=us-east-1:12345678-1234-1234-1234-123456789012
 ```
 
 ### Production Environment
 ```bash
-AUTH0_DOMAIN=rewind.auth0.com
-AUTH0_AUDIENCE=https://api.rewindpodcast.com
-AUTH0_CLIENT_ID=prod_client_id
+COGNITO_USER_POOL_ID=us-east-1_prodXYZ123
+COGNITO_CLIENT_ID=prod_client_id_lmnopqrstuv
+COGNITO_REGION=us-east-1
+COGNITO_IDENTITY_POOL_ID=us-east-1:87654321-4321-4321-4321-210987654321
 ```
 
 ### Security Notes
 - Never commit secrets to version control
 - Use environment variables for all configuration
-- Rotate secrets regularly
-- Use different Auth0 tenants for dev/prod
+- Rotate secrets regularly (though User Pool IDs are not sensitive)
+- Use separate User Pools for dev/prod environments
+- Client secrets not needed for public SPA applications
 
 ## Notes for AI Agent
-- Configure Auth0 tenant and application settings
-- Implement JWT validation in Lambda authorizer
+- Configure Cognito User Pool and app client settings
+- Implement JWT validation using API Gateway JWT authorizer
 - Set up RSS feed processing with proper error handling
 - Configure CloudFront distribution for optimal performance
 - Test all integrations thoroughly before deployment
-- Monitor third-party service status and implement fallbacks
+- Monitor AWS service status and implement fallbacks
 - Keep all integration documentation updated
 - Report integration issues in PLAN.md
 

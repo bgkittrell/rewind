@@ -82,7 +82,7 @@ This is a documentation-heavy project currently in the planning phase. The archi
 - **Database**: DynamoDB with pay-per-request billing
 - **Infrastructure**: AWS (S3, CloudFront, API Gateway, Lambda, DynamoDB, Personalize)
 - **Testing**: Storybook, Vitest, MSW for API mocking
-- **Authentication**: Auth0 with JWT
+- **Authentication**: Amazon Cognito with JWT
 
 ### Key AWS Services
 
@@ -160,9 +160,9 @@ This is a documentation-heavy project currently in the planning phase. The archi
 - Removed Redis dependencies (not needed for v1)
 
 ### Authentication Architecture
-- Standardized on Auth0 JWT authentication (removed custom auth endpoints)
-- Updated database schema to remove password fields
-- Added proper Auth0 integration documentation
+- Migrated from Auth0 to Amazon Cognito JWT authentication
+- Updated database schema to remove password fields (handled by Cognito)
+- Added proper Cognito integration documentation
 
 ### API Consistency
 - Consolidated and standardized all API endpoints in BACKEND_API.md

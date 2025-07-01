@@ -14,7 +14,7 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
   - Format: \`{ "error": { "message": "Detailed message", "code": "ERROR_CODE", "details": {} }, "timestamp": "2024-01-15T10:30:00Z", "path": "/api/podcasts" }\`
   - Common Codes:
     - \`400\`: Bad Request (e.g., invalid JSON, validation errors).
-    - \`401\`: Unauthorized (e.g., missing or invalid Auth0 token).
+    - \`401\`: Unauthorized (e.g., missing or invalid Cognito JWT token).
     - \`403\`: Forbidden (e.g., insufficient permissions).
     - \`404\`: Not Found (e.g., resource does not exist).
     - \`409\`: Conflict (e.g., resource already exists).
@@ -29,10 +29,10 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
   - Handle throttling with exponential backoff.
   - Catch and handle ConditionalCheckFailedException.
   - Retry transient errors automatically.
-- **Auth0 Integration Errors**:
+- **Cognito Integration Errors**:
   - Invalid JWT: Return 401 with clear message.
   - Token expiry: Return 401 with refresh instruction.
-  - Auth0 service unavailable: Return 503 with retry-after.
+  - Cognito service unavailable: Return 503 with retry-after.
 
 ## Frontend Error Handling
 - **API Error Handling**:
@@ -67,7 +67,7 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
 
 ### System Errors (500-level)
 - **Database Errors**: DynamoDB unavailable, throttling.
-- **External Service Errors**: RSS feed unavailable, Auth0 down.
+- **External Service Errors**: RSS feed unavailable, Cognito down.
 - **Lambda Errors**: Timeout, memory exceeded, code errors.
 - **User Messages**:
   - "Unable to connect to the service, please try again"

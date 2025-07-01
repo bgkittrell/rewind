@@ -51,8 +51,8 @@ This document outlines the AWS infrastructure for Rewind, a mobile-first Progres
   - Data Source: DynamoDB Streams to Personalize batch export.
 
 ### Authentication
-- **Auth0**:
-  - Domain and Client ID configured in Lambda environment.
+- **Amazon Cognito**:
+  - User Pool ID and Client ID configured in CDK environment.
   - JWT validation in API Gateway authorizer.
 
 ### Monitoring

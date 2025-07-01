@@ -12,17 +12,17 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
 ## Tables
 
 ### Users
-- **Description**: Stores user profile information (Auth0 handles authentication).
-- **Partition Key**: `userId` \(String\) - from Auth0 sub claim
+- **Description**: Stores user profile information (Cognito handles authentication).
+- **Partition Key**: `userId` \(String\) - from Cognito sub claim
 - **Attributes**:
-  - `userId` \(String\): Auth0 user identifier (sub claim)
-  - `email` \(String\): User email address from Auth0
-  - `name` \(String\): User's display name from Auth0
+  - `userId` \(String\): Cognito user identifier (sub claim)
+  - `email` \(String\): User email address from Cognito
+  - `name` \(String\): User's display name from Cognito
   - `preferences` \(Map\): User preferences (notifications, filters, etc.)
   - `createdAt` \(String\): Profile creation timestamp (ISO format)
   - `updatedAt` \(String\): Last update timestamp (ISO format)
   - `lastActiveAt` \(String\): Last activity timestamp (ISO format)
-- **Notes**: User authentication handled by Auth0, this stores app-specific profile data.
+- **Notes**: User authentication handled by Cognito, this stores app-specific profile data.
 
 ### Podcasts
 - **Description**: Stores podcast metadata and user associations.
