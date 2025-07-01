@@ -33,6 +33,18 @@ export function Auth({ onAuthStateChange }: AuthProps) {
     const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID
     const redirectUri = encodeURIComponent(`${window.location.origin}/callback`)
 
+    // Debug environment variables
+    console.warn('Environment variables:', {
+      cognitoDomain,
+      clientId,
+      allEnv: import.meta.env,
+    })
+
+    if (!cognitoDomain || !clientId) {
+      console.error('Missing required environment variables')
+      return
+    }
+
     const loginUrl = `${cognitoDomain}/login?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}`
     window.location.href = loginUrl
   }
