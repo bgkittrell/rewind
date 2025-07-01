@@ -19,17 +19,17 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 
 ## Milestones
 
-- [x] Planning and Design (2 weeks)
+- [x] Planning and Design (2 weeks) ✅ COMPLETED
   - Finalize requirements, wireframes, DynamoDB schema, CDK stacks.
-- [ ] Project Setup (3 days)
+- [x] Project Setup (3 days) ✅ COMPLETED
   - Create directory structure, initialize projects, configure Cognito.
-- [ ] Frontend Development (6 weeks)
+- [x] Frontend Development (6 weeks) ✅ COMPLETED
   - Build UI components, PWA features, and audio playback.
-- [ ] Backend Development (6 weeks)
+- [x] Backend Development (6 weeks) ✅ COMPLETED
   - Set up APIs, recommendation engine, and library sharing.
-- [ ] Testing (4 weeks)
+- [ ] Testing (4 weeks) 🚧 IN PROGRESS
   - Unit and integration tests for UI, APIs, and features.
-- [ ] Deployment (1 week)
+- [x] Deployment (1 week) ✅ COMPLETED
   - Deploy frontend to S3/CloudFront, backend via CDK.
 - [ ] Monitoring and Iteration (Ongoing)
   - Track performance, user feedback, and optimize costs.

@@ -4,14 +4,17 @@
 This document outlines the RESTful API endpoints for the Rewind backend, supporting a mobile-first Progressive Web App \(PWA\) for podcast enthusiasts aged 35\+. The API handles podcast management, recommendations, library sharing, and user authentication, integrating with the frontend \(see UI_TECH.md\). All endpoints use JSON for request and response bodies, with standard HTTP status codes.
 
 ## Base URL
-- **Production**: `https://api.rewindpodcast.com/v1`
+- **Production**: `https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1` ✅ DEPLOYED
 - **Development**: `http://localhost:3000/v1`
 
-## Authentication
+## Authentication - DEPLOYED ✅
 - **Method**: Amazon Cognito JWT-based authentication
 - **Header**: `Authorization: Bearer <cognito_jwt_token>`
 - **Token Validation**: All protected endpoints validate Cognito JWT tokens via API Gateway
 - **User Identification**: User ID extracted from Cognito token claims (sub field)
+- **Cognito User Pool**: `us-east-1_Cw78Mapt3`
+- **Client ID**: `49kf2uvsl9vg08ka6o67ts41jj`
+- **Hosted UI**: `https://rewind-730420835413-us-east-1.auth.us-east-1.amazoncognito.com`
 
 ## Podcast Management
 - **Add Podcast**:
