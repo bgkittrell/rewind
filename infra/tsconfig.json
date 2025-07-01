@@ -1,5 +1,4 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
     "target": "ES2022",
     "module": "CommonJS",
@@ -10,7 +9,10 @@
     "declaration": true,
     "sourceMap": true,
     "noEmit": false,
-    "jsx": "preserve"
+    "strict": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true
   },
   "include": [
     "bin/**/*",
