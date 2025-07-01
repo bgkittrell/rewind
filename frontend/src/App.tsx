@@ -1,6 +1,9 @@
+import { Outlet, Link, useLocation } from 'react-router'
 import { Auth } from './components/Auth'
 
 function App() {
+  const location = useLocation()
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-teal text-white p-4 flex justify-between items-center">
@@ -12,18 +15,44 @@ function App() {
       </header>
 
       <main className="container mx-auto p-4">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-2xl font-bold mb-4">Welcome to Rewind</h2>
-          <p className="text-gray-600 mb-4">Your mobile-first PWA for rediscovering older podcast episodes.</p>
-          <div className="bg-teal/10 border border-teal/20 rounded-lg p-4">
-            <h3 className="font-semibold text-teal mb-2">🚧 Development Setup Complete</h3>
-            <p className="text-sm text-gray-600">
-              Project structure created and ready for development. See the documentation in the docs/ folder for
-              implementation details.
-            </p>
-          </div>
-        </div>
+        <Outlet />
       </main>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2">
+        <div className="flex justify-around">
+          <Link
+            to="/"
+            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+              location.pathname === '/' ? 'text-teal bg-teal/10' : 'text-gray-600 hover:text-teal'
+            }`}
+          >
+            <span className="text-xl mb-1">🏠</span>
+            <span className="text-xs">Home</span>
+          </Link>
+          <Link
+            to="/library"
+            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+              location.pathname === '/library' ? 'text-teal bg-teal/10' : 'text-gray-600 hover:text-teal'
+            }`}
+          >
+            <span className="text-xl mb-1">📚</span>
+            <span className="text-xs">Library</span>
+          </Link>
+          <Link
+            to="/search"
+            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+              location.pathname === '/search' ? 'text-teal bg-teal/10' : 'text-gray-600 hover:text-teal'
+            }`}
+          >
+            <span className="text-xl mb-1">🔍</span>
+            <span className="text-xs">Search</span>
+          </Link>
+        </div>
+      </nav>
+
+      {/* Bottom padding to account for fixed navigation */}
+      <div className="h-20"></div>
     </div>
   )
 }
