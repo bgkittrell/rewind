@@ -20,7 +20,7 @@ const amplifyConfig = {
             'http://localhost:5173/',
             'https://rewindpodcast.com/'
           ],
-          responseType: 'code'
+          responseType: 'code' as const
         },
         email: true,
         username: false

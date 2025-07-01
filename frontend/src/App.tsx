@@ -1,10 +1,15 @@
 
+import { Auth } from './components/Auth';
+
 function App() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-teal text-white p-4">
-        <h1 className="text-xl font-bold">Rewind</h1>
-        <p className="text-sm opacity-90">Rediscover older podcast episodes</p>
+      <header className="bg-teal text-white p-4 flex justify-between items-center">
+        <div>
+          <h1 className="text-xl font-bold">Rewind</h1>
+          <p className="text-sm opacity-90">Rediscover older podcast episodes</p>
+        </div>
+        <Auth />
       </header>
       
       <main className="container mx-auto p-4">
