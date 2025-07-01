@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+storybook-static/
+
+# Configuration files
+*.config.js
+*.config.ts
+vite.config.*
+tailwind.config.*
+postcss.config.*
+
+# Environment and config files
+.env*
+*.local
+
+# Test files
+setupTests.ts
+
+# Generated files
+*.d.ts.map
+
+# Logs
+logs
+*.log
+
+# IDE and OS files  
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -6,12 +6,12 @@ export default {
       colors: {
         teal: '#26A69A',
         primary: '#26A69A',
-        secondary: '#004D40'
+        secondary: '#004D40',
       },
       screens: {
-        xs: '320px'
-      }
-    }
+        xs: '320px',
+      },
+    },
   },
-  plugins: []
+  plugins: [],
 }
