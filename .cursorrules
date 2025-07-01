@@ -1,113 +1,199 @@
 # Rewind Project - Cursor AI Rules
 
 ## Project Overview
-Rewind is a mobile-first Progressive Web App (PWA) for podcast enthusiasts aged 35+ to rediscover older episodes. Built with React Router v7, TypeScript, AWS serverless architecture, and Auth0 authentication.
+Rewind is a mobile-first Progressive Web App (PWA) for podcast enthusiasts aged 35+ to rediscover older episodes. Built with React Router v7, TypeScript, AWS serverless architecture, and Amazon Cognito authentication.
 
 ## Technology Stack
 - **Frontend**: React Router v7, TypeScript, Tailwind CSS, Vite, PWA
-- **Backend**: Node.js Lambda functions, TypeScript, DynamoDB, Auth0 JWT
+- **Backend**: Node.js Lambda functions, TypeScript, DynamoDB, Amazon Cognito JWT
 - **Infrastructure**: AWS CDK v2, S3, CloudFront, API Gateway, Lambda, DynamoDB
 - **Testing**: Storybook (component testing), Vitest (unit/integration tests), MSW (API mocking)
+
+## Project Structure & Workspaces
+This is a monorepo with npm workspaces:
+- `frontend/` - React PWA (in progress)
+- `backend/` - Lambda functions (planned)
+- `infra/` - AWS CDK infrastructure (planned)
+- `docs/` - Comprehensive documentation
+
+## Current Development Status
+- **Phase**: Frontend Development In Progress
+- **Completed**: Core components, auth, PWA features, library functionality
+- **Next**: Search functionality, backend development, infrastructure deployment
 
 ## Coding Standards
 
 ### General
-- Use TypeScript for all code
+- Use TypeScript for all code with strict mode enabled
 - Follow mobile-first responsive design principles
 - Implement proper error handling and logging
 - Write comprehensive tests for all new functionality
 - Use semantic HTML and ARIA labels for accessibility
+- Prefer const over let, avoid var
+- Use descriptive variable and function names
+- Add JSDoc comments for public functions
+- Use async/await over Promise chains
 
-### Frontend
+### Frontend (React Router v7)
 - Use React Router v7 with clientLoader and clientAction patterns
-- Business logic in service layer (src/services/)
+- Business logic in service layer (`src/services/`)
 - State management with React Context and IndexedDB for persistence
 - Component testing with Storybook, unit tests with Vitest
 - Mock API calls with MSW during development and testing
 - Follow the component structure defined in UI_TECH.md
+- Use @tabler/icons-react for all icons
+- Follow red color scheme (#eb4034 primary, #c72e20 secondary)
+- Route files use kebab-case to match route paths (e.g., `library-podcast-id.tsx`)
+- Minimal view logic; business logic in clientLoader/clientAction
 
-### Backend
+### Backend (Lambda Functions)
 - Implement Lambda functions with proper TypeScript typing
-- Use Auth0 JWT validation for protected endpoints
+- Use Amazon Cognito JWT validation for protected endpoints
 - Follow DynamoDB best practices with proper partition keys
 - Implement standardized error responses per BACKEND_API.md
 - Use AWS SDK v3 for all AWS operations
 - Add comprehensive logging for debugging
+- Functions in `backend/src/handlers/`
+- Shared logic in `backend/src/services/`
 
-### Infrastructure
+### Infrastructure (AWS CDK v2)
 - Use AWS CDK v2 with TypeScript
 - Follow least privilege IAM principles
 - Implement proper monitoring and alerting
 - Use environment variables for all configuration
 - Follow the stack structure defined in AWS_CONFIG.md
 
-## File Organization
+## File Organization & Naming Conventions
 - All documentation in `docs/` directory
-- Frontend code in `frontend/` with src/components, src/routes, src/services
-- Backend code in `backend/` with src/handlers, src/services, src/utils
-- Infrastructure code in `infra/` with bin/ and lib/ directories
-- Tests in `tests/` with unit/ and integration/ subdirectories
+- Frontend: `frontend/src/components`, `frontend/src/pages`, `frontend/src/services`
+- Backend: `backend/src/handlers`, `backend/src/services`, `backend/src/utils`
+- Infrastructure: `infra/bin/` and `infra/lib/` directories
+- Tests: Component tests with Storybook, unit tests with Vitest
+- Use PascalCase for React components
+- Use camelCase for functions and variables
+- Use kebab-case for route files and URLs
 
-## Code Style
-- Use Prettier for formatting
-- Use ESLint for linting
-- Prefer const over let, avoid var
-- Use descriptive variable and function names
-- Add JSDoc comments for public functions
-- Use async/await over Promise chains
-
-## Authentication
-- All authentication handled by Auth0
+## Authentication & Security
+- All authentication handled by Amazon Cognito
 - Extract user ID from JWT sub claim
 - No custom password handling or storage
 - Validate JWT tokens in Lambda authorizer
+- Never commit secrets or API keys to version control
+- Use environment variables for all configuration
+- Implement proper input validation and sanitization
+- Follow OWASP security best practices
 
-## Database
+## Database (DynamoDB)
 - Use DynamoDB with pay-per-request billing
 - Follow the schema defined in DATABASE.md
 - Implement proper GSI usage for efficient queries
 - Use batch operations to reduce API calls
 - Handle DynamoDB errors with proper retry logic
+- Tables: Users, Podcasts, Episodes, ListeningHistory, UserFavorites, UserFeedback, Shares
 
 ## API Design
 - Follow RESTful conventions
-- Use consistent error response format
+- Use consistent error response format per BACKEND_API.md
 - Implement proper HTTP status codes
 - Add request validation and sanitization
 - Include proper CORS headers
+- Base URL: `/v1` for versioning
 
-## Testing
+## Testing Strategy
 - Write Storybook stories for all UI components
 - Unit test all service functions and utilities
 - Integration test API endpoints and workflows
 - Test error scenarios and edge cases
 - Aim for >80% code coverage
+- Use MSW for API mocking in tests
+- Test PWA features and offline functionality
 
-## Performance
+## Performance & Optimization
 - Optimize Lambda cold starts with minimal dependencies
 - Use DynamoDB efficiently with proper partition key design
 - Implement CloudFront caching for static assets
 - Lazy load non-critical components and assets
 - Optimize images and use WebP when possible
+- Implement infinite scroll for large lists
+- Use localStorage for scroll position persistence
 
-## Security
-- Never commit secrets or API keys to version control
-- Use environment variables for all configuration
-- Implement proper input validation and sanitization
-- Follow OWASP security best practices
-- Regularly update dependencies
+## PWA Features
+- Service worker with Workbox for offline capabilities
+- Manifest file for app installation
+- Cache episode audio and metadata
+- Support for background sync
+- Media session API for lock screen controls
+- Bluetooth/AirPlay compatibility
 
-## Documentation
+## Development Workflow
+1. Check PLAN.md for current tasks and milestones
+2. Follow mobile-first design principles
+3. Use Storybook for component development
+4. Write tests alongside implementation
+5. Update documentation when making changes
+6. Use MSW for API mocking during development
+7. Test across different screen sizes and devices
+
+## Component Guidelines
+- Create reusable, accessible components
+- Use Tailwind CSS for styling
+- Implement proper loading and error states
+- Support keyboard navigation
+- Add ARIA labels for screen readers
+- Test with Storybook stories
+
+## State Management
+- Use React Context for global state
+- Store persistent data in IndexedDB
+- Save playback positions and user preferences
+- Implement proper error boundaries
+- Handle offline state gracefully
+
+## Error Handling
+- Implement comprehensive error boundaries
+- Provide user-friendly error messages
+- Log errors for debugging
+- Handle network failures gracefully
+- Implement retry logic where appropriate
+
+## Documentation Requirements
 - Keep README files updated
 - Document API changes in BACKEND_API.md
 - Update component documentation in Storybook
 - Maintain clear commit messages
 - Reference the comprehensive documentation in docs/
 
-## When in doubt, refer to:
-- docs/PLAN.md for project tasks and milestones
-- docs/UI_TECH.md for frontend implementation details
-- docs/BACKEND_API.md for API specifications
-- docs/DATABASE.md for database schema and queries
-- docs/AWS_CONFIG.md for infrastructure setup
-- docs/CLAUDE.md for project context and current status
+## Key References
+- `docs/PLAN.md` - Project tasks and milestones
+- `docs/UI_TECH.md` - Frontend implementation details
+- `docs/BACKEND_API.md` - API specifications
+- `docs/DATABASE.md` - Database schema and queries
+- `docs/AWS_CONFIG.md` - Infrastructure setup
+- `docs/CLAUDE.md` - Project context and current status
+- `docs/UI_DESIGN.md` - Design specifications and wireframes
+
+## Development Commands
+- `npm run dev` - Start frontend development server
+- `npm run build` - Build all workspaces
+- `npm run test` - Run tests across all workspaces
+- `npm run lint` - Lint all workspaces
+- `npm run storybook` - Start Storybook for component development
+- `cdk deploy --all` - Deploy infrastructure (when ready)
+
+## Common Patterns & Best Practices
+- Use TypeScript interfaces for all data structures
+- Implement proper loading states with skeletons
+- Handle empty states gracefully
+- Use optimistic updates where appropriate
+- Implement proper pagination with infinite scroll
+- Cache data appropriately for offline use
+- Follow the established color scheme and design system
+- Test on mobile devices regularly
+- Implement proper focus management for accessibility
+
+## When in Doubt
+1. Check the comprehensive documentation in `docs/`
+2. Look at existing component patterns in `frontend/src/components/`
+3. Follow the established service layer patterns
+4. Refer to PLAN.md for current priorities
+5. Update CLAUDE.md with any significant changes or decisions
