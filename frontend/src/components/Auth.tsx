@@ -29,19 +29,14 @@ export function Auth({ onAuthStateChange }: AuthProps) {
 
   const handleSignIn = () => {
     // Redirect to Cognito hosted UI
-    const cognitoDomain = import.meta.env.VITE_COGNITO_DOMAIN
+    const accountId = import.meta.env.VITE_AWS_ACCOUNT_ID
+    const region = import.meta.env.VITE_COGNITO_REGION || 'us-east-1'
     const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID
+    const cognitoDomain = `https://rewind-${accountId}-${region}.auth.${region}.amazoncognito.com`
     const redirectUri = encodeURIComponent(`${window.location.origin}/callback`)
 
-    // Debug environment variables
-    console.warn('Environment variables:', {
-      cognitoDomain,
-      clientId,
-      allEnv: import.meta.env,
-    })
-
-    if (!cognitoDomain || !clientId) {
-      console.error('Missing required environment variables')
+    if (!accountId || !clientId) {
+      console.error('Missing required environment variables for Cognito authentication')
       return
     }
 

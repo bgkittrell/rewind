@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { signIn } from 'aws-amplify/auth'
 
 export function CallbackPage() {
   const navigate = useNavigate()
@@ -20,16 +19,10 @@ export function CallbackPage() {
         throw new Error('No authorization code received')
       }
 
-      // Handle the OAuth callback
-      await signIn({
-        username: '', // Not used for OAuth flow
-        options: {
-          authFlowType: 'USER_SRP_AUTH',
-        },
-      })
-
+      // For OAuth flows, Amplify handles the callback automatically
+      // We just need to wait for the authentication to complete
       setStatus('success')
-      setTimeout(() => navigate('/'), 2000)
+      setTimeout(() => navigate('/library'), 2000)
     } catch (err) {
       console.error('Callback error:', err)
       setError(err instanceof Error ? err.message : 'Authentication failed')
