@@ -1,0 +1,106 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Testing Strategy Guidelines
+
+## Testing Pyramid
+- **Storybook**: Component visual testing and documentation
+- **Vitest**: Unit and integration tests
+- **Playwright**: End-to-end tests for user flows
+
+## Frontend Testing
+
+### Storybook
+- **Purpose**: Component development and visual testing
+- **Setup**: Follow [UI_TECH.md](mdc:docs/UI_TECH.md) for configuration
+- **Usage**: Create stories for all reusable components
+- **Benefits**: Visual regression testing, component documentation
+
+### Vitest (Unit/Integration)
+- **Framework**: Vitest with jsdom environment
+- **Setup**: Configure in `vite.config.ts` with testing setup
+- **Coverage**: Use v8 provider for coverage reports
+- **Mocking**: MSW for API call mocking
+
+### Test Structure
+```
+frontend/src/
+├── components/
+│   ├── Header.tsx
+│   ├── Header.test.tsx      # Component tests
+│   └── Header.stories.tsx   # Storybook stories
+├── routes/
+│   ├── home.tsx
+│   └── home.test.tsx        # Route tests
+└── services/
+    ├── podcastService.ts
+    └── podcastService.test.ts # Service tests
+```
+
+### MSW Configuration
+- **Purpose**: Mock API calls for testing
+- **Setup**: Create handlers in `src/mocks/handlers.ts`
+- **Usage**: Mock all backend endpoints defined in [BACKEND_API.md](mdc:docs/BACKEND_API.md)
+
+## Backend Testing
+
+### Lambda Function Testing
+- **Framework**: Vitest for unit tests
+- **Mocking**: Mock AWS SDK calls
+- **Coverage**: Test all handler functions
+- **Integration**: Test with DynamoDB local
+
+### API Testing
+- **Endpoints**: Test all API endpoints
+- **Authentication**: Test Cognito JWT validation
+- **Error Handling**: Test error scenarios
+- **Performance**: Load testing for critical endpoints
+
+## End-to-End Testing
+
+### Playwright
+- **Purpose**: Full user flow testing
+- **Setup**: Configure for mobile-first testing
+- **Scenarios**: Test complete user journeys
+- **Devices**: Test on multiple device sizes
+
+### Key Test Scenarios
+- User authentication flow
+- Podcast addition and management
+- Episode playback and progress tracking
+- Library sharing functionality
+- Recommendation engine interaction
+- Offline playback capabilities
+
+## Testing Commands
+```bash
+# Frontend
+npm run test              # Run Vitest tests
+npm run test:coverage     # Generate coverage report
+npm run storybook         # Start Storybook
+npm run test:e2e          # Run Playwright tests
+
+# Backend
+npm run test              # Run Lambda tests
+npm run test:integration  # Run integration tests
+```
+
+## Test Data Management
+- Use consistent mock data across tests
+- Create factory functions for test data
+- Clean up test data after each test
+- Use environment-specific test configurations
+
+## Continuous Integration
+- Run tests on every pull request
+- Generate coverage reports
+- Visual regression testing with Storybook
+- Performance testing for critical paths
+
+## Quality Gates
+- Minimum 80% code coverage
+- All tests must pass before deployment
+- No critical accessibility violations
+- Performance benchmarks met

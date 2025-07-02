@@ -1,0 +1,37 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Rewind Project Overview
+
+## Project Description
+Rewind is a mobile-first Progressive Web App (PWA) for podcast enthusiasts aged 35+ who enjoy rediscovering older episodes of their favorite podcasts, particularly comedy podcasts. The app prioritizes simplicity, ease of use, and a recommendation engine tailored to listening history and favorite guests.
+
+## Technology Stack
+- **Frontend**: React Router v7, TypeScript, Tailwind CSS, Vite, PWA
+- **Backend**: Node.js Lambdas, TypeScript, DynamoDB, Cognito JWT, RESTful APIs
+- **Infrastructure**: AWS (S3, CloudFront, API Gateway, Lambda, Personalize), AWS CDK v2
+- **Testing**: Storybook (component testing), Vitest (unit/integration tests)
+
+## Project Structure
+- `docs/`: Comprehensive documentation including [PROJECT_STRUCTURE.md](mdc:docs/PROJECT_STRUCTURE.md), [PLAN.md](mdc:docs/PLAN.md), [UI_TECH.md](mdc:docs/UI_TECH.md), [BACKEND_API.md](mdc:docs/BACKEND_API.md)
+- `frontend/`: React-based PWA with components, routes, and services
+- `backend/`: Lambda functions and business logic
+- `infra/`: AWS CDK configuration and deployment
+- `tests/`: Unit and integration tests
+
+## Key Features
+- Podcast library management and discovery
+- AI-powered recommendation engine
+- Library sharing functionality
+- Offline playback capabilities
+- Mobile-first responsive design
+- Social authentication via Cognito
+
+## Development Guidelines
+- Follow the detailed specifications in the docs/ directory
+- Use TypeScript for all code
+- Implement comprehensive testing with Storybook and Vitest
+- Follow AWS best practices for serverless architecture
+- Prioritize mobile UX and accessibility

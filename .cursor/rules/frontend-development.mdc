@@ -1,0 +1,65 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Frontend Development Guidelines
+
+## Technology Stack
+- **Framework**: React Router v7 with TypeScript
+- **Styling**: Tailwind CSS for responsive, utility-first design
+- **Build Tool**: Vite with PWA plugin
+- **Testing**: Storybook for component testing, Vitest for unit tests, MSW for API mocking
+
+## Project Setup
+Follow the detailed setup instructions in [UI_TECH.md](mdc:docs/UI_TECH.md) for:
+- Vite configuration with PWA plugin
+- Tailwind CSS setup with custom colors (primary: #eb4034)
+- Storybook configuration
+- Vitest testing setup with MSW
+
+## Component Structure
+- **Core Components**: Header, BottomActionBar, SideMenu, EpisodeCard, FloatingMediaPlayer, FilterPills, PodcastCard
+- **Directory Structure**:
+  ```
+  frontend/src/
+  ├── components/     # Reusable UI components
+  ├── routes/         # Route definitions with clientLoader/clientAction
+  ├── services/       # API service layer
+  ├── context/        # State management
+  ├── mocks/          # Mock data for testing
+  └── index.tsx       # App entry point
+  ```
+
+## Routing (React Router v7)
+- Use `clientLoader` and `clientAction` for business logic
+- Routes: `/` (Home), `/library`, `/library/:podcastId`, `/search`, `/episode/:episodeId`, `/share/:shareId`
+- Reference [UI_TECH.md](mdc:docs/UI_TECH.md) for detailed routing specifications
+
+## Styling Guidelines
+- Use Tailwind CSS utility classes
+- Primary color: `#eb4034` (red)
+- Mobile-first responsive design
+- Follow accessibility best practices
+- Support dark mode considerations
+
+## PWA Features
+- Service worker for offline playback
+- Manifest configuration for app-like experience
+- Workbox for caching strategies
+- Reference [PWA_FEATURES.md](mdc:docs/PWA_FEATURES.md) for implementation details
+
+## Testing Strategy
+- **Storybook**: Component visual testing and documentation
+- **Vitest**: Unit tests for components, routes, and services
+- **MSW**: Mock API calls for testing
+- **Playwright**: End-to-end tests for user flows
+
+## State Management
+- Use React Context for global state
+- Local storage/IndexedDB for persistence
+- Keep state minimal and focused
+
+## External Device Support
+- Bluetooth/AirPlay compatibility for audio playback
+- Test with various audio devices and platforms
