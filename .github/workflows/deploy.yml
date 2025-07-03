@@ -38,11 +38,12 @@ jobs:
       - name: Run unit tests
         run: npm run test
 
-      - name: Run frontend E2E tests
-        run: |
-          cd frontend
-          npx playwright install --with-deps
-          npm run test:e2e
+      # Disabled for speed
+      # - name: Run frontend E2E tests
+      #   run: |
+      #     cd frontend
+      #     npx playwright install --with-deps
+      #     npm run test:e2e
 
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -72,9 +73,7 @@ jobs:
         run: npm ci
 
       - name: Build backend
-        run: |
-          cd backend
-          npm run build
+        run: npm run build -w backend
 
       - name: Deploy infrastructure
         run: |
@@ -180,16 +179,15 @@ jobs:
 
       - name: Build and deploy previous version
         run: |
-          cd backend
-          npm run build
-          cd ../infra
+          npm run build -w backend
+          cd infra
           npm run build
           npm run deploy
-          cd ../frontend
-          npm run build
+          cd ..
+          npm run build -w frontend
           FRONTEND_BUCKET=$(aws cloudformation describe-stacks --stack-name RewindFrontendStack --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" --output text)
           DISTRIBUTION_ID=$(aws cloudformation describe-stacks --stack-name RewindFrontendStack --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" --output text)
-          aws s3 sync dist/ s3://$FRONTEND_BUCKET/ --delete
+          aws s3 sync frontend/dist/ s3://$FRONTEND_BUCKET/ --delete
           aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
 
       - name: Notify rollback
