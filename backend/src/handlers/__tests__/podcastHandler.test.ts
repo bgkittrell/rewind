@@ -311,8 +311,8 @@ describe('PodcastHandler', () => {
 
       expect(result.statusCode).toBe(500)
       const body = JSON.parse(result.body)
-      expect(body.error.message).toBe('Internal server error')
-      expect(body.error.code).toBe('INTERNAL_ERROR')
+      expect(body.error.message).toBe('Failed to get podcasts')
+      expect(body.error.code).toBe('DATABASE_ERROR')
     })
   })
 })
