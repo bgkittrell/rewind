@@ -1,6 +1,7 @@
 # 🚀 Rewind: Immediate Next Actions
 
 ## 📍 Current Status
+
 - ✅ **Frontend**: All UI components ready (EpisodeCard, FloatingMediaPlayer, etc.)
 - ✅ **Backend**: Podcast management APIs working
 - ✅ **Infrastructure**: AWS deployment pipeline working
@@ -16,16 +17,17 @@ The most critical missing piece is **episode management**. We have a beautiful U
 **📋 Detailed Implementation Guide**: See `docs/EPISODE_IMPLEMENTATION_CHECKLIST.md` for step-by-step tasks
 
 #### Day 1: Backend Foundation
+
 1. **RSS Episode Extraction** (2 hours)
    - Extend `rssService.ts` to parse individual episodes from RSS feeds
    - Add helper methods for audio URL, duration, images, guests
-   
 2. **DynamoDB Episode Operations** (3 hours)
    - Extend `dynamoService.ts` with episode CRUD operations
    - Add progress tracking methods for playback positions
    - Add batch operations for efficient episode storage
 
 #### Day 2: API Handler & Infrastructure
+
 3. **Episode API Handler** (4 hours)
    - Create `episodeHandler.ts` with full CRUD endpoints
    - Add progress tracking APIs for playback positions
@@ -36,7 +38,8 @@ The most critical missing piece is **episode management**. We have a beautiful U
    - Configure API Gateway routes and permissions
    - Deploy infrastructure changes
 
-#### Day 3: Frontend Integration  
+#### Day 3: Frontend Integration
+
 5. **Episode Service** (2 hours)
    - Create `episodeService.ts` for API integration
    - Add TypeScript types and error handling
@@ -51,6 +54,7 @@ The most critical missing piece is **episode management**. We have a beautiful U
    - Add progress persistence and restoration
 
 #### Day 4: Testing & Polish
+
 8. **Automatic Episode Sync** (1 hour)
    - Episodes sync automatically when adding podcasts
    - Background processing for RSS feeds
@@ -61,6 +65,7 @@ The most critical missing piece is **episode management**. We have a beautiful U
    - Fix missing test dependencies
 
 #### Day 5: End-to-End Validation
+
 10. **User Flow Testing** (2 hours)
     - Complete podcast-to-playback workflow
     - Progress persistence across sessions
@@ -74,6 +79,7 @@ The most critical missing piece is **episode management**. We have a beautiful U
 ### 🎛️ Technical Implementation Notes
 
 #### Episode Handler Structure
+
 ```typescript
 // GET /episodes/{podcastId}
 {
@@ -93,19 +99,21 @@ The most critical missing piece is **episode management**. We have a beautiful U
 ```
 
 #### Frontend Integration
+
 ```typescript
 // In Library page
 const episodes = await episodeService.getEpisodes(podcastId)
 
 // In EpisodeCard
-<EpisodeCard 
-  episode={episode} 
+<EpisodeCard
+  episode={episode}
   onPlay={(ep) => mediaPlayer.play(ep)}
   onAIExplanation={(ep) => showAIModal(ep)}
 />
 ```
 
 ### 📊 Success Criteria
+
 - [ ] User adds a podcast → episodes automatically appear
 - [ ] User clicks play → episode actually plays with audio
 - [ ] User pauses/resumes → position is saved and restored
@@ -113,7 +121,9 @@ const episodes = await episodeService.getEpisodes(podcastId)
 - [ ] No TypeScript errors
 
 ### ⚡ Quick Wins After Episode Management
+
 Once episodes work, these become easy additions:
+
 1. **Basic Recommendations**: Show "older episodes you haven't heard"
 2. **Search**: Search within episodes, not just podcasts
 3. **Progress Analytics**: "You've listened to 45 minutes this week"
@@ -123,8 +133,9 @@ Once episodes work, these become easy additions:
 ## 🔄 Next Phase Preview
 
 After episode management is working:
+
 - **Week 2**: Simple recommendation algorithm
-- **Week 3**: PWA features (offline, installable)  
+- **Week 3**: PWA features (offline, installable)
 - **Week 4**: Library sharing and advanced features
 
 The foundation is solid - we just need to connect the beautiful frontend to episode data!

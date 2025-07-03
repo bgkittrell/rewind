@@ -1,4 +1,10 @@
-import { DynamoDBClient, PutItemCommand, QueryCommand, DeleteItemCommand, BatchWriteItemCommand } from '@aws-sdk/client-dynamodb'
+import {
+  DynamoDBClient,
+  PutItemCommand,
+  QueryCommand,
+  DeleteItemCommand,
+  BatchWriteItemCommand,
+} from '@aws-sdk/client-dynamodb'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { Podcast, Episode, EpisodeData, ListeningHistoryItem } from '../types'
 import { v4 as uuidv4 } from 'uuid'
@@ -116,14 +122,14 @@ export class DynamoService {
       // Prepare batch write request
       const writeRequests = episodesToSave.map(episode => ({
         PutRequest: {
-          Item: marshall(episode)
-        }
+          Item: marshall(episode),
+        },
       }))
 
       const params = {
         RequestItems: {
-          [EPISODES_TABLE]: writeRequests
-        }
+          [EPISODES_TABLE]: writeRequests,
+        },
       }
 
       try {
@@ -139,10 +145,10 @@ export class DynamoService {
   }
 
   async getEpisodesByPodcast(
-    podcastId: string, 
-    limit?: number, 
-    lastEvaluatedKey?: string
-  ): Promise<{episodes: Episode[], lastEvaluatedKey?: string}> {
+    podcastId: string,
+    limit?: number,
+    lastEvaluatedKey?: string,
+  ): Promise<{ episodes: Episode[]; lastEvaluatedKey?: string }> {
     const params: any = {
       TableName: EPISODES_TABLE,
       KeyConditionExpression: 'podcastId = :podcastId',
@@ -169,9 +175,9 @@ export class DynamoService {
       }
 
       const episodes = result.Items.map(item => unmarshall(item) as Episode)
-      
-      const response: {episodes: Episode[], lastEvaluatedKey?: string} = { episodes }
-      
+
+      const response: { episodes: Episode[]; lastEvaluatedKey?: string } = { episodes }
+
       if (result.LastEvaluatedKey) {
         response.lastEvaluatedKey = JSON.stringify(unmarshall(result.LastEvaluatedKey))
       }
@@ -210,7 +216,7 @@ export class DynamoService {
     try {
       // First, get all episodes for the podcast
       const episodes = await this.getEpisodesByPodcast(podcastId)
-      
+
       if (episodes.episodes.length === 0) {
         return
       }
@@ -224,14 +230,14 @@ export class DynamoService {
             Key: marshall({
               podcastId: episode.podcastId,
               episodeId: episode.episodeId,
-            })
-          }
+            }),
+          },
         }))
 
         const params = {
           RequestItems: {
-            [EPISODES_TABLE]: deleteRequests
-          }
+            [EPISODES_TABLE]: deleteRequests,
+          },
         }
 
         await dynamoClient.send(new BatchWriteItemCommand(params))
@@ -244,11 +250,11 @@ export class DynamoService {
 
   // Progress Tracking Operations
   async savePlaybackProgress(
-    userId: string, 
-    episodeId: string, 
-    podcastId: string, 
-    position: number, 
-    duration: number
+    userId: string,
+    episodeId: string,
+    podcastId: string,
+    position: number,
+    duration: number,
   ): Promise<void> {
     const now = new Date().toISOString()
     const isCompleted = position >= duration * 0.95 // Consider 95% as completed
@@ -315,7 +321,7 @@ export class DynamoService {
     }
   }
 
-  async getPlaybackProgress(userId: string, episodeId: string): Promise<{position: number, duration: number} | null> {
+  async getPlaybackProgress(userId: string, episodeId: string): Promise<{ position: number; duration: number } | null> {
     try {
       const history = await this.getListeningHistoryItem(userId, episodeId)
       if (!history) {

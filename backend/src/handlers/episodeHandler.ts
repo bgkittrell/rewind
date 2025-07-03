@@ -69,7 +69,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 async function getEpisodes(
   podcastId: string | undefined,
   queryParams: { [key: string]: string | undefined } | null,
-  path: string
+  path: string,
 ): Promise<APIGatewayProxyResult> {
   if (!podcastId) {
     return createErrorResponse('Podcast ID is required', 'VALIDATION_ERROR', 400, path)
@@ -104,7 +104,7 @@ async function getEpisodes(
 async function syncEpisodes(
   podcastId: string | undefined,
   userId: string,
-  path: string
+  path: string,
 ): Promise<APIGatewayProxyResult> {
   if (!podcastId) {
     return createErrorResponse('Podcast ID is required', 'VALIDATION_ERROR', 400, path)
@@ -114,7 +114,7 @@ async function syncEpisodes(
     // First, verify the podcast belongs to the user
     const userPodcasts = await dynamoService.getPodcastsByUser(userId)
     const podcast = userPodcasts.find(p => p.podcastId === podcastId)
-    
+
     if (!podcast) {
       return createErrorResponse('Podcast not found or access denied', 'NOT_FOUND', 404, path)
     }
@@ -123,10 +123,14 @@ async function syncEpisodes(
     const episodeData = await rssService.parseEpisodesFromFeed(podcast.rssUrl)
 
     if (episodeData.length === 0) {
-      return createSuccessResponse({
-        message: 'No episodes found in RSS feed',
-        episodeCount: 0,
-      }, 200, path)
+      return createSuccessResponse(
+        {
+          message: 'No episodes found in RSS feed',
+          episodeCount: 0,
+        },
+        200,
+        path,
+      )
     }
 
     // Save episodes to database
@@ -154,7 +158,7 @@ async function saveProgress(
   userId: string,
   pathParams: { [key: string]: string | undefined } | null,
   body: string | null,
-  path: string
+  path: string,
 ): Promise<APIGatewayProxyResult> {
   const episodeId = pathParams?.episodeId
 
@@ -205,7 +209,7 @@ async function saveProgress(
 async function getProgress(
   userId: string,
   pathParams: { [key: string]: string | undefined } | null,
-  path: string
+  path: string,
 ): Promise<APIGatewayProxyResult> {
   const episodeId = pathParams?.episodeId
 
@@ -217,11 +221,15 @@ async function getProgress(
     const progress = await dynamoService.getPlaybackProgress(userId, episodeId)
 
     if (!progress) {
-      return createSuccessResponse({
-        position: 0,
-        duration: 0,
-        progressPercentage: 0,
-      }, 200, path)
+      return createSuccessResponse(
+        {
+          position: 0,
+          duration: 0,
+          progressPercentage: 0,
+        },
+        200,
+        path,
+      )
     }
 
     const response = {
@@ -240,7 +248,7 @@ async function getProgress(
 async function getListeningHistory(
   userId: string,
   queryParams: { [key: string]: string | undefined } | null,
-  path: string
+  path: string,
 ): Promise<APIGatewayProxyResult> {
   try {
     const limit = queryParams?.limit ? parseInt(queryParams.limit, 10) : 20
@@ -263,25 +271,25 @@ async function getListeningHistory(
   }
 }
 
-async function deleteEpisodes(
-  podcastId: string,
-  userId: string,
-  path: string
-): Promise<APIGatewayProxyResult> {
+async function deleteEpisodes(podcastId: string, userId: string, path: string): Promise<APIGatewayProxyResult> {
   try {
     // Verify the podcast belongs to the user
     const userPodcasts = await dynamoService.getPodcastsByUser(userId)
     const podcast = userPodcasts.find(p => p.podcastId === podcastId)
-    
+
     if (!podcast) {
       return createErrorResponse('Podcast not found or access denied', 'NOT_FOUND', 404, path)
     }
 
     await dynamoService.deleteEpisodesByPodcast(podcastId)
 
-    return createSuccessResponse({
-      message: 'Episodes deleted successfully',
-    }, 200, path)
+    return createSuccessResponse(
+      {
+        message: 'Episodes deleted successfully',
+      },
+      200,
+      path,
+    )
   } catch (error) {
     console.error('Error deleting episodes:', error)
     return createErrorResponse('Failed to delete episodes', 'INTERNAL_ERROR', 500, path)

@@ -13,7 +13,7 @@ export default function Library() {
   const [error, setError] = useState<string | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [deletingPodcastId, setDeletingPodcastId] = useState<string | null>(null)
-  
+
   // Episode management state
   const [expandedPodcasts, setExpandedPodcasts] = useState<Set<string>>(new Set())
   const [episodesByPodcast, setEpisodesByPodcast] = useState<Record<string, Episode[]>>({})
@@ -84,7 +84,7 @@ export default function Library() {
   // Episode management functions
   const handlePodcastExpand = async (podcastId: string) => {
     const isCurrentlyExpanded = expandedPodcasts.has(podcastId)
-    
+
     if (isCurrentlyExpanded) {
       // Collapse podcast
       setExpandedPodcasts(prev => {
@@ -95,7 +95,7 @@ export default function Library() {
     } else {
       // Expand podcast and load episodes if not already loaded
       setExpandedPodcasts(prev => new Set([...prev, podcastId]))
-      
+
       if (!episodesByPodcast[podcastId]) {
         await loadEpisodes(podcastId)
       }
@@ -106,7 +106,7 @@ export default function Library() {
     try {
       setLoadingEpisodes(prev => new Set([...prev, podcastId]))
       const response = await episodeService.getEpisodes(podcastId, 20)
-      
+
       setEpisodesByPodcast(prev => ({
         ...prev,
         [podcastId]: response.episodes,
@@ -128,7 +128,7 @@ export default function Library() {
     try {
       setSyncingEpisodes(prev => new Set([...prev, podcastId]))
       const response = await episodeService.syncEpisodes(podcastId)
-      
+
       if (response.episodeCount > 0) {
         // Reload episodes after successful sync
         await loadEpisodes(podcastId)
@@ -237,7 +237,7 @@ export default function Library() {
             const episodes = episodesByPodcast[podcast.podcastId] || []
             const isLoadingEpisodes = loadingEpisodes.has(podcast.podcastId)
             const isSyncing = syncingEpisodes.has(podcast.podcastId)
-            
+
             return (
               <div key={podcast.podcastId} className="bg-white rounded-lg border border-gray-200 shadow-sm">
                 {/* Enhanced Podcast Card */}
@@ -285,7 +285,12 @@ export default function Library() {
                           <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full" />
                         ) : (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
                           </svg>
                         )}
                       </button>
@@ -296,10 +301,10 @@ export default function Library() {
                         className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
                         title={isExpanded ? 'Hide episodes' : 'Show episodes'}
                       >
-                        <svg 
-                          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
-                          fill="none" 
-                          stroke="currentColor" 
+                        <svg
+                          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
                           viewBox="0 0 24 24"
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -317,7 +322,12 @@ export default function Library() {
                           <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full" />
                         ) : (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
                           </svg>
                         )}
                       </button>
@@ -331,7 +341,7 @@ export default function Library() {
                     {/* Episodes Header */}
                     <div className="p-4 bg-gray-50">
                       <h4 className="font-medium text-gray-900">
-                        Episodes 
+                        Episodes
                         {episodes.length > 0 && <span className="text-gray-500">({episodes.length})</span>}
                       </h4>
                     </div>
@@ -347,18 +357,18 @@ export default function Library() {
                     {/* Episodes List */}
                     {!isLoadingEpisodes && episodes.length > 0 && (
                       <div className="divide-y divide-gray-100">
-                                                 {episodes.map(episode => {
-                           const episodeCardData = transformEpisodeForCard(episode, podcast)
-                           return (
-                             <div key={episode.episodeId} className="p-4">
-                               <EpisodeCard
-                                 episode={episodeCardData}
-                                 onPlay={() => handlePlayEpisode(episode)}
-                                 onAIExplanation={() => handleAIExplanation(episode)}
-                               />
-                             </div>
-                           )
-                         })}
+                        {episodes.map(episode => {
+                          const episodeCardData = transformEpisodeForCard(episode, podcast)
+                          return (
+                            <div key={episode.episodeId} className="p-4">
+                              <EpisodeCard
+                                episode={episodeCardData}
+                                onPlay={() => handlePlayEpisode(episode)}
+                                onAIExplanation={() => handleAIExplanation(episode)}
+                              />
+                            </div>
+                          )
+                        })}
                       </div>
                     )}
 

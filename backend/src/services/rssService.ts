@@ -99,7 +99,7 @@ export class RSSService {
   async parseEpisodesFromFeed(rssUrl: string, limit = 50): Promise<EpisodeData[]> {
     try {
       const feed = await this.parser.parseURL(rssUrl)
-      
+
       if (!feed.items || feed.items.length === 0) {
         return []
       }
@@ -125,7 +125,7 @@ export class RSSService {
             duration: this.parseDuration(item.duration || item['itunes:duration'] || '0:00'),
             releaseDate: this.parseReleaseDate(item.pubDate || item.isoDate),
             guests: this.extractGuests(item.content || item.summary || item.description || ''),
-            tags: this.extractTags(item.categories || [])
+            tags: this.extractTags(item.categories || []),
           }
 
           // Only add imageUrl if it exists
@@ -151,7 +151,7 @@ export class RSSService {
     if (item.enclosure?.url && this.isAudioFile(item.enclosure.url)) {
       return item.enclosure.url
     }
-    
+
     if (item.link && this.isAudioFile(item.link)) {
       return item.link
     }
@@ -181,7 +181,7 @@ export class RSSService {
     // Handle different duration formats
     // HH:MM:SS or MM:SS or just seconds
     const timeMatch = duration.match(/(\d+):(\d+):(\d+)|(\d+):(\d+)|(\d+)/)
-    
+
     if (timeMatch) {
       if (timeMatch[1] && timeMatch[2] && timeMatch[3]) {
         // HH:MM:SS format
@@ -233,7 +233,7 @@ export class RSSService {
     // Simple guest extraction - look for common patterns
     const guestPatterns = [
       /(?:with|featuring|guest|interview)\s+([A-Z][a-z]+ [A-Z][a-z]+)/gi,
-      /([A-Z][a-z]+ [A-Z][a-z]+)\s+(?:joins|appears|guests)/gi
+      /([A-Z][a-z]+ [A-Z][a-z]+)\s+(?:joins|appears|guests)/gi,
     ]
 
     const guests: string[] = []

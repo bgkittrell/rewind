@@ -55,16 +55,12 @@ export interface ListeningHistoryResponse {
 }
 
 export class EpisodeService {
-  async getEpisodes(
-    podcastId: string, 
-    limit = 20, 
-    cursor?: string
-  ): Promise<EpisodeListResponse> {
+  async getEpisodes(podcastId: string, limit = 20, cursor?: string): Promise<EpisodeListResponse> {
     try {
       const params = new URLSearchParams({
         limit: limit.toString(),
       })
-      
+
       if (cursor) {
         params.append('cursor', cursor)
       }
@@ -88,10 +84,10 @@ export class EpisodeService {
   }
 
   async saveProgress(
-    episodeId: string, 
-    position: number, 
-    duration: number, 
-    podcastId: string
+    episodeId: string,
+    position: number,
+    duration: number,
+    podcastId: string,
   ): Promise<ProgressResponse> {
     try {
       const response = await apiClient.put<ProgressResponse>(`/episodes/${episodeId}/progress`, {

@@ -172,7 +172,7 @@ export class RewindBackendStack extends cdk.Stack {
 
     // Add episode routes
     const episodes = api.root.addResource('episodes')
-    
+
     // GET /episodes/{podcastId} - Get episodes for a podcast
     const episodesByPodcast = episodes.addResource('{podcastId}')
     episodesByPodcast.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
@@ -196,7 +196,7 @@ export class RewindBackendStack extends cdk.Stack {
     // Episode progress routes
     const episodeById = episodes.addResource('{episodeId}')
     const progress = episodeById.addResource('progress')
-    
+
     // GET /episodes/{episodeId}/progress - Get playback progress
     progress.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
       authorizer: cognitoAuthorizer,
