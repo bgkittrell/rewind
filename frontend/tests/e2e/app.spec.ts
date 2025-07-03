@@ -113,6 +113,38 @@ test.describe('Rewind App', () => {
     })
   })
 
+  test('should show bottom navigation correctly', async ({ page }) => {
+    // Wait for page to load completely
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(1000)
+
+    // Verify bottom navigation is visible
+    const bottomNav = page.locator('[data-testid="nav-home"]')
+    await expect(bottomNav).toBeVisible()
+
+    // Verify all navigation items are present
+    await expect(page.locator('[data-testid="nav-home"]')).toBeVisible()
+    await expect(page.locator('[data-testid="nav-library"]')).toBeVisible()
+    await expect(page.locator('[data-testid="nav-search"]')).toBeVisible()
+
+    // Take a screenshot focusing on the bottom area
+    await page.screenshot({
+      path: 'test-results/screenshots/bottom-navigation-visible.png',
+      fullPage: true,
+    })
+
+    // Test bottom navigation functionality
+    await page.click('[data-testid="nav-library"]')
+    await expect(page).toHaveURL('/library')
+    await page.screenshot({
+      path: 'test-results/screenshots/bottom-nav-library-active.png',
+      fullPage: true,
+    })
+
+    await page.click('[data-testid="nav-home"]')
+    await expect(page).toHaveURL('/')
+  })
+
   test('should handle audio playback with floating media player', async ({ page }) => {
     // Wait for page to load
     await page.waitForTimeout(1000)
@@ -141,6 +173,17 @@ test.describe('Rewind App', () => {
 
     if (await mediaPlayer.isVisible()) {
       console.log('Success! Media player is visible')
+
+      // Verify bottom navigation is still visible with media player
+      await expect(page.locator('[data-testid="nav-home"]')).toBeVisible()
+      await expect(page.locator('[data-testid="nav-library"]')).toBeVisible()
+      await expect(page.locator('[data-testid="nav-search"]')).toBeVisible()
+
+      // Take screenshot showing both bottom nav and floating player together
+      await page.screenshot({
+        path: 'test-results/screenshots/floating-player-with-bottom-nav.png',
+        fullPage: true,
+      })
 
       // Take screenshot of mini player
       await page.screenshot({
