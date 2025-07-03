@@ -168,7 +168,7 @@ export function FloatingMediaPlayer({
       {/* Player Container */}
       <div
         className={`fixed left-0 right-0 bg-primary text-white z-50 transition-all duration-300 ${
-          isExpanded ? 'bottom-0 h-screen' : 'bottom-18 h-20 shadow-lg'
+          isExpanded ? 'bottom-0 h-screen' : 'bottom-16 h-20 shadow-lg'
         }`}
         data-testid="floating-media-player"
       >
