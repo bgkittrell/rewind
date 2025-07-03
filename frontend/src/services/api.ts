@@ -1,5 +1,5 @@
 // Base API configuration and utilities
-const API_BASE_URL = 'https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
 export interface APIResponse<T = any> {
   data?: T
