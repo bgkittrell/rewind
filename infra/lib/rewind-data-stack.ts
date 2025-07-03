@@ -175,6 +175,13 @@ export class RewindDataStack extends cdk.Stack {
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
     })
 
+    // Add GSI for recent listening activity (commented out for now - to be implemented in Phase 3)
+    // this.tables.listeningHistory.addGlobalSecondaryIndex({
+    //   indexName: 'LastPlayedIndex',
+    //   partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+    //   sortKey: { name: 'lastPlayed', type: dynamodb.AttributeType.STRING },
+    // })
+
     // Share links table
     this.tables.shares = new dynamodb.Table(this, 'RewindShares', {
       tableName: 'RewindShares',
@@ -184,6 +191,40 @@ export class RewindDataStack extends cdk.Stack {
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
       timeToLiveAttribute: 'expiresAt',
     })
+
+    // Add GSI for user's share history (commented out for now - to be implemented in Phase 3)
+    // this.tables.shares.addGlobalSecondaryIndex({
+    //   indexName: 'UserSharesIndex',
+    //   partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+    //   sortKey: { name: 'createdAt', type: dynamodb.AttributeType.STRING },
+    // })
+
+    // Phase 3 Tables - UserFavorites (commented out for now - to be implemented in Phase 3)
+    // this.tables.userFavorites = new dynamodb.Table(this, 'RewindUserFavorites', {
+    //   tableName: 'RewindUserFavorites',
+    //   partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+    //   sortKey: { name: 'itemId', type: dynamodb.AttributeType.STRING },
+    //   billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    //   removalPolicy: cdk.RemovalPolicy.RETAIN,
+    //   encryption: dynamodb.TableEncryption.AWS_MANAGED,
+    // })
+
+    // Add GSI for filtering by item type (commented out for now - to be implemented in Phase 3)
+    // this.tables.userFavorites.addGlobalSecondaryIndex({
+    //   indexName: 'ItemTypeIndex',
+    //   partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+    //   sortKey: { name: 'itemType', type: dynamodb.AttributeType.STRING },
+    // })
+
+    // Phase 3 Tables - UserFeedback (commented out for now - to be implemented in Phase 3)
+    // this.tables.userFeedback = new dynamodb.Table(this, 'RewindUserFeedback', {
+    //   tableName: 'RewindUserFeedback',
+    //   partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+    //   sortKey: { name: 'episodeId#feedbackId', type: dynamodb.AttributeType.STRING },
+    //   billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    //   removalPolicy: cdk.RemovalPolicy.RETAIN,
+    //   encryption: dynamodb.TableEncryption.AWS_MANAGED,
+    // })
 
     // Output table names for reference
     new cdk.CfnOutput(this, 'UsersTableName', {

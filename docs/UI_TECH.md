@@ -1,536 +1,828 @@
-# Rewind UI Technical Specifications
+# Rewind UI Technology Specifications
 
 ## Overview
 
-This document details the technical implementation of the Rewind frontend, a mobile-first Progressive Web App (PWA) for podcast enthusiasts aged 35+ to rediscover older episodes. The frontend is built with React Router v7, TypeScript, Tailwind CSS, and Vite, ensuring a lightweight, responsive, and offline-capable interface. It integrates with backend APIs (see BACKEND_API.md) and supports accessibility, Bluetooth/AirPlay playback, and library sharing.
+This document outlines the frontend technology stack and implementation details for Rewind, a mobile-first Progressive Web App (PWA) designed for podcast enthusiasts aged 35+. The UI focuses on rediscovering older podcast episodes with an intuitive, accessible design optimized for mobile-first usage.
 
-## Technology Stack
+## 🚧 Current Implementation Status
 
-- Framework: React Router v7 with TypeScript for routing and logic.
-- Styling: Tailwind CSS for responsive, utility-first design.
-- Build Tool: Vite for fast development and production builds.
-- PWA: Workbox for service worker and offline capabilities (see PWA_FEATURES.md).
-- Testing: Playwright for e2e testing with screenshot generation, Storybook for component development and visual testing, Vitest for unit and integration tests, MSW for mocking API calls.
-- State Management: React Context or local storage/IndexedDB for persistence.
+### ✅ Phase 1-2 - Core UI Foundation (Completed)
 
-## Project Setup
+- ✅ React Router v7 with modern routing
+- ✅ TypeScript for type safety
+- ✅ Tailwind CSS for responsive design
+- ✅ Vite for build tooling and development
+- ✅ Authentication components (login, signup, confirmation)
+- ✅ Basic PWA setup with manifest and service worker
+- ✅ Core navigation components (header, bottom bar)
+- ✅ Podcast management UI (add modal, library display)
+- ✅ Responsive mobile-first design
+- ✅ Context providers for auth and media state
 
-- Initialize Project:
-  ```
-  npm create vite@latest rewind-frontend --template react-ts
-  cd rewind-frontend
-  npm install
-  ```
-- Install Dependencies:
-  ```
-  npm install react-router@7 @types/react-router tailwindcss postcss autoprefixer workbox-window vitest @testing-library/react @testing-library/user-event @vitejs/plugin-react msw @testing-library/jest-dom @playwright/test
-  ```
-- Configure Tailwind CSS:
-  - Initialize Tailwind:
-    ```
-    npx tailwindcss init -p
-    ```
-  - Update `tailwind.config.js`:
-    ```
-    /** @type {import('tailwindcss').Config} \*/
-    export default {
-    content: ["./index.html", "./src/**/\*.{js,ts,jsx,tsx}"],
-    theme: {
-    extend: {
-    colors: {
-    red: "#eb4034", // Primary red color
-    primary: "#eb4034",
-    secondary: "#c72e20",
-    },
-    },
-    },
-    plugins: [],
-    };
-    ```
-  - Add to `src/index.css`:
-    ```
-    @tailwind base;
-    @tailwind components;
-    @tailwind utilities;
-    ```
-- Set Up Storybook:
-  ```
-  npx storybook@latest init
-  ```
-- Configure Vitest:
-  - Update `vite.config.ts`:
+### 📋 Phase 3 - Enhanced Features (Next Sprint)
 
-    ```
-    import { defineConfig } from "vite";
-    import react from "@vitejs/plugin-react";
-    import { VitePWA } from "vite-plugin-pwa";
+- 📋 Episode display components and cards
+- 📋 Floating media player with audio controls
+- 📋 Search functionality and UI
+- 📋 Recommendation display components
+- 📋 Enhanced PWA features (better offline support)
 
-    export default defineConfig({
-    plugins: [
-    react(),
-    VitePWA({
-    registerType: "autoUpdate",
-    manifest: {
-    name: "Rewind",
-    short_name: "Rewind",
-    theme_color: "#eb4034",
-    icons: [
-    { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-    { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    },
-    }),
-    ],
-    test: {
-    environment: "jsdom",
-    setupFiles: "./src/setupTests.ts",
-    include: ["**/*.test.{ts,tsx}"],
-    coverage: {
-    provider: "v8",
-    reporter: ["text", "json", "html"],
-    },
-    },
-    });
-    ```
+### 🔮 Phase 4 - Advanced Features (Future)
 
-  - Create `src/setupTests.ts`:
+- 🔮 Library sharing UI components
+- 🔮 Push notification preferences
+- 🔮 Advanced audio features (sleep timer, speed control)
+- 🔮 Social features and community integration
 
-    ```
-    import "@testing-library/jest-dom";
-    import { setupServer } from "msw/node";
-    import { handlers } from "./mocks/handlers";
+## Technology Stack ✅ IMPLEMENTED
 
-    export const server = setupServer(...handlers);
+### Core Framework
 
-    beforeAll(() => server.listen());
-    afterEach(() => server.resetHandlers());
-    afterAll(() => server.close());
-    ```
+- **React 18**: Modern React with hooks, suspense, and concurrent features
+- **React Router v7**: File-based routing with data loading
+- **TypeScript**: Full type safety across components and services
+- **Vite**: Fast development server and optimized builds
 
-- Configure MSW for Mocking:
-  - Install MSW:
-    ```
-    npm install msw --save-dev
-    ```
-  - Create `src/mocks/handlers.ts`:
+### Styling & UI
 
-    ```
-    import { http, HttpResponse } from "msw";
+- **Tailwind CSS 3**: Utility-first CSS framework
+- **CSS Variables**: Dynamic theming and customization
+- **Responsive Design**: Mobile-first approach with breakpoints
+- **Accessible Design**: WCAG 2.1 AA compliance
 
-    export const handlers = [
-    http.get("/api/recommendations", () => {
-    return HttpResponse.json([
-    {
-    id: "1",
-    title: "Test Episode",
-    podcastName: "Test Podcast",
-    releaseDate: "2023-01-15",
-    duration: "45 min",
-    audioUrl: "http://example.com/episode.mp3"
-    },
-    ]);
-    }),
-    http.post("/api/podcasts", () => {
-    return HttpResponse.json({ podcastId: "123", message: "Podcast added successfully" });
-    }),
-    // Add more handlers for other endpoints (see BACKEND_API.md)
-    ];
-    ```
+### State Management
 
-  - Create `src/mocks/browser.ts` for browser-based testing (if needed):
+- **React Context**: Global state for auth and media player
+- **React Hooks**: Local state management and effects
+- **React Query**: Server state management and caching (planned)
 
-    ```
-    import { setupWorker } from "msw";
-    import { handlers } from "./handlers";
+### PWA & Performance
 
-    export const worker = setupWorker(...handlers);
-    ```
+- **Vite PWA Plugin**: Service worker and manifest generation
+- **Code Splitting**: Route-based lazy loading
+- **Image Optimization**: Responsive images and lazy loading
+- **Bundle Analysis**: Webpack bundle analyzer integration
 
-- Configure Vite for PWA:
-  - Install `vite-plugin-pwa`:
-    ```
-    npm install vite-plugin-pwa
-    ```
-  - Update `vite.config.ts` (see above for combined config).
+## Project Structure ✅ IMPLEMENTED
 
-## Component Structure
+```
+frontend/
+├── src/
+│   ├── components/           # Reusable UI components
+│   │   ├── auth/            # Authentication components ✅
+│   │   │   ├── AuthModal.tsx
+│   │   │   ├── LoginForm.tsx
+│   │   │   ├── SignupForm.tsx
+│   │   │   └── ConfirmEmailForm.tsx
+│   │   ├── AddPodcastModal.tsx        # ✅ Implemented
+│   │   ├── BottomActionBar.tsx        # ✅ Implemented
+│   │   ├── EpisodeCard.tsx            # 📋 Planned
+│   │   ├── FloatingMediaPlayer.tsx    # 📋 Planned
+│   │   ├── Header.tsx                 # ✅ Implemented
+│   │   └── PodcastCard.tsx            # ✅ Implemented
+│   ├── context/             # React Context providers
+│   │   ├── AuthContext.tsx           # ✅ Implemented
+│   │   └── MediaPlayerContext.tsx    # ✅ Basic implementation
+│   ├── routes/              # Route components
+│   │   ├── root.tsx                  # ✅ Implemented
+│   │   ├── home.tsx                  # ✅ Implemented
+│   │   ├── library.tsx               # ✅ Implemented
+│   │   ├── search.tsx                # 📋 Planned
+│   │   └── error-page.tsx            # ✅ Implemented
+│   ├── services/            # API and business logic
+│   │   ├── api.ts                    # ✅ Implemented
+│   │   └── podcastService.ts         # ✅ Implemented
+│   ├── index.css            # Global styles ✅
+│   └── main.tsx            # App entry point ✅
+├── public/                  # Static assets
+│   ├── manifest.json       # PWA manifest ✅
+│   └── sw.js              # Service worker ✅
+├── package.json            # Dependencies ✅
+├── tailwind.config.js      # Tailwind configuration ✅
+├── vite.config.ts         # Vite configuration ✅
+└── tsconfig.json          # TypeScript configuration ✅
+```
 
-- Core Components:
-  - `Header.tsx`: Fixed header with menu button, title, and contextual action.
-  - `BottomActionBar.tsx`: Fixed navigation bar with Home, Library, Search buttons.
-  - `SideMenu.tsx`: Slide-in menu with Profile, Add Podcast, Share Library, Settings, Logout.
-  - `EpisodeCard.tsx`: Displays episode details (thumbnail, title, podcast name, release date, duration, AI explanation button).
-  - `FloatingMediaPlayer.tsx`: Mini and expanded player for playback control.
-  - `FilterPills.tsx`: Clickable filter pills for recommendations.
-  - `PodcastCard.tsx`: Displays podcast details in Library (thumbnail, title, unread count).
-- Directory:
-  ```
-  src/
-  components/
-  Header.tsx
-  BottomActionBar.tsx
-  SideMenu.tsx
-  EpisodeCard.tsx
-  FloatingMediaPlayer.tsx
-  FilterPills.tsx
-  PodcastCard.tsx
-  routes/
-  home.tsx
-  library.tsx
-  library-podcast-id.tsx
-  search.tsx
-  episode-episode-id.tsx
-  share-share-id.tsx
-  services/
-  podcastService.ts
-  recommendationService.ts
-  shareService.ts
-  mocks/
-  handlers.ts
-  browser.ts
-  ```
+## Design System ✅ IMPLEMENTED
 
-## Routing
+### Color Palette
 
-- Framework: React Router v7 with `clientLoader` and `clientAction` for business logic.
-- Routes:
-  - `/`: Home screen (recommendations).
-  - `/library`: Library screen (podcast management).
-  - `/library/:podcastId`: Podcast-specific episode list.
-  - `/search`: Search screen.
-  - `/episode/:episodeId`: Episode details page.
-  - `/share/:shareId`: Share library prompt (add podcasts to user’s library).
-- Implementation:
-  - Route files use kebab-case to match route paths (e.g., `library-podcast-id.tsx`).
-  - Minimal view logic; business logic in `clientLoader` (fetch data) and `clientAction` (handle actions).
+```css
+/* Primary brand colors */
+:root {
+  --color-primary: #eb4034; /* Rewind Red */
+  --color-primary-hover: #d63384;
+  --color-primary-light: #f8d7da;
 
-## Service Layer
+  /* Neutral colors */
+  --color-background: #ffffff;
+  --color-surface: #f8f9fa;
+  --color-text: #212529;
+  --color-text-secondary: #6c757d;
+  --color-border: #dee2e6;
 
-- Purpose: Handle API calls and business logic, used primarily in `clientLoader` and `clientAction`.
-- Files:
-  - `podcastService.ts`: Add, fetch, and remove podcasts.
-  - `recommendationService.ts`: Fetch recommendations, submit feedback.
-  - `shareService.ts`: Generate and handle share links.
-- Example:
+  /* Status colors */
+  --color-success: #28a745;
+  --color-warning: #ffc107;
+  --color-error: #dc3545;
+  --color-info: #17a2b8;
+}
 
-  ```
-  // src/services/podcastService.ts
-  export async function addPodcast(rssUrl: string) {
-  const response = await fetch("/api/podcasts/add", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ rssUrl }),
-  });
-  if (!response.ok) throw new Error("Invalid RSS URL");
-  return await response.json();
+/* Dark mode support (planned) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #121212;
+    --color-surface: #1e1e1e;
+    --color-text: #e0e0e0;
+    --color-text-secondary: #9e9e9e;
+    --color-border: #333333;
   }
+}
+```
 
-  export async function getPodcasts() {
-  const response = await fetch("/api/podcasts");
-  if (!response.ok) throw new Error("Failed to fetch podcasts");
-  return await response.json();
-  }
-  ```
+### Typography
 
-## State Management
+```css
+/* Font system */
+:root {
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
 
-- Global State: Use React Context for shared state (e.g., user authentication, playback state).
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+```
 
-  ```
-  // src/context/AppContext.tsx
-  import { createContext, useContext, useState } from "react";
+### Spacing System
 
-  interface AppState {
-  user: { id: string; email: string } | null;
-  currentEpisode: { id: string; position: number } | null;
-  }
+```css
+/* Consistent spacing scale */
+:root {
+  --spacing-1: 0.25rem; /* 4px */
+  --spacing-2: 0.5rem; /* 8px */
+  --spacing-3: 0.75rem; /* 12px */
+  --spacing-4: 1rem; /* 16px */
+  --spacing-5: 1.25rem; /* 20px */
+  --spacing-6: 1.5rem; /* 24px */
+  --spacing-8: 2rem; /* 32px */
+  --spacing-10: 2.5rem; /* 40px */
+  --spacing-12: 3rem; /* 48px */
+  --spacing-16: 4rem; /* 64px */
+}
+```
 
-  const AppContext = createContext<{ state: AppState; setState: React.Dispatch<React.SetStateAction<AppState>> } | null>(null);
+## Component Architecture ✅ IMPLEMENTED
 
-  export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AppState>({ user: null, currentEpisode: null });
-  return <AppContext.Provider value={{ state, setState }}>{children}</AppContext.Provider>;
-  }
+### Base Component Pattern
 
-  export function useAppState() {
-  const context = useContext(AppContext);
-  if (!context) throw new Error("useAppState must be used within AppProvider");
-  return context;
-  }
-  ```
+```typescript
+// Standard component structure
+interface ComponentProps {
+  children?: React.ReactNode;
+  className?: string;
+}
 
-- Persistent State: Store playback position and library data in IndexedDB.
-  - Install `idb-keyval`:
-    ```
-    npm install idb-keyval
-    ```
-  - Example:
+export const Component: React.FC<ComponentProps> = ({
+  children,
+  className = '',
+  ...props
+}) => {
+  return (
+    <div className={`base-styles ${className}`} {...props}>
+      {children}
+    </div>
+  );
+};
+```
 
-    ```
-    // src/services/playbackService.ts
-    import { get, set } from "idb-keyval";
+### Authentication Components ✅ IMPLEMENTED
 
-    export async function savePlaybackPosition(episodeId: string, position: number) {
-    await set(`playback-${episodeId}`, position);
-    }
+#### AuthModal Component
 
-    export async function getPlaybackPosition(episodeId: string) {
-    return (await get(`playback-${episodeId}`)) || 0;
-    }
-    ```
-
-## PWA Features
-
-- Service Worker: Use Workbox to cache episode audio and metadata (see PWA_FEATURES.md).
-- Manifest:
-  ```
-  {
-  "name": "Rewind",
-  "short_name": "Rewind",
-  "start_url": "/",
-  "display": "standalone",
-  "theme_color": "#26A69A",
-  "background_color": "#FFFFFF",
-  "icons": [
-  { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-  { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
-  }
-  ```
-- Offline Playback: Cache episode audio on play, update cache on podcast addition.
-
-## Audio Playback
-
-- Implementation: Use HTML5 `<audio>` element with MediaSession API for lock screen controls.
-- Example:
-
-  ```
-  // src/components/FloatingMediaPlayer.tsx
-  import { useEffect } from "react";
-  import { savePlaybackPosition } from "../services/playbackService";
-
-  export function FloatingMediaPlayer({ episode }: { episode: { id: string; url: string; title: string } }) {
-  useEffect(() => {
-  if ("mediaSession" in navigator) {
-  navigator.mediaSession.metadata = new MediaMetadata({
-  title: episode.title,
-  artist: "Rewind",
-  artwork: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png" }],
-  });
-  navigator.mediaSession.setActionHandler("play", () => { /_ Play logic _/ });
-  navigator.mediaSession.setActionHandler("pause", () => { /_ Pause logic _/ });
-  }
-  }, [episode]);
+```typescript
+// src/components/auth/AuthModal.tsx
+export const AuthModal: React.FC = () => {
+  const [mode, setMode] = useState<'login' | 'signup' | 'confirm'>('login');
+  const [email, setEmail] = useState('');
+  const { isOpen, closeModal } = useAuthModal();
 
   return (
-  <div className="fixed bottom-0 w-full bg-red-500 text-white p-4">
-  <audio
-  src={episode.url}
-  controls
-  onTimeUpdate={(e) => savePlaybackPosition(episode.id, e.currentTarget.currentTime)}
-  />
-  {/_ Play/pause, skip, speed controls _/}
-  </div>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+          >
+            {mode === 'login' && <LoginForm onSuccess={closeModal} />}
+            {mode === 'signup' && <SignupForm onSuccess={() => setMode('confirm')} />}
+            {mode === 'confirm' && <ConfirmEmailForm email={email} />}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
-  }
-  ```
+};
+```
 
-- External Devices: Support Bluetooth/AirPlay via browser APIs (`<audio>` element handles automatically).
+#### LoginForm Component
 
-## Accessibility
+```typescript
+// src/components/auth/LoginForm.tsx
+export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { signIn } = useAuth();
 
-- ARIA Labels: Add to interactive elements (e.g., `aria-label="Play episode"`).
-- Keyboard Navigation: Ensure buttons are focusable via `tabIndex`.
-- Testing: Use axe DevTools or Lighthouse for accessibility checks.
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-## Testing
-
-The Rewind frontend uses a multi-layered testing strategy to ensure reliability and maintainability:
-
-### Playwright E2E Testing
-
-**End-to-end testing with visual screenshots for comprehensive app validation:**
-
-- **Setup**: Playwright with TypeScript, mobile-first testing configuration
-- **Key Features**:
-  - Non-interactive CI mode for automated testing
-  - Screenshot generation for visual debugging
-  - Mobile and desktop viewport testing
-  - Authentication flow testing
-  - Navigation and routing validation
-  - Error state handling
-
-- **Configuration** (`playwright.config.ts`):
-
-  ```typescript
-  export default defineConfig({
-    testDir: './tests/e2e',
-    fullyParallel: true,
-    workers: process.env.CI ? 1 : undefined,
-    globalTimeout: process.env.CI ? 300_000 : undefined,
-    use: {
-      baseURL: 'http://localhost:5173',
-      screenshot: 'only-on-failure',
-      video: 'retain-on-failure',
-      trace: 'on-first-retry',
-    },
-    projects: [
-      { name: 'Mobile Chrome', use: { ...devices['Pixel 5'] } },
-      { name: 'Desktop Chrome', use: { ...devices['Desktop Chrome'] } },
-    ],
-    webServer: {
-      command: 'npm run dev',
-      url: 'http://localhost:5173',
-      reuseExistingServer: !process.env.CI,
-    },
-  })
-  ```
-
-- **Available Commands**:
-
-  ```bash
-  # Run e2e tests with screenshots (non-interactive)
-  npm run test:e2e:screenshots
-
-  # Run tests in interactive UI mode
-  npm run test:e2e:ui
-
-  # Run tests with visible browser
-  npm run test:e2e:headed
-
-  # Force screenshot generation even if tests fail
-  npm run test:e2e:force-screenshots
-  ```
-
-- **Example Test** (`tests/e2e/app.spec.ts`):
-
-  ```typescript
-  test('should load the homepage and take screenshot', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
-
-    await expect(page.locator('h1').filter({ hasText: 'Recommended Episodes' })).toBeVisible()
-
-    await page.screenshot({
-      path: 'test-results/screenshots/homepage-full.png',
-      fullPage: true,
-    })
-  })
-  ```
-
-- **Generated Screenshots**: All screenshots saved to `test-results/screenshots/` including:
-  - Homepage (mobile and desktop)
-  - Authentication modals (login/signup)
-  - Navigation screens (library, search)
-  - Error states and validation flows
-  - Component-level screenshots
-
-### Storybook Component Testing
-
-- Create stories for components (e.g., `EpisodeCard.stories.tsx`).
-
-  ```
-  // src/components/EpisodeCard.stories.tsx
-  import { EpisodeCard } from "./EpisodeCard";
-  ```
-
-  export default {
-  title: "Components/EpisodeCard",
-  component: EpisodeCard,
+    try {
+      await signIn(email, password);
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  export const Default = () => (
-  <EpisodeCard
-  episode={{
-        id: "1",
-        title: "Episode Title",
-        podcastName: "Test Podcast",
-        releaseDate: "2023-01-15",
-        duration: "45 min",
-      }}
-  />
+  return (
+    <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      <h2 className="text-2xl font-bold text-center">Welcome Back</h2>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Email
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Password
+        </label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+          required
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 disabled:opacity-50"
+      >
+        {loading ? 'Signing in...' : 'Sign In'}
+      </button>
+    </form>
   );
+};
+```
 
-  ```
+### Navigation Components ✅ IMPLEMENTED
 
-  ```
+#### Header Component
 
-### Vitest Unit & Integration Testing
+```typescript
+// src/components/Header.tsx
+export const Header: React.FC = () => {
+  const { user, signOut } = useAuth();
+  const [showMenu, setShowMenu] = useState(false);
 
-- Write unit tests for components, routes, and services, using MSW to mock API responses.
+  return (
+    <header className="bg-white shadow-sm border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <Link to="/" className="text-2xl font-bold text-red-500">
+              Rewind
+            </Link>
+          </div>
 
-  ```
-  // src/components/EpisodeCard.test.tsx
-  import { render, screen } from "@testing-library/react";
-  import { EpisodeCard } from "./EpisodeCard";
+          <nav className="hidden md:flex space-x-8">
+            <Link to="/" className="text-gray-900 hover:text-red-500">
+              Home
+            </Link>
+            <Link to="/library" className="text-gray-900 hover:text-red-500">
+              Library
+            </Link>
+            <Link to="/search" className="text-gray-900 hover:text-red-500">
+              Search
+            </Link>
+          </nav>
 
-  test("renders episode title", () => {
-    render(<EpisodeCard episode={{ id: "1", title: "Test Episode" }} />);
-    expect(screen.getByText("Test Episode")).toBeInTheDocument();
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <button
+                onClick={signOut}
+                className="text-gray-900 hover:text-red-500"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+```
+
+#### BottomActionBar Component
+
+```typescript
+// src/components/BottomActionBar.tsx
+export const BottomActionBar: React.FC = () => {
+  const location = useLocation();
+
+  const navItems = [
+    { path: '/', label: 'Home', icon: HomeIcon },
+    { path: '/library', label: 'Library', icon: LibraryIcon },
+    { path: '/search', label: 'Search', icon: SearchIcon }
+  ];
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden">
+      <div className="flex justify-around items-center h-16">
+        {navItems.map(({ path, label, icon: Icon }) => (
+          <Link
+            key={path}
+            to={path}
+            className={`flex flex-col items-center justify-center flex-1 py-2 ${
+              location.pathname === path
+                ? 'text-red-500'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Icon className="w-6 h-6" />
+            <span className="text-xs mt-1">{label}</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+### Podcast Components ✅ IMPLEMENTED
+
+#### PodcastCard Component
+
+```typescript
+// src/components/PodcastCard.tsx
+export const PodcastCard: React.FC<PodcastCardProps> = ({ podcast, onRemove }) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleRemove = async () => {
+    setLoading(true);
+    try {
+      await onRemove(podcast.id);
+    } catch (error) {
+      console.error('Failed to remove podcast:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+      <div className="aspect-square bg-gray-200 flex items-center justify-center">
+        {podcast.imageUrl ? (
+          <img
+            src={podcast.imageUrl}
+            alt={podcast.title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="text-gray-400">No Image</div>
+        )}
+      </div>
+
+      <div className="p-4">
+        <h3 className="font-medium text-gray-900 line-clamp-2 mb-2">
+          {podcast.title}
+        </h3>
+
+        <p className="text-sm text-gray-600 line-clamp-3 mb-4">
+          {podcast.description}
+        </p>
+
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-gray-500">
+            {podcast.episodeCount} episodes
+          </span>
+
+          <button
+            onClick={handleRemove}
+            disabled={loading}
+            className="text-red-500 hover:text-red-700 disabled:opacity-50"
+          >
+            {loading ? 'Removing...' : 'Remove'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+#### AddPodcastModal Component
+
+```typescript
+// src/components/AddPodcastModal.tsx
+export const AddPodcastModal: React.FC<AddPodcastModalProps> = ({
+  isOpen,
+  onClose,
+  onAdd
+}) => {
+  const [rssUrl, setRssUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      await onAdd(rssUrl);
+      setRssUrl('');
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add podcast');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+          >
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <h2 className="text-2xl font-bold text-center">Add Podcast</h2>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  RSS Feed URL
+                </label>
+                <input
+                  type="url"
+                  value={rssUrl}
+                  onChange={(e) => setRssUrl(e.target.value)}
+                  placeholder="https://example.com/feed.xml"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                  required
+                />
+              </div>
+
+              <div className="flex space-x-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 disabled:opacity-50"
+                >
+                  {loading ? 'Adding...' : 'Add Podcast'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+```
+
+## State Management ✅ IMPLEMENTED
+
+### AuthContext
+
+```typescript
+// src/context/AuthContext.tsx
+export const AuthContext = createContext<AuthContextType | null>(null);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Initialize auth state
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.log('No authenticated user');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    const user = await signInWithEmailAndPassword(email, password);
+    setUser(user);
+  };
+
+  const signUp = async (email: string, password: string, name: string) => {
+    await signUpWithEmailAndPassword(email, password, name);
+  };
+
+  const signOut = async () => {
+    await signOutUser();
+    setUser(null);
+  };
+
+  const confirmEmail = async (email: string, code: string) => {
+    await confirmUserEmail(email, code);
+  };
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      signIn,
+      signUp,
+      signOut,
+      confirmEmail
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+```
+
+### MediaPlayerContext
+
+```typescript
+// src/context/MediaPlayerContext.tsx
+export const MediaPlayerContext = createContext<MediaPlayerContextType | null>(null);
+
+export const MediaPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+
+  const playEpisode = (episode: Episode) => {
+    setCurrentEpisode(episode);
+    setIsPlaying(true);
+  };
+
+  const pauseEpisode = () => {
+    setIsPlaying(false);
+  };
+
+  const seekTo = (time: number) => {
+    setProgress(time);
+  };
+
+  return (
+    <MediaPlayerContext.Provider value={{
+      currentEpisode,
+      isPlaying,
+      progress,
+      duration,
+      volume,
+      playEpisode,
+      pauseEpisode,
+      seekTo,
+      setVolume
+    }}>
+      {children}
+    </MediaPlayerContext.Provider>
+  );
+};
+```
+
+## Responsive Design ✅ IMPLEMENTED
+
+### Breakpoint System
+
+```typescript
+// Tailwind breakpoints
+const breakpoints = {
+  sm: '640px', // Small devices
+  md: '768px', // Medium devices
+  lg: '1024px', // Large devices
+  xl: '1280px', // Extra large devices
+  '2xl': '1536px', // 2X large devices
+}
+
+// Mobile-first approach
+// Default styles are for mobile
+// Use responsive prefixes for larger screens
+```
+
+### Mobile-First Layout
+
+```css
+/* Mobile layout (default) */
+.container {
+  @apply px-4 max-w-full;
+}
+
+/* Tablet layout */
+@media (min-width: 768px) {
+  .container {
+    @apply px-6 max-w-3xl mx-auto;
+  }
+}
+
+/* Desktop layout */
+@media (min-width: 1024px) {
+  .container {
+    @apply px-8 max-w-7xl mx-auto;
+  }
+}
+```
+
+## Performance Optimization ✅ IMPLEMENTED
+
+### Code Splitting
+
+```typescript
+// Route-based code splitting
+const Home = lazy(() => import('./routes/home'))
+const Library = lazy(() => import('./routes/library'))
+const Search = lazy(() => import('./routes/search'))
+
+// Component-based code splitting
+const FloatingMediaPlayer = lazy(() => import('./components/FloatingMediaPlayer'))
+```
+
+### Image Optimization
+
+```typescript
+// Responsive image component
+const ResponsiveImage: React.FC<ImageProps> = ({ src, alt, className }) => {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      loading="lazy"
+      decoding="async"
+    />
+  );
+};
+```
+
+## Testing Strategy (Planned)
+
+### Component Testing
+
+```typescript
+// Example test structure
+describe('PodcastCard', () => {
+  it('displays podcast information', () => {
+    render(<PodcastCard podcast={mockPodcast} onRemove={jest.fn()} />);
+
+    expect(screen.getByText(mockPodcast.title)).toBeInTheDocument();
+    expect(screen.getByText(mockPodcast.description)).toBeInTheDocument();
   });
-  ```
 
-  ```
-  // src/routes/home.test.tsx
-  import { render, screen } from "@testing-library/react";
-  import { createMemoryRouter, RouterProvider } from "react-router";
-  import Home, { clientLoader } from "./home";
+  it('calls onRemove when remove button is clicked', () => {
+    const onRemove = jest.fn();
+    render(<PodcastCard podcast={mockPodcast} onRemove={onRemove} />);
 
-  test("renders recommendations", async () => {
-    const router = createMemoryRouter(
-      [{ path: "/", element: <Home />, loader: clientLoader }],
-      { initialEntries: ["/"] }
-    );
-    render(<RouterProvider router={router} />);
-    expect(await screen.findByText("Test Episode")).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Remove'));
+    expect(onRemove).toHaveBeenCalledWith(mockPodcast.id);
   });
-  ```
+});
+```
 
-  ```
-  // src/services/recommendationService.test.tsx
-  import { getRecommendations } from "./recommendationService";
-  import { server } from "../setupTests";
-  import { http, HttpResponse } from "msw";
+### Integration Testing
 
-  test("fetches recommendations", async () => {
-    server.use(
-      http.get("/api/recommendations", () =>
-        HttpResponse.json([{ id: "1", title: "Test Episode" }])
-      )
-    );
-    const recommendations = await getRecommendations();
-    expect(recommendations).toHaveLength(1);
-    expect(recommendations[0].title).toBe("Test Episode");
-  });
-  ```
+```typescript
+// End-to-end testing with Playwright
+test('user can add and remove podcasts', async ({ page }) => {
+  await page.goto('/library')
 
-- Run tests:
-  ```
-  npm run test
-  ```
-- Run Storybook and tests together:
-  ```
-  npm run storybook & npm run test
-  ```
-- Generate coverage report:
-  ```
-  npm run test -- --coverage
-  ```
+  // Add podcast
+  await page.click('[data-testid="add-podcast-button"]')
+  await page.fill('[data-testid="rss-url-input"]', 'https://example.com/feed.xml')
+  await page.click('[data-testid="add-podcast-submit"]')
 
-## Notes for AI Agent
+  // Verify podcast appears
+  await expect(page.locator('[data-testid="podcast-card"]')).toBeVisible()
 
-- Follow designs in UI_DESIGN.md for visual and interaction details.
-- Use Tailwind classes for styling (e.g., `bg-red-500`, `text-white`).
-- Place business logic in `clientLoader` and `clientAction` within route files, using services in `src/services`.
-- Use MSW to mock API calls in tests (see BACKEND_API.md).
-- Commit changes to Git after completing each component or route.
-- Report issues (e.g., unclear API response format) in PLAN.md.
-- Test components in Storybook and Vitest for full coverage.
-- Ensure PWA and accessibility features are implemented early.
+  // Remove podcast
+  await page.click('[data-testid="remove-podcast-button"]')
+  await expect(page.locator('[data-testid="podcast-card"]')).not.toBeVisible()
+})
+```
+
+## Future Enhancements (Planned)
+
+### 📋 Phase 3 - Enhanced Features
+
+- **Episode Components**: EpisodeCard, EpisodeList, EpisodePlayer
+- **Search UI**: SearchBar, SearchResults, SearchFilters
+- **Recommendation UI**: RecommendationSection, RecommendationCard
+- **Media Player**: FloatingMediaPlayer, ProgressBar, PlaybackControls
+
+### 🔮 Phase 4 - Advanced Features
+
+- **Sharing Components**: ShareModal, ShareButton, SharedLibraryView
+- **Notification UI**: NotificationPermission, NotificationSettings
+- **Advanced Audio**: SleepTimer, PlaybackSpeed, EQ Settings
+- **Social Features**: UserProfile, FollowButton, ActivityFeed
+
+## Notes for Implementation
+
+### AI Agent Guidelines
+
+- Maintain consistent component structure and naming
+- Follow mobile-first responsive design principles
+- Ensure accessibility compliance (ARIA labels, keyboard navigation)
+- Implement proper error handling and loading states
+- Use TypeScript for all components and props
+- Test components in isolation with proper mocking
+
+### Development Priorities
+
+1. **Core Functionality**: Complete episode display and media player
+2. **User Experience**: Smooth animations and transitions
+3. **Accessibility**: WCAG 2.1 AA compliance
+4. **Performance**: Maintain fast loading times
+5. **Testing**: Comprehensive component and integration tests
 
 ## References
 
-- UI_DESIGN.md: Screen and component designs.
-- BACKEND_API.md: API endpoints for integration.
-- PWA_FEATURES.md: Service worker and offline details.
-- PLAN.md: Task list and progress tracking.
+- [PLAN.md](./PLAN.md): Implementation timeline and priorities
+- [UI_DESIGN.md](./UI_DESIGN.md): Design specifications and mockups
+- [PWA_FEATURES.md](./PWA_FEATURES.md): Progressive Web App implementation
+- [BACKEND_API.md](./BACKEND_API.md): API integration details
+- [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md): Project organization

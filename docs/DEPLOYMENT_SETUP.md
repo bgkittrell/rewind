@@ -1,6 +1,52 @@
-# Deployment Setup Guide
+# Rewind Deployment and Setup Guide
 
-This guide walks through setting up the CI/CD pipeline for automatic deployment of the Rewind app when code is pushed to the main branch.
+## Overview
+
+This guide provides comprehensive instructions for deploying the Rewind podcast discovery application, covering AWS CDK infrastructure, CI/CD pipeline, environment configuration, and production deployment strategies.
+
+## 🚀 Current Deployment Status
+
+### ✅ Production Deployment (LIVE)
+
+- **Frontend URL**: https://rewindpodcast.com (CloudFront distribution)
+- **API Base URL**: https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1
+- **Authentication**: Amazon Cognito User Pool (fully configured)
+- **Database**: DynamoDB tables deployed and operational
+- **CI/CD**: Automated deployment on merge to main branch
+- **Environment**: Production environment variables automatically managed
+
+### ✅ Core Infrastructure Deployed
+
+- **Frontend**: React app deployed to S3 + CloudFront
+- **Backend**: Lambda functions with API Gateway REST API
+- **Database**: DynamoDB tables (Users, Podcasts, Episodes, ListeningHistory, Shares)
+- **Authentication**: Cognito User Pool with web client
+- **CDN**: CloudFront distribution with custom domain
+- **SSL**: AWS Certificate Manager SSL certificate
+
+### ✅ Working Features (As of Current Deployment)
+
+- **User Registration & Authentication**: Sign up, sign in, email confirmation
+- **Podcast Management**: Add podcasts via RSS URL, view library, remove podcasts
+- **RSS Feed Parsing**: Automatic podcast metadata extraction and validation
+- **Responsive UI**: Mobile-first design with desktop adaptation
+- **Error Handling**: Comprehensive error handling and user feedback
+- **Environment Management**: Automatic environment variable configuration
+
+### 📋 Next Phase - Enhanced Features (Phase 3)
+
+- **Episode Management**: Parse and display individual episodes
+- **Media Player**: Audio playback with position tracking and controls
+- **Search Functionality**: Search for podcasts and episodes
+- **Recommendations**: Basic recommendation algorithm implementation
+- **Enhanced PWA**: Better offline support and app installation
+
+### 🔮 Future Enhancements (Phase 4+)
+
+- **Advanced Recommendations**: AWS Personalize integration
+- **Library Sharing**: Share and import podcast libraries
+- **Push Notifications**: New episode notifications
+- **Social Features**: Community and sharing features
 
 ## Prerequisites
 
@@ -178,6 +224,194 @@ Backend environment variables are set by the CDK deployment:
 - DynamoDB table names
 - Cognito configuration
 - AWS region settings
+
+## Environment Variable Management
+
+### Overview
+
+The Rewind app uses an automated environment variable management system that eliminates manual configuration and ensures consistency across deployments. Environment variables are automatically generated from CDK stack outputs during deployment.
+
+### Frontend Environment Variables
+
+#### Automatic Generation Process
+
+1. **CDK Deployment**: Infrastructure stacks output configuration values
+2. **Output Retrieval**: Deployment script queries CloudFormation stack outputs
+3. **File Generation**: `.env.production` file is created automatically
+4. **Build Process**: Vite uses environment variables during build
+
+#### Generated Environment File
+
+The deployment script creates `frontend/.env.production` with these variables:
+
+```bash
+# Auto-generated during deployment - DO NOT MODIFY
+VITE_API_BASE_URL=https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1
+VITE_AWS_REGION=us-east-1
+VITE_USER_POOL_ID=us-east-1_Cw78Mapt3
+VITE_USER_POOL_CLIENT_ID=49kf2uvsl9vg08ka6o67ts41jj
+VITE_IDENTITY_POOL_ID=us-east-1:xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+
+#### Environment File Management
+
+- **Production**: `.env.production` is auto-generated during deployment
+- **Development**: `.env.development` can be created manually for local development
+- **Git Ignore**: Environment files are gitignored to prevent accidental commits
+- **Backup**: Previous environment files are backed up as `.env.backup`
+
+### Backend Environment Variables
+
+#### CDK Injection
+
+Backend Lambda functions receive environment variables directly from CDK:
+
+```typescript
+// From RewindBackendStack
+environment: {
+  USERS_TABLE: props.tables.users.tableName,
+  PODCASTS_TABLE: props.tables.podcasts.tableName,
+  EPISODES_TABLE: props.tables.episodes.tableName,
+  LISTENING_HISTORY_TABLE: props.tables.listeningHistory.tableName,
+  SHARES_TABLE: props.tables.shares.tableName,
+  USER_POOL_ID: props.userPool.userPoolId,
+  USER_POOL_CLIENT_ID: props.userPoolClient.userPoolClientId,
+}
+```
+
+#### Runtime Access
+
+Backend functions access environment variables through `process.env`:
+
+```typescript
+// Example usage in Lambda function
+const dynamoClient = new DynamoDBClient({
+  region: process.env.AWS_REGION,
+})
+
+const tableName = process.env.PODCASTS_TABLE
+```
+
+### Local Development Environment
+
+#### Setting Up Local Environment
+
+For local development, create a `.env.development` file:
+
+```bash
+# Create development environment file
+cp frontend/.env.production frontend/.env.development
+
+# Edit with local values if needed
+# VITE_API_BASE_URL=http://localhost:3001/v1  # If running local API
+```
+
+#### Development vs Production
+
+- **Development**: Optional local environment file for testing
+- **Production**: Automatically generated from CDK outputs
+- **Testing**: Mock values used in test environment
+
+### Environment Variable Validation
+
+#### Deployment Validation
+
+The deployment script validates critical environment variables:
+
+```bash
+# API URL format validation
+if [[ ! "$API_URL" =~ ^https://.*\.execute-api\..*\.amazonaws\.com/.*$ ]]; then
+  log_error "Invalid API URL format: $API_URL"
+  exit 1
+fi
+
+# Required variables check
+if [ -z "$FRONTEND_BUCKET" ] || [ -z "$API_URL" ] || [ -z "$USER_POOL_ID" ]; then
+  log_error "Failed to retrieve required CDK outputs"
+  exit 1
+fi
+```
+
+#### Runtime Validation
+
+Backend functions validate environment variables at startup:
+
+```typescript
+// Example validation in Lambda function
+const requiredEnvVars = ['PODCASTS_TABLE', 'USER_POOL_ID', 'USER_POOL_CLIENT_ID']
+
+requiredEnvVars.forEach(varName => {
+  if (!process.env[varName]) {
+    throw new Error(`Missing required environment variable: ${varName}`)
+  }
+})
+```
+
+### Environment Variable Security
+
+#### Best Practices
+
+- **No Hardcoding**: Never hardcode sensitive values in source code
+- **CDK Outputs**: Use CDK outputs for resource names and endpoints
+- **Git Ignore**: Environment files are excluded from version control
+- **Rotation**: Cognito credentials can be rotated without code changes
+
+#### Sensitive Data Handling
+
+- **Cognito Credentials**: Managed by AWS, automatically rotated
+- **API Keys**: Not currently used (future: AWS Secrets Manager)
+- **Database Credentials**: Not applicable (DynamoDB uses IAM roles)
+
+### Troubleshooting Environment Variables
+
+#### Common Issues
+
+1. **Missing Environment File**:
+   - Check if deployment completed successfully
+   - Verify CDK stack outputs are available
+   - Re-run deployment if needed
+
+2. **Invalid API URL**:
+   - Verify backend stack deployed successfully
+   - Check CloudFormation stack outputs
+   - Ensure API Gateway is properly configured
+
+3. **CORS Issues**:
+   - Verify VITE_API_BASE_URL matches deployed API URL
+   - Check API Gateway CORS configuration
+   - Ensure environment variables are loaded correctly
+
+#### Debugging Commands
+
+```bash
+# Check CloudFormation stack outputs
+aws cloudformation describe-stacks --stack-name RewindBackendStack \
+  --query "Stacks[0].Outputs"
+
+# Verify environment file content
+cat frontend/.env.production
+
+# Check Lambda function environment variables
+aws lambda get-function-configuration --function-name FUNCTION_NAME \
+  --query "Environment.Variables"
+```
+
+### Multi-Environment Support (Future)
+
+#### Planned Enhancement
+
+- **Development Environment**: `dev` stage with separate resources
+- **Staging Environment**: `staging` stage for testing
+- **Production Environment**: `prod` stage for live deployment
+
+#### Implementation Approach
+
+```bash
+# Future deployment commands
+./scripts/deploy.sh dev      # Deploy to development
+./scripts/deploy.sh staging  # Deploy to staging
+./scripts/deploy.sh prod     # Deploy to production
+```
 
 ## Testing the Deployment
 
