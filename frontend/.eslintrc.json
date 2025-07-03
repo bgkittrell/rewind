@@ -12,10 +12,20 @@
     "quotes": ["error", "single"],
     "comma-dangle": ["error", "always-multiline"],
     "no-trailing-spaces": "error",
-    "eol-last": "error"
+    "eol-last": "error",
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
   },
   "env": {
     "browser": true,
     "es2022": true
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx"],
+      "parser": "@typescript-eslint/parser",
+      "rules": {
+        "no-unused-vars": "off"
+      }
+    }
+  ]
 }

@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 
 interface SignupFormProps {
   onSwitchToLogin: () => void
-  onSwitchToConfirm: (email: string) => void
+  onSwitchToConfirm: (_email: string) => void
 }
 
 export function SignupForm({ onSwitchToLogin, onSwitchToConfirm }: SignupFormProps) {

@@ -31,11 +31,11 @@ interface AuthContextType {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
-  signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; message: string }>
-  signIn: (email: string, password: string) => Promise<{ success: boolean; message: string }>
+  signUp: (_email: string, _password: string, _name: string) => Promise<{ success: boolean; message: string }>
+  signIn: (_email: string, _password: string) => Promise<{ success: boolean; message: string }>
   signOut: () => Promise<void>
-  confirmSignUp: (email: string, code: string) => Promise<{ success: boolean; message: string }>
-  resendCode: (email: string) => Promise<{ success: boolean; message: string }>
+  confirmSignUp: (_email: string, _code: string) => Promise<{ success: boolean; message: string }>
+  resendCode: (_email: string) => Promise<{ success: boolean; message: string }>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)

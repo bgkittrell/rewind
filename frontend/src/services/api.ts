@@ -21,12 +21,6 @@ export class APIError extends Error {
   ) {
     super(message)
     this.name = 'APIError'
-
-    // These properties are automatically created by the public parameters
-    // The linter warning is a false positive
-    void this.code
-    void this.statusCode
-    void this.details
   }
 }
 
