@@ -29,7 +29,7 @@ export class RewindFrontendStack extends cdk.Stack {
     // CloudFront distribution
     const distribution = new cloudfront.Distribution(this, 'WebsiteDistribution', {
       defaultBehavior: {
-        origin: new origins.S3Origin(websiteBucket),
+        origin: new origins.S3StaticWebsiteOrigin(websiteBucket),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
       },
@@ -65,6 +65,11 @@ export class RewindFrontendStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'WebsiteUrl', {
       value: `https://${this.distributionDomainName}`,
       description: 'Website URL',
+    })
+
+    new cdk.CfnOutput(this, 'DistributionId', {
+      value: distribution.distributionId,
+      description: 'CloudFront distribution ID',
     })
   }
 }

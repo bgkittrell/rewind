@@ -29,6 +29,7 @@ Check out the [`docs/`](docs/) directory to see the complete specifications that
 ## 🛠️ Technology Stack
 
 ### Frontend
+
 - **React Router v7** with TypeScript
 - **Vite** for fast development
 - **Tailwind CSS** for styling
@@ -36,6 +37,7 @@ Check out the [`docs/`](docs/) directory to see the complete specifications that
 - **PWA** capabilities for offline use
 
 ### Backend
+
 - **AWS Lambda** serverless functions
 - **DynamoDB** for data storage
 - **API Gateway** for HTTP APIs
@@ -43,6 +45,7 @@ Check out the [`docs/`](docs/) directory to see the complete specifications that
 - **EventBridge** for scheduled tasks
 
 ### Infrastructure
+
 - **AWS CDK** for infrastructure as code
 - **CloudFront** for content delivery
 - **S3** for static assets
@@ -50,6 +53,7 @@ Check out the [`docs/`](docs/) directory to see the complete specifications that
 ## 🏃‍♂️ Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
 - AWS CLI configured
 - Git
@@ -118,18 +122,47 @@ npm run test:e2e:ui
 
 ## 🚀 Deployment
 
-Infrastructure is managed with AWS CDK:
+### Automated Deployment (Recommended)
+
+The project includes automated CI/CD deployment using GitHub Actions. When code is pushed to the `main` branch, both frontend and backend are automatically deployed to AWS.
+
+**Setup Instructions:**
+
+1. Follow the [Deployment Setup Guide](docs/DEPLOYMENT_SETUP.md) to configure AWS and GitHub
+2. Set up the required GitHub secrets and AWS IAM roles
+3. Push to `main` branch to trigger automatic deployment
+
+**Documentation:**
+
+- **[DEPLOYMENT_PLAN.md](docs/DEPLOYMENT_PLAN.md)** - Complete deployment strategy
+- **[DEPLOYMENT_SETUP.md](docs/DEPLOYMENT_SETUP.md)** - Step-by-step setup guide
+
+### Manual Deployment
+
+For local testing or manual deployments:
 
 ```bash
-# Deploy backend and infrastructure
+# Use the deployment script
+./scripts/deploy.sh
+
+# Or deploy manually with CDK
 cd infra
 npm run deploy
 
-# Deploy frontend
+# Build and deploy frontend
 cd frontend
 npm run build
-npm run deploy
+aws s3 sync dist/ s3://your-bucket-name/ --delete
 ```
+
+### Deployment Features
+
+- ✅ **Automated CI/CD** with GitHub Actions
+- ✅ **Health checks** and rollback on failure
+- ✅ **Environment configuration** with CDK outputs
+- ✅ **CloudFront invalidation** for immediate updates
+- ✅ **Security scanning** and validation
+- ✅ **Cost monitoring** and optimization
 
 ## 🤝 Contributing
 
@@ -150,4 +183,4 @@ Built with ❤️ for podcast lovers who want to rediscover the gems hiding in t
 
 ---
 
-*"The best way to predict the future is to document it first, then code it."* - The Vibe Coding Manifesto 
+_"The best way to predict the future is to document it first, then code it."_ - The Vibe Coding Manifesto

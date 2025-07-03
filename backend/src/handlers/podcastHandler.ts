@@ -1,6 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { createSuccessResponse, createErrorResponse, createCorsHeaders } from '../utils/response'
-import { Podcast } from '../types'
+import { rssService } from '../services/rssService'
+import { dynamoService } from '../services/dynamoService'
 
 export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   const headers = createCorsHeaders()
@@ -54,25 +55,25 @@ async function getPodcasts(
   headers: Record<string, string>,
   path: string,
 ): Promise<APIGatewayProxyResult> {
-  // TODO: Implement DynamoDB query to get user's podcasts
-  // For now, return mock data
-  const mockPodcasts: Podcast[] = [
-    {
-      podcastId: 'podcast-1',
-      userId,
-      title: 'Comedy Podcast',
-      description: 'A hilarious comedy podcast',
-      rssUrl: 'https://example.com/comedy-podcast/rss',
-      imageUrl: 'https://example.com/comedy-podcast/image.jpg',
-      createdAt: new Date().toISOString(),
-      lastUpdated: new Date().toISOString(),
-      episodeCount: 42,
-    },
-  ]
+  try {
+    const podcasts = await dynamoService.getPodcastsByUser(userId)
 
-  return {
-    ...createSuccessResponse(mockPodcasts, 200, path),
-    headers,
+    const response = {
+      podcasts,
+      total: podcasts.length,
+      hasMore: false,
+    }
+
+    return {
+      ...createSuccessResponse(response, 200, path),
+      headers,
+    }
+  } catch (error) {
+    console.error('Error getting podcasts:', error)
+    return {
+      ...createErrorResponse('Failed to get podcasts', 'DATABASE_ERROR', 500, path),
+      headers,
+    }
   }
 }
 
@@ -93,17 +94,54 @@ async function addPodcast(
       }
     }
 
-    // TODO: Implement RSS feed validation and podcast creation
-    // For now, return mock response
-    const podcastId = `podcast-${Date.now()}`
+    // Check if podcast already exists
+    const exists = await dynamoService.podcastExists(userId, rssUrl)
+    if (exists) {
+      return {
+        ...createErrorResponse('Podcast already exists', 'DUPLICATE_PODCAST', 409, path),
+        headers,
+      }
+    }
+
+    // Parse RSS feed
+    const feedData = await rssService.validateAndParseFeed(rssUrl)
+
+    // Create podcast record
+    const podcastData = {
+      title: feedData.title,
+      description: feedData.description,
+      rssUrl,
+      imageUrl: feedData.image || '',
+      createdAt: new Date().toISOString(),
+      lastUpdated: feedData.lastUpdated,
+      episodeCount: feedData.episodeCount,
+    }
+
+    const podcast = await dynamoService.savePodcast(userId, podcastData)
+
+    const response = {
+      podcastId: podcast.podcastId,
+      title: podcast.title,
+      rssUrl: podcast.rssUrl,
+      message: 'Podcast added successfully',
+    }
 
     return {
-      ...createSuccessResponse({ podcastId, message: 'Podcast added successfully' }, 201, path),
+      ...createSuccessResponse(response, 201, path),
       headers,
     }
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error adding podcast:', error)
+
+    if (error.message.includes('Failed to parse RSS feed')) {
+      return {
+        ...createErrorResponse(error.message, 'INVALID_RSS_FEED', 400, path),
+        headers,
+      }
+    }
+
     return {
-      ...createErrorResponse('Invalid JSON', 'VALIDATION_ERROR', 400, path),
+      ...createErrorResponse('Failed to add podcast', 'INTERNAL_ERROR', 500, path),
       headers,
     }
   }
@@ -124,11 +162,26 @@ async function deletePodcast(
     }
   }
 
-  // TODO: Implement DynamoDB delete operation
-  // For now, return mock response
+  try {
+    await dynamoService.deletePodcast(userId, podcastId)
 
-  return {
-    ...createSuccessResponse({ message: 'Podcast deleted successfully' }, 200, path),
-    headers,
+    return {
+      ...createSuccessResponse({ message: 'Podcast deleted successfully' }, 200, path),
+      headers,
+    }
+  } catch (error: any) {
+    console.error('Error deleting podcast:', error)
+
+    if (error.message === 'Podcast not found') {
+      return {
+        ...createErrorResponse('Podcast not found', 'NOT_FOUND', 404, path),
+        headers,
+      }
+    }
+
+    return {
+      ...createErrorResponse('Failed to delete podcast', 'INTERNAL_ERROR', 500, path),
+      headers,
+    }
   }
 }

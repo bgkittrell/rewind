@@ -1,0 +1,197 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  NODE_VERSION: '18'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint and format check
+        run: |
+          npm run lint
+          npm run format:check
+
+      - name: Type check and build
+        run: npm run build
+
+      - name: Run unit tests
+        run: npm run test
+
+      - name: Run frontend E2E tests
+        run: |
+          cd frontend
+          npx playwright install --with-deps
+          npm run test:e2e
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build backend
+        run: |
+          cd backend
+          npm run build
+
+      - name: Deploy infrastructure
+        run: |
+          cd infra
+          npm run build
+          npm run deploy
+
+      - name: Get CDK outputs
+        id: cdk-outputs
+        run: |
+          cd infra
+          FRONTEND_BUCKET=$(aws cloudformation describe-stacks --stack-name RewindFrontendStack --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" --output text)
+          DISTRIBUTION_ID=$(aws cloudformation describe-stacks --stack-name RewindFrontendStack --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" --output text)
+          API_URL=$(aws cloudformation describe-stacks --stack-name RewindBackendStack --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" --output text)
+          USER_POOL_ID=$(aws cloudformation describe-stacks --stack-name RewindDataStack --query "Stacks[0].Outputs[?OutputKey=='UserPoolId'].OutputValue" --output text)
+          USER_POOL_CLIENT_ID=$(aws cloudformation describe-stacks --stack-name RewindDataStack --query "Stacks[0].Outputs[?OutputKey=='UserPoolClientId'].OutputValue" --output text)
+          IDENTITY_POOL_ID=$(aws cloudformation describe-stacks --stack-name RewindDataStack --query "Stacks[0].Outputs[?OutputKey=='IdentityPoolId'].OutputValue" --output text)
+
+          echo "frontend-bucket=$FRONTEND_BUCKET" >> $GITHUB_OUTPUT
+          echo "distribution-id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
+          echo "api-url=$API_URL" >> $GITHUB_OUTPUT
+          echo "user-pool-id=$USER_POOL_ID" >> $GITHUB_OUTPUT
+          echo "user-pool-client-id=$USER_POOL_CLIENT_ID" >> $GITHUB_OUTPUT
+          echo "identity-pool-id=$IDENTITY_POOL_ID" >> $GITHUB_OUTPUT
+
+      - name: Build frontend with environment variables
+        run: |
+          cd frontend
+          cat > .env.production << EOF
+          VITE_API_BASE_URL=${{ steps.cdk-outputs.outputs.api-url }}
+          VITE_AWS_REGION=${{ env.AWS_REGION }}
+          VITE_COGNITO_USER_POOL_ID=${{ steps.cdk-outputs.outputs.user-pool-id }}
+          VITE_COGNITO_USER_POOL_CLIENT_ID=${{ steps.cdk-outputs.outputs.user-pool-client-id }}
+          VITE_COGNITO_IDENTITY_POOL_ID=${{ steps.cdk-outputs.outputs.identity-pool-id }}
+          EOF
+          npm run build
+
+      - name: Deploy frontend to S3
+        run: |
+          aws s3 sync frontend/dist/ s3://${{ steps.cdk-outputs.outputs.frontend-bucket }}/ --delete
+          aws cloudfront create-invalidation --distribution-id ${{ steps.cdk-outputs.outputs.distribution-id }} --paths "/*"
+
+      - name: Run health checks
+        run: |
+          # Wait for CloudFront invalidation to complete
+          echo "Waiting for CloudFront invalidation to complete..."
+          sleep 60
+
+          # Check API health
+          API_HEALTH_URL="${{ steps.cdk-outputs.outputs.api-url }}/health"
+          echo "Checking API health at: $API_HEALTH_URL"
+          curl -f $API_HEALTH_URL || exit 1
+
+          # Check frontend accessibility
+          FRONTEND_URL="https://$(aws cloudformation describe-stacks --stack-name RewindFrontendStack --query "Stacks[0].Outputs[?OutputKey=='DistributionDomainName'].OutputValue" --output text)"
+          echo "Checking frontend at: $FRONTEND_URL"
+          curl -f $FRONTEND_URL || exit 1
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+          echo "Frontend URL: https://$(aws cloudformation describe-stacks --stack-name RewindFrontendStack --query "Stacks[0].Outputs[?OutputKey=='DistributionDomainName'].OutputValue" --output text)"
+          echo "API URL: ${{ steps.cdk-outputs.outputs.api-url }}"
+
+  rollback:
+    if: failure() && github.ref == 'refs/heads/main'
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout previous commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Get previous commit
+        id: previous-commit
+        run: |
+          PREVIOUS_COMMIT=$(git rev-parse HEAD~1)
+          echo "previous-commit=$PREVIOUS_COMMIT" >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Checkout previous version
+        run: git checkout ${{ steps.previous-commit.outputs.previous-commit }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and deploy previous version
+        run: |
+          cd backend
+          npm run build
+          cd ../infra
+          npm run build
+          npm run deploy
+          cd ../frontend
+          npm run build
+          FRONTEND_BUCKET=$(aws cloudformation describe-stacks --stack-name RewindFrontendStack --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" --output text)
+          DISTRIBUTION_ID=$(aws cloudformation describe-stacks --stack-name RewindFrontendStack --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" --output text)
+          aws s3 sync dist/ s3://$FRONTEND_BUCKET/ --delete
+          aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+
+      - name: Notify rollback
+        run: |
+          echo "🔄 Rollback completed to commit: ${{ steps.previous-commit.outputs.previous-commit }}"

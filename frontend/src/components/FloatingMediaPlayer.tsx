@@ -1,4 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react'
+import {
+  IconPlayerPlay,
+  IconPlayerPause,
+  IconPlayerSkipBack,
+  IconPlayerSkipForward,
+  IconVolume,
+  IconChevronDown,
+  IconX,
+  IconMusic,
+  IconChevronUp,
+} from '@tabler/icons-react'
 
 interface Episode {
   id: string
@@ -45,14 +56,16 @@ export function FloatingMediaPlayer({
       title: episode.title,
       artist: episode.podcastName,
       album: 'Rewind',
-      artwork: episode.imageUrl ? [
-        { src: episode.imageUrl, sizes: '96x96', type: 'image/png' },
-        { src: episode.imageUrl, sizes: '128x128', type: 'image/png' },
-        { src: episode.imageUrl, sizes: '192x192', type: 'image/png' },
-        { src: episode.imageUrl, sizes: '256x256', type: 'image/png' },
-        { src: episode.imageUrl, sizes: '384x384', type: 'image/png' },
-        { src: episode.imageUrl, sizes: '512x512', type: 'image/png' },
-      ] : undefined,
+      artwork: episode.imageUrl
+        ? [
+            { src: episode.imageUrl, sizes: '96x96', type: 'image/png' },
+            { src: episode.imageUrl, sizes: '128x128', type: 'image/png' },
+            { src: episode.imageUrl, sizes: '192x192', type: 'image/png' },
+            { src: episode.imageUrl, sizes: '256x256', type: 'image/png' },
+            { src: episode.imageUrl, sizes: '384x384', type: 'image/png' },
+            { src: episode.imageUrl, sizes: '512x512', type: 'image/png' },
+          ]
+        : undefined,
     })
 
     navigator.mediaSession.setActionHandler('play', onPlay)
@@ -158,12 +171,7 @@ export function FloatingMediaPlayer({
       />
 
       {/* Overlay for expanded view */}
-      {isExpanded && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setIsExpanded(false)}
-        />
-      )}
+      {isExpanded && <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setIsExpanded(false)} />}
 
       {/* Player Container */}
       <div
@@ -183,9 +191,7 @@ export function FloatingMediaPlayer({
                 aria-label="Minimize player"
                 data-testid="minimize-player"
               >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M19 13H5v-2h14v2z" />
-                </svg>
+                <IconChevronDown />
               </button>
               <button
                 onClick={onClose}
@@ -193,9 +199,7 @@ export function FloatingMediaPlayer({
                 aria-label="Close player"
                 data-testid="close-player"
               >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <IconX />
               </button>
             </div>
 
@@ -211,9 +215,7 @@ export function FloatingMediaPlayer({
                   />
                 ) : (
                   <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                    <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-                    </svg>
+                    <IconMusic />
                   </div>
                 )}
               </div>
@@ -249,10 +251,7 @@ export function FloatingMediaPlayer({
                   aria-label="Skip back 15 seconds"
                   data-testid="skip-back-button"
                 >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z" />
-                    <text x="12" y="15" textAnchor="middle" fontSize="8" fill="white">15</text>
-                  </svg>
+                  <IconPlayerSkipBack />
                 </button>
 
                 <button
@@ -261,15 +260,7 @@ export function FloatingMediaPlayer({
                   aria-label={isPlaying ? 'Pause' : 'Play'}
                   data-testid="main-play-pause-button"
                 >
-                  {isPlaying ? (
-                    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  )}
+                  {isPlaying ? <IconPlayerPause /> : <IconPlayerPlay />}
                 </button>
 
                 <button
@@ -278,26 +269,21 @@ export function FloatingMediaPlayer({
                   aria-label="Skip forward 15 seconds"
                   data-testid="skip-forward-button"
                 >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M13 6v12l8.5-6L13 6zM4 18l8.5-6L4 6v12z" />
-                    <text x="12" y="15" textAnchor="middle" fontSize="8" fill="white">15</text>
-                  </svg>
+                  <IconPlayerSkipForward />
                 </button>
               </div>
 
               {/* Secondary Controls */}
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
-                  </svg>
+                  <IconVolume />
                   <input
                     type="range"
                     min="0"
                     max="1"
                     step="0.1"
                     value={volume}
-                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                    onChange={e => setVolume(parseFloat(e.target.value))}
                     className="w-20 h-1 bg-white bg-opacity-30 rounded-full appearance-none slider"
                     aria-label="Volume"
                   />
@@ -307,7 +293,7 @@ export function FloatingMediaPlayer({
                   <span className="text-sm text-white text-opacity-80">Speed:</span>
                   <select
                     value={playbackRate}
-                    onChange={(e) => setPlaybackRate(parseFloat(e.target.value))}
+                    onChange={e => setPlaybackRate(parseFloat(e.target.value))}
                     className="bg-white bg-opacity-20 text-white text-sm rounded px-2 py-1 appearance-none"
                     aria-label="Playback speed"
                   >
@@ -335,9 +321,7 @@ export function FloatingMediaPlayer({
                 />
               ) : (
                 <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-                  </svg>
+                  <IconMusic />
                 </div>
               )}
             </div>
@@ -356,15 +340,7 @@ export function FloatingMediaPlayer({
                 aria-label={isPlaying ? 'Pause' : 'Play'}
                 data-testid="mini-play-pause-button"
               >
-                {isPlaying ? (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                )}
+                {isPlaying ? <IconPlayerPause /> : <IconPlayerPlay />}
               </button>
 
               <button
@@ -373,9 +349,7 @@ export function FloatingMediaPlayer({
                 aria-label="Expand player"
                 data-testid="expand-player"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z" />
-                </svg>
+                <IconChevronUp />
               </button>
 
               <button
@@ -384,18 +358,13 @@ export function FloatingMediaPlayer({
                 aria-label="Close player"
                 data-testid="mini-close-player"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <IconX />
               </button>
             </div>
 
             {/* Progress Bar */}
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-white bg-opacity-30">
-              <div
-                className="h-1 bg-white transition-all"
-                style={{ width: `${progressPercentage}%` }}
-              />
+              <div className="h-1 bg-white transition-all" style={{ width: `${progressPercentage}%` }} />
             </div>
           </div>
         )}
