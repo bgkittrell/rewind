@@ -97,13 +97,19 @@ test.describe('Rewind App', () => {
     // Wait for any dynamic content to load
     await page.waitForTimeout(1000)
 
-    // Check if episode cards are present (even if they're placeholders)
-    const episodeCards = page.locator('.episode-card')
-    await expect(episodeCards).toHaveCount(1) // Currently has 1 placeholder
+    // Check if episode cards are present
+    const episodeCards = page.locator('[data-testid="episode-card"]')
+    await expect(episodeCards).toHaveCount(4) // Now has 4 sample episodes
 
     // Take a focused screenshot of the episode card area
-    await page.locator('.episode-card').first().screenshot({
+    await page.locator('[data-testid="episode-card"]').first().screenshot({
       path: 'test-results/screenshots/episode-card.png',
+    })
+
+    // Take a screenshot of all episode cards
+    await page.screenshot({
+      path: 'test-results/screenshots/episode-cards-full.png',
+      fullPage: true,
     })
   })
 

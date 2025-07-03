@@ -23,7 +23,7 @@ export default function Header() {
           </button>
 
           {/* Centered title and icon */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
+          <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-1/2">
             {/* Rewind Icon (two left-pointing triangles) */}
             <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 5l-7 7 7 7V5zm7 0l-7 7 7 7V5z" />
