@@ -3,3 +3,91 @@ description:
 globs:
 alwaysApply: false
 ---
+# Documentation Maintenance Guidelines
+
+## Documentation Update Requirements
+
+### When to Update Documentation
+- **Architectural Changes**: Any changes to system architecture, patterns, or design decisions
+- **API Changes**: New endpoints, modified request/response formats, authentication changes
+- **Database Changes**: Schema modifications, new tables, index changes
+- **Infrastructure Changes**: AWS service configurations, deployment processes, environment variables
+- **Feature Additions**: New functionality that affects existing systems
+- **Breaking Changes**: Any changes that require migration or affect existing integrations
+
+### Documentation Files to Update
+
+#### Core Planning Documents
+- **[PLAN.md](mdc:docs/PLAN.md)**: Update task status, add new tasks, note completed milestones
+- **[PROJECT_STRUCTURE.md](mdc:docs/PROJECT_STRUCTURE.md)**: Reflect changes to directory structure or build processes
+
+#### Technical Specifications
+- **[BACKEND_API.md](mdc:docs/BACKEND_API.md)**: API endpoint changes, authentication updates, new response formats
+- **[DATABASE.md](mdc:docs/DATABASE.md)**: Schema changes, new tables, query optimizations
+- **[UI_TECH.md](mdc:docs/UI_TECH.md)**: Frontend architecture changes, new components, build process updates
+- **[INFRASTRUCTURE.md](mdc:docs/INFRASTRUCTURE.md)**: AWS service changes, deployment updates, monitoring configurations
+
+#### Feature-Specific Documentation
+- **[RECOMMENDATION_ENGINE.md](mdc:docs/RECOMMENDATION_ENGINE.md)**: ML model changes, algorithm updates
+- **[PWA_FEATURES.md](mdc:docs/PWA_FEATURES.md)**: Service worker changes, offline functionality updates
+- **[LIBRARY_SHARING.md](mdc:docs/LIBRARY_SHARING.md)**: Sharing mechanism changes, security updates
+- **[ERROR_HANDLING.md](mdc:docs/ERROR_HANDLING.md)**: New error types, handling strategies
+- **[THIRD_PARTY_INTEGRATIONS.md](mdc:docs/THIRD_PARTY_INTEGRATIONS.md)**: New integrations, API changes
+
+## Update Process
+
+### Before Making Changes
+1. **Review existing documentation** to understand current state
+2. **Plan documentation updates** alongside code changes
+3. **Identify affected files** and update requirements
+
+### During Implementation
+1. **Update documentation incrementally** as you make changes
+2. **Keep documentation in sync** with code changes
+3. **Test documentation accuracy** by following the documented procedures
+
+### After Implementation
+1. **Finalize documentation updates** with completed changes
+2. **Review for completeness** and accuracy
+3. **Update task status** in [PLAN.md](mdc:docs/PLAN.md)
+
+## Documentation Standards
+
+### Commit Messages
+- Include documentation updates in the same commit as code changes
+- Use clear commit messages that reference documentation updates
+- Example: "Add user preferences API + update BACKEND_API.md"
+
+### Code Reviews
+- **Review documentation changes** as part of code review process
+- **Verify accuracy** of documented procedures and configurations
+- **Check for completeness** of updates across all affected files
+
+### Version Control
+- **Keep documentation in sync** with code branches
+- **Update documentation** when merging feature branches
+- **Maintain documentation history** for reference
+
+## Quality Assurance
+
+### Documentation Review Checklist
+- [ ] All architectural decisions are documented
+- [ ] API changes are reflected in BACKEND_API.md
+- [ ] Database changes are documented in DATABASE.md
+- [ ] Infrastructure changes are updated in INFRASTRUCTURE.md
+- [ ] Task status is current in PLAN.md
+- [ ] Code examples are accurate and tested
+- [ ] Configuration examples are up-to-date
+- [ ] Cross-references between documents are correct
+
+### Regular Maintenance
+- **Monthly review** of all documentation for accuracy
+- **Quarterly audit** of documentation completeness
+- **Update outdated information** as systems evolve
+- **Archive deprecated documentation** when appropriate
+
+## Emergency Updates
+- **Critical changes** require immediate documentation updates
+- **Security updates** must be documented with implementation details
+- **Breaking changes** need migration guides and rollback procedures
+- **Production issues** should be documented with root cause analysis

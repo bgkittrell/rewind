@@ -1,5 +1,73 @@
 ---
-description:
-globs:
-alwaysApply: false
+description: 
+globs: 
+alwaysApply: true
 ---
+# Cursor Rules Index
+
+## Overview
+This index provides guidance on which Cursor rules to reference for different development tasks in the Rewind project.
+
+## Rule Categories
+
+### 🏗️ Project Foundation
+- **[project-overview.mdc](mdc:.cursor/rules/project-overview.mdc)**: Start here for project understanding, technology stack, and key features
+- **[documentation-maintenance.mdc](mdc:.cursor/rules/documentation-maintenance.mdc)**: Guidelines for keeping documentation current with architectural decisions
+
+### 🎨 Frontend Development
+- **@frontend/frontend-development.mdc**: React Router v7, TypeScript, Tailwind CSS, and PWA implementation
+- **[testing-strategy.mdc](mdc:.cursor/rules/testing-strategy.mdc)**: Storybook, Vitest, and end-to-end testing approaches
+
+### 🔧 Backend Development
+- **@backend/backend-development.mdc**: Lambda functions, API design, and AWS services integration
+- **[infrastructure-aws.mdc](mdc:.cursor/rules/infrastructure-aws.mdc)**: AWS CDK, deployment, and infrastructure management
+
+### ⚡ Feature Implementation
+- **[feature-specific.mdc](mdc:.cursor/rules/feature-specific.mdc)**: Recommendation engine, library sharing, PWA features, and audio playback
+
+## When to Use Each Rule
+
+### Starting a New Feature
+1. Check **[project-overview.mdc](mdc:.cursor/rules/project-overview.mdc)** for context
+2. Review **[documentation-maintenance.mdc](mdc:.cursor/rules/documentation-maintenance.mdc)** for update requirements
+3. Reference **[feature-specific.mdc](mdc:.cursor/rules/feature-specific.mdc)** for feature details
+
+### Frontend Development
+- **@frontend/frontend-development.mdc** for component structure and styling
+- **[testing-strategy.mdc](mdc:.cursor/rules/testing-strategy.mdc)** for testing approaches
+- **[feature-specific.mdc](mdc:.cursor/rules/feature-specific.mdc)** for UI-specific features
+
+### Backend Development
+- **@backend/backend-development.mdc** for API and Lambda development
+- **[infrastructure-aws.mdc](mdc:.cursor/rules/infrastructure-aws.mdc)** for AWS service configuration
+- **[testing-strategy.mdc](mdc:.cursor/rules/testing-strategy.mdc)** for backend testing
+
+### Infrastructure and Deployment
+- **[infrastructure-aws.mdc](mdc:.cursor/rules/infrastructure-aws.mdc)** for AWS CDK and deployment
+
+### Testing and Quality Assurance
+- **[testing-strategy.mdc](mdc:.cursor/rules/testing-strategy.mdc)** for all testing approaches
+
+### Documentation and Maintenance
+- **[documentation-maintenance.mdc](mdc:.cursor/rules/documentation-maintenance.mdc)** for keeping docs current
+
+## Documentation References
+All rules reference the comprehensive documentation in the `docs/` directory:
+- [PROJECT_STRUCTURE.md](mdc:docs/PROJECT_STRUCTURE.md)
+- [PLAN.md](mdc:docs/PLAN.md)
+- [UI_TECH.md](mdc:docs/UI_TECH.md)
+- [BACKEND_API.md](mdc:docs/BACKEND_API.md)
+- [AWS_CONFIG.md](mdc:docs/AWS_CONFIG.md)
+- [INFRASTRUCTURE.md](mdc:docs/INFRASTRUCTURE.md)
+- [RECOMMENDATION_ENGINE.md](mdc:docs/RECOMMENDATION_ENGINE.md)
+- [PWA_FEATURES.md](mdc:docs/PWA_FEATURES.md)
+- [LIBRARY_SHARING.md](mdc:docs/LIBRARY_SHARING.md)
+- [ERROR_HANDLING.md](mdc:docs/ERROR_HANDLING.md)
+- [THIRD_PARTY_INTEGRATIONS.md](mdc:docs/THIRD_PARTY_INTEGRATIONS.md)
+
+## Quick Reference
+- **API Base URL**: `https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1`
+- **Primary Color**: `#eb4034` (red)
+- **Target Audience**: Podcast enthusiasts aged 35+
+- **Key Feature**: Rediscovery of older podcast episodes
+- **Architecture**: Mobile-first PWA with AWS serverless backend

@@ -3,3 +3,107 @@ description:
 globs:
 alwaysApply: false
 ---
+# Feature-Specific Development Guidelines
+
+## Recommendation Engine
+Reference [RECOMMENDATION_ENGINE.md](mdc:docs/RECOMMENDATION_ENGINE.md) for detailed implementation:
+
+### AWS Personalize Integration
+- **Service**: AWS Personalize for ML-powered recommendations
+- **Data Sources**: User listening history, episode metadata
+- **Features**: Comedy episode filtering, time-based recommendations
+- **API Endpoint**: `GET /recommendations`
+
+### Recommendation Logic
+- Focus on episodes older than 1 month
+- Prioritize comedy podcasts for target audience
+- Consider user feedback (thumbs-up/thumbs-down)
+- Factor in listening patterns and preferences
+
+## Library Sharing
+Reference [LIBRARY_SHARING.md](mdc:docs/LIBRARY_SHARING.md) for implementation details:
+
+### Frontend Implementation
+- Share button in Library screen
+- Generate shareable URLs
+- Add podcasts from shared libraries
+- Visual feedback for sharing status
+
+### Backend Implementation
+- **API Endpoints**: `POST /library/share`, `GET /library/share/:shareId`
+- **URL Generation**: Create unique, secure share links
+- **Data Structure**: Store shared library configurations
+- **Security**: Validate share permissions and expiration
+
+## PWA Features
+Reference [PWA_FEATURES.md](mdc:docs/PWA_FEATURES.md) for complete PWA implementation:
+
+### Service Worker
+- **Purpose**: Enable offline playback
+- **Caching**: Cache audio files and app shell
+- **Updates**: Handle app updates gracefully
+- **Background Sync**: Sync data when online
+
+### Manifest Configuration
+- **App Name**: "Rewind"
+- **Theme Color**: `#eb4034` (primary red)
+- **Icons**: 192x192 and 512x512 PNG icons
+- **Display**: Standalone app experience
+
+### Offline Capabilities
+- Cache recently played episodes
+- Store user preferences locally
+- Queue actions for when online
+- Provide offline status indicators
+
+## Audio Playback
+### Floating Media Player
+- **Mini Player**: Compact controls at bottom
+- **Expanded Player**: Full-screen with detailed controls
+- **Background Playback**: Continue playing when app is minimized
+- **Progress Tracking**: Save and restore playback position
+
+### External Device Support
+- **Bluetooth**: Support for Bluetooth headphones/speakers
+- **AirPlay**: iOS AirPlay compatibility
+- **Android Auto**: Android Auto integration
+- **CarPlay**: iOS CarPlay support
+
+## Episode Management
+### Episode Cards
+- **Display**: Thumbnail, title, podcast name, release date, duration
+- **Actions**: Play, AI explanation, add to favorites
+- **Progress**: Visual progress indicators
+- **Status**: Listened/unlistened indicators
+
+### AI Explanation Feature
+- **Purpose**: Provide episode summaries and context
+- **Integration**: Connect to AI service for explanations
+- **UI**: Dedicated button on episode cards
+- **Caching**: Cache explanations for offline access
+
+## Search and Discovery
+### Search Functionality
+- **Scope**: Search across podcasts and episodes
+- **Filters**: By podcast, date range, duration
+- **Results**: Ranked by relevance and popularity
+- **History**: Save recent searches
+
+### RSS Feed Integration
+- **Updates**: Daily RSS feed processing via EventBridge
+- **New Episodes**: Automatic episode discovery
+- **Metadata**: Extract episode information from feeds
+- **Validation**: Verify RSS feed validity
+
+## User Authentication
+### Cognito Integration
+- **Provider**: Amazon Cognito for authentication
+- **Social Login**: Support for social providers
+- **JWT Tokens**: Secure API access
+- **User Management**: Profile and preferences
+
+### User Experience
+- **Onboarding**: Smooth first-time user experience
+- **Profile Management**: User preferences and settings
+- **Data Privacy**: Clear data usage policies
+- **Account Recovery**: Password reset and account recovery

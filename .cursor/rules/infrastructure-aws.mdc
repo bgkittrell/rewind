@@ -3,3 +3,89 @@ description:
 globs:
 alwaysApply: false
 ---
+# Infrastructure and AWS Guidelines
+
+## Technology Stack
+- **Infrastructure as Code**: AWS CDK v2 with TypeScript
+- **Hosting**: S3 + CloudFront for frontend
+- **Backend**: Lambda + API Gateway + DynamoDB
+- **Authentication**: Amazon Cognito
+- **Monitoring**: CloudWatch
+- **Recommendations**: AWS Personalize
+
+## CDK Project Structure
+```
+infra/
+├── bin/              # CDK app entry point (rewind.ts)
+├── lib/              # Stack definitions
+├── cdk.json          # CDK configuration
+└── package.json      # CDK dependencies
+```
+
+## AWS Services Configuration
+Reference [AWS_CONFIG.md](mdc:docs/AWS_CONFIG.md) for detailed service configurations:
+
+### Frontend Hosting
+- **S3 Bucket**: Static website hosting
+- **CloudFront**: CDN for global distribution
+- **Route 53**: Domain management (if applicable)
+
+### Backend Services
+- **Lambda**: Serverless compute for API handlers
+- **API Gateway**: RESTful API endpoints
+- **DynamoDB**: NoSQL database for data persistence
+- **Cognito**: User authentication and authorization
+
+### Additional Services
+- **Personalize**: Recommendation engine
+- **EventBridge**: Scheduled RSS feed updates
+- **CloudWatch**: Monitoring and logging
+- **SNS/SQS**: Event-driven architecture (if needed)
+
+## Deployment Process
+Reference [INFRASTRUCTURE.md](mdc:docs/INFRASTRUCTURE.md) for:
+- CDK deployment commands
+- Environment-specific configurations
+- Cost optimization strategies
+
+### Commands
+```bash
+# Synthesize CloudFormation templates
+cdk synth
+
+# Deploy to AWS
+cdk deploy
+
+# Destroy infrastructure
+cdk destroy
+```
+
+## Environment Management
+- **Development**: Separate stack for development environment
+- **Production**: Production-optimized configuration
+- **Staging**: Pre-production testing environment
+
+## Security Best Practices
+- Use IAM roles with least privilege
+- Encrypt data at rest and in transit
+- Implement proper CORS policies
+- Secure API Gateway endpoints
+- Monitor access logs and metrics
+
+## Cost Optimization
+- Use Lambda provisioned concurrency for consistent performance
+- Implement DynamoDB auto-scaling
+- Monitor CloudWatch metrics for cost analysis
+- Use S3 lifecycle policies for cost management
+
+## Monitoring and Alerting
+- Set up CloudWatch dashboards
+- Configure alarms for critical metrics
+- Monitor Lambda function performance
+- Track API Gateway usage and errors
+
+## Third-Party Integrations
+Reference [THIRD_PARTY_INTEGRATIONS.md](mdc:docs/THIRD_PARTY_INTEGRATIONS.md) for:
+- RSS feed processing
+- Social authentication providers
+- External API integrations

@@ -35,3 +35,13 @@ Rewind is a mobile-first Progressive Web App (PWA) for podcast enthusiasts aged 
 - Implement comprehensive testing with Storybook and Vitest
 - Follow AWS best practices for serverless architecture
 - Prioritize mobile UX and accessibility
+
+## Documentation Maintenance
+- **Update docs/ files immediately** when making architectural decisions
+- **Reference [PLAN.md](mdc:docs/PLAN.md)** to track progress and update task status
+- **Update relevant technical docs** when changing APIs, schemas, or configurations
+- **Document decisions** in appropriate files (e.g., database changes in [DATABASE.md](mdc:docs/DATABASE.md))
+- **Keep API documentation current** in [BACKEND_API.md](mdc:docs/BACKEND_API.md) when endpoints change
+- **Update infrastructure docs** in [INFRASTRUCTURE.md](mdc:docs/INFRASTRUCTURE.md) for deployment changes
+- **Commit documentation changes** with code changes in the same commit
+- **Review documentation** during code reviews to ensure accuracy

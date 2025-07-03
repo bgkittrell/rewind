@@ -1,0 +1,80 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Backend Development Guidelines
+
+## Technology Stack
+- **Runtime**: Node.js with TypeScript
+- **Serverless**: AWS Lambda functions
+- **Database**: DynamoDB for data persistence
+- **Authentication**: Amazon Cognito JWT tokens
+- **API**: RESTful APIs via API Gateway
+- **Infrastructure**: AWS CDK v2 for deployment
+
+## API Specifications
+Reference [BACKEND_API.md](mdc:docs/BACKEND_API.md) for complete API documentation:
+
+### Base URL
+- **Production**: `https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1`
+- **Development**: `https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1`
+
+### Authentication
+- **Method**: Amazon Cognito JWT-based authentication
+- **Header**: `Authorization: Bearer <cognito_jwt_token>`
+- **User Pool**: `us-east-1_Cw78Mapt3`
+- **Client ID**: `49kf2uvsl9vg08ka6o67ts41jj`
+
+## Core Endpoints
+- **Podcast Management**: `POST /podcasts`, `GET /podcasts`, `DELETE /podcasts/:podcastId`
+- **Episodes**: `GET /podcasts/:podcastId/episodes`
+- **Recommendations**: `GET /recommendations`, `POST /episodes/:episodeId/feedback`
+- **Playback**: `PUT /episodes/:episodeId/playback`
+- **Library Sharing**: `POST /library/share`, `GET /library/share/:shareId`
+
+## Project Structure
+```
+backend/src/
+├── handlers/         # Lambda handler files
+├── services/         # Business logic
+├── utils/           # Utility functions
+└── types/           # TypeScript type definitions
+```
+
+## Lambda Function Guidelines
+- Use TypeScript for all Lambda functions
+- Implement proper error handling and logging
+- Follow AWS Lambda best practices
+- Use environment variables for configuration
+- Implement proper input validation
+
+## Database Design
+Reference [DATABASE.md](mdc:docs/DATABASE.md) for:
+- DynamoDB table schemas
+- Query patterns and optimization
+- Data modeling best practices
+
+## Business Logic
+Reference [BACKEND_LOGIC.md](mdc:docs/BACKEND_LOGIC.md) for:
+- RSS feed processing
+- Recommendation engine integration
+- Episode update workflows
+
+## Error Handling
+Reference [ERROR_HANDLING.md](mdc:docs/ERROR_HANDLING.md) for:
+- Standardized error responses
+- Logging and monitoring
+- Client-friendly error messages
+
+## Testing
+- Unit tests for Lambda functions using Vitest
+- Integration tests for API endpoints
+- Mock DynamoDB for testing
+- Test authentication flows
+
+## Deployment
+- Use AWS CDK v2 for infrastructure as code
+- Deploy Lambda functions via CDK
+- Configure API Gateway and DynamoDB
+- Set up CloudWatch monitoring
