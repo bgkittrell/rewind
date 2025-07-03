@@ -3,7 +3,9 @@ import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as apigateway from 'aws-cdk-lib/aws-apigateway'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import { Construct } from 'constructs'
+import * as path from 'path'
 
 export interface RewindBackendStackProps extends cdk.StackProps {
   tables: { [key: string]: dynamodb.Table }
@@ -18,10 +20,10 @@ export class RewindBackendStack extends cdk.Stack {
     super(scope, id, props)
 
     // Create Lambda function for podcast operations
-    const podcastFunction = new lambda.Function(this, 'PodcastHandler', {
+    const podcastFunction = new NodejsFunction(this, 'PodcastHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'podcastHandler.handler',
-      code: lambda.Code.fromAsset('../backend/dist'), // Will be built later
+      handler: 'handler',
+      entry: path.join(__dirname, '../../backend/src/handlers/podcastHandler.ts'),
       environment: {
         USERS_TABLE: props.tables.users.tableName,
         PODCASTS_TABLE: props.tables.podcasts.tableName,
@@ -33,13 +35,18 @@ export class RewindBackendStack extends cdk.Stack {
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
+      bundling: {
+        minify: false,
+        sourceMap: true,
+        externalModules: ['aws-sdk'],
+      },
     })
 
     // Create Lambda function for authentication operations
-    const authFunction = new lambda.Function(this, 'AuthHandler', {
+    const authFunction = new NodejsFunction(this, 'AuthHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'authHandler.handler',
-      code: lambda.Code.fromAsset('../backend/dist'),
+      handler: 'handler',
+      entry: path.join(__dirname, '../../backend/src/handlers/authHandler.ts'),
       environment: {
         USERS_TABLE: props.tables.users.tableName,
         USER_POOL_ID: props.userPool.userPoolId,
@@ -47,6 +54,11 @@ export class RewindBackendStack extends cdk.Stack {
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
+      bundling: {
+        minify: false,
+        sourceMap: true,
+        externalModules: ['aws-sdk'],
+      },
     })
 
     // Grant DynamoDB permissions to the Lambda functions
@@ -60,6 +72,7 @@ export class RewindBackendStack extends cdk.Stack {
       cognitoUserPools: [props.userPool],
       authorizerName: 'RewindCognitoAuthorizer',
       identitySource: 'method.request.header.Authorization',
+      resultsCacheTtl: cdk.Duration.seconds(0), // Disable caching for debugging
     })
 
     // Create API Gateway
@@ -67,9 +80,13 @@ export class RewindBackendStack extends cdk.Stack {
       restApiName: 'Rewind API',
       description: 'API for Rewind podcast app',
       defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS,
-        allowMethods: apigateway.Cors.ALL_METHODS,
-        allowHeaders: ['Content-Type', 'Authorization'],
+        allowOrigins: ['*'],
+        allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowHeaders: ['Content-Type', 'Authorization', 'X-Amz-Date', 'X-Api-Key', 'X-Amz-Security-Token'],
+        allowCredentials: false,
+      },
+      deployOptions: {
+        stageName: 'prod',
       },
     })
 

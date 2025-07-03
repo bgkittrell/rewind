@@ -10,6 +10,7 @@ import {
   fetchAuthSession,
   fetchUserAttributes,
 } from 'aws-amplify/auth'
+import { apiClient } from '../services/api'
 
 // Configuration will be set at runtime
 const amplifyConfig = {
@@ -71,11 +72,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const checkAuthState = async () => {
     try {
+      console.log('AuthContext: Starting auth check')
       setIsLoading(true)
       const currentUser = await getCurrentUser()
       const session = await fetchAuthSession()
 
       if (currentUser && session.tokens) {
+        // Set the auth token in the API client
+        // Try ID token first, then access token as fallback
+        const token = session.tokens.idToken || session.tokens.accessToken
+        if (token) {
+          console.log(
+            'AuthContext: Setting auth token (type:',
+            session.tokens.idToken ? 'ID' : 'Access',
+            ')',
+            token.toString(),
+          )
+          apiClient.setAuthToken(token.toString())
+        }
+
         // Fetch user attributes to get the name
         const attributes = await fetchUserAttributes()
         setUser({
@@ -84,13 +99,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
           name: attributes.name || attributes.preferred_username || '',
         })
         setIsAuthenticated(true)
+        console.log('AuthContext: User authenticated successfully')
       }
     } catch (error) {
-      console.log('User is not authenticated')
+      console.log('AuthContext: User is not authenticated', error)
       setUser(null)
       setIsAuthenticated(false)
+      apiClient.clearAuthToken()
     } finally {
       setIsLoading(false)
+      console.log('AuthContext: Auth check completed')
     }
   }
 
@@ -153,6 +171,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await signOut()
       setUser(null)
       setIsAuthenticated(false)
+      apiClient.clearAuthToken()
     } catch (error) {
       console.error('Sign out error:', error)
     }

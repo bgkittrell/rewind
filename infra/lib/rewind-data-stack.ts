@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
+import * as iam from 'aws-cdk-lib/aws-iam'
 import { Construct } from 'constructs'
 
 export interface RewindDataStackProps extends cdk.StackProps {}
@@ -34,6 +35,8 @@ export class RewindDataStack extends cdk.Stack {
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
+      // Ensure MFA is not required which can cause authorization issues
+      mfa: cognito.Mfa.OFF,
     })
 
     // User Pool Client
@@ -43,8 +46,8 @@ export class RewindDataStack extends cdk.Stack {
       generateSecret: false, // For web clients
       authFlows: {
         userSrp: true,
-        userPassword: false,
-        adminUserPassword: false,
+        userPassword: true, // Enable this for admin auth
+        adminUserPassword: true, // Enable this for admin auth
       },
       oAuth: {
         flows: {
@@ -69,6 +72,55 @@ export class RewindDataStack extends cdk.Stack {
           providerName: this.userPool.userPoolProviderName,
         },
       ],
+    })
+
+    // Create IAM roles for Identity Pool
+    const authenticatedRole = new iam.Role(this, 'RewindAuthenticatedRole', {
+      assumedBy: new iam.FederatedPrincipal(
+        'cognito-identity.amazonaws.com',
+        {
+          StringEquals: {
+            'cognito-identity.amazonaws.com:aud': this.identityPool.ref,
+          },
+          'ForAnyValue:StringLike': {
+            'cognito-identity.amazonaws.com:amr': 'authenticated',
+          },
+        },
+        'sts:AssumeRoleWithWebIdentity',
+      ),
+    })
+
+    // Add basic permissions to authenticated role
+    authenticatedRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['cognito-identity:*'],
+        resources: ['*'],
+      }),
+    )
+
+    const unauthenticatedRole = new iam.Role(this, 'RewindUnauthenticatedRole', {
+      assumedBy: new iam.FederatedPrincipal(
+        'cognito-identity.amazonaws.com',
+        {
+          StringEquals: {
+            'cognito-identity.amazonaws.com:aud': this.identityPool.ref,
+          },
+          'ForAnyValue:StringLike': {
+            'cognito-identity.amazonaws.com:amr': 'unauthenticated',
+          },
+        },
+        'sts:AssumeRoleWithWebIdentity',
+      ),
+    })
+
+    // Attach roles to Identity Pool
+    new cognito.CfnIdentityPoolRoleAttachment(this, 'RewindIdentityPoolRoleAttachment', {
+      identityPoolId: this.identityPool.ref,
+      roles: {
+        authenticated: authenticatedRole.roleArn,
+        unauthenticated: unauthenticatedRole.roleArn,
+      },
     })
 
     // Users table

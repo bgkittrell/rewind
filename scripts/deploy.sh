@@ -173,10 +173,17 @@ deploy_frontend() {
     cat > .env.production << EOF
 VITE_API_BASE_URL=$API_URL
 VITE_AWS_REGION=$AWS_REGION
-VITE_COGNITO_USER_POOL_ID=$USER_POOL_ID
-VITE_COGNITO_USER_POOL_CLIENT_ID=$USER_POOL_CLIENT_ID
-VITE_COGNITO_IDENTITY_POOL_ID=$IDENTITY_POOL_ID
+VITE_USER_POOL_ID=$USER_POOL_ID
+VITE_USER_POOL_CLIENT_ID=$USER_POOL_CLIENT_ID
+VITE_IDENTITY_POOL_ID=$IDENTITY_POOL_ID
 EOF
+    
+    # Validate API URL format
+    echo "API URL: $API_URL"
+    if [[ ! "$API_URL" =~ ^https://.*\.execute-api\..*\.amazonaws\.com/.*$ ]]; then
+        log_error "Invalid API URL format: $API_URL"
+        exit 1
+    fi
     
     # Build frontend
     npm run build
@@ -209,11 +216,26 @@ run_health_checks() {
     API_HEALTH_URL="${API_URL}health"
     log_info "Checking API health at: $API_HEALTH_URL"
     
+    # Test direct API call
     if curl -f -s "$API_HEALTH_URL" > /dev/null; then
         log_success "API health check passed"
     else
         log_error "API health check failed"
         exit 1
+    fi
+    
+    # Test CORS headers
+    log_info "Testing CORS headers..."
+    CORS_TEST=$(curl -s -H "Origin: https://$DISTRIBUTION_ID.cloudfront.net" \
+        -H "Access-Control-Request-Method: GET" \
+        -H "Access-Control-Request-Headers: Content-Type,Authorization" \
+        -X OPTIONS "$API_HEALTH_URL" -I)
+    
+    if echo "$CORS_TEST" | grep -q "Access-Control-Allow-Origin"; then
+        log_success "CORS headers present"
+    else
+        log_warning "CORS headers not found in response"
+        echo "CORS Response: $CORS_TEST"
     fi
     
     # Check frontend

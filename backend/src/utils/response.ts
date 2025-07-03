@@ -4,7 +4,7 @@ export function createSuccessResponse<T>(
   data: T,
   statusCode: number = 200,
   path?: string,
-): { statusCode: number; body: string } {
+): { statusCode: number; body: string; headers: any } {
   const response: APIResponse<T> = {
     data,
     timestamp: new Date().toISOString(),
@@ -14,6 +14,7 @@ export function createSuccessResponse<T>(
   return {
     statusCode,
     body: JSON.stringify(response),
+    headers: createCorsHeaders(),
   }
 }
 
@@ -23,7 +24,7 @@ export function createErrorResponse(
   statusCode: number = 500,
   path?: string,
   details?: any,
-): { statusCode: number; body: string } {
+): { statusCode: number; body: string; headers: any } {
   const response: APIResponse = {
     error: {
       message,
@@ -37,14 +38,16 @@ export function createErrorResponse(
   return {
     statusCode,
     body: JSON.stringify(response),
+    headers: createCorsHeaders(),
   }
 }
 
 export function createCorsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
     'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'Access-Control-Allow-Credentials': 'false',
     'Content-Type': 'application/json',
   }
 }

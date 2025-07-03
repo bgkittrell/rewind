@@ -3,26 +3,39 @@ import AddPodcastModal from '../components/AddPodcastModal'
 import PodcastCard from '../components/PodcastCard'
 import { podcastService, Podcast } from '../services/podcastService'
 import { APIError } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 export default function Library() {
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth()
   const [podcasts, setPodcasts] = useState<Podcast[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [deletingPodcastId, setDeletingPodcastId] = useState<string | null>(null)
 
-  // Load podcasts on component mount
+  // Load podcasts only after authentication is complete
   useEffect(() => {
-    loadPodcasts()
-  }, [])
+    console.log('Library: Auth state changed', { authLoading, isAuthenticated, user })
+    if (!authLoading && isAuthenticated) {
+      console.log('Library: Loading podcasts for authenticated user')
+      loadPodcasts()
+    } else if (!authLoading && !isAuthenticated) {
+      console.log('Library: User not authenticated, showing error')
+      setIsLoading(false)
+      setError('Please sign in to view your library')
+    }
+  }, [authLoading, isAuthenticated])
 
   const loadPodcasts = async () => {
     try {
+      console.log('Library: Starting to load podcasts')
       setIsLoading(true)
       setError(null)
       const response = await podcastService.getPodcasts()
+      console.log('Library: Podcasts loaded successfully', response)
       setPodcasts(response.podcasts)
     } catch (err) {
+      console.log('Library: Failed to load podcasts', err)
       if (err instanceof APIError) {
         setError(err.message)
       } else {
@@ -74,11 +87,13 @@ export default function Library() {
       </div>
 
       {/* Add Podcast Button */}
-      <div className="mb-6">
-        <button onClick={() => setIsAddModalOpen(true)} className="btn-primary w-full">
-          Add Podcast
-        </button>
-      </div>
+      {!authLoading && isAuthenticated && (
+        <div className="mb-6">
+          <button onClick={() => setIsAddModalOpen(true)} className="btn-primary w-full">
+            Add Podcast
+          </button>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
@@ -91,15 +106,17 @@ export default function Library() {
       )}
 
       {/* Loading State */}
-      {isLoading && (
+      {(authLoading || isLoading) && (
         <div className="flex justify-center items-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-2 text-gray-600">Loading podcasts...</span>
+          <span className="ml-2 text-gray-600">
+            {authLoading ? 'Checking authentication...' : 'Loading podcasts...'}
+          </span>
         </div>
       )}
 
       {/* Empty State */}
-      {!isLoading && podcasts.length === 0 && !error && (
+      {!authLoading && !isLoading && isAuthenticated && podcasts.length === 0 && !error && (
         <div className="text-center py-8">
           <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -118,7 +135,7 @@ export default function Library() {
       )}
 
       {/* Podcast List */}
-      {!isLoading && podcasts.length > 0 && (
+      {!authLoading && !isLoading && isAuthenticated && podcasts.length > 0 && (
         <div className="space-y-4">
           {podcasts.map(podcast => (
             <PodcastCard
