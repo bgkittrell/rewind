@@ -73,6 +73,30 @@ export class RewindBackendStack extends cdk.Stack {
       },
     })
 
+    // Add health check endpoint (no authorization needed)
+    api.root.addResource('health').addMethod('GET', new apigateway.MockIntegration({
+      integrationResponses: [{
+        statusCode: '200',
+        responseTemplates: {
+          'application/json': JSON.stringify({
+            status: 'healthy',
+            timestamp: '$context.requestTime',
+            version: '1.0.0'
+          })
+        }
+      }],
+      requestTemplates: {
+        'application/json': JSON.stringify({ statusCode: 200 })
+      }
+    }), {
+      methodResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': true
+        }
+      }]
+    })
+
     // Add authentication routes (no authorization needed)
     const auth = api.root.addResource('auth')
     auth.addResource('signin').addMethod('POST', new apigateway.LambdaIntegration(authFunction))

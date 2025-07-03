@@ -66,5 +66,10 @@ export class RewindFrontendStack extends cdk.Stack {
       value: `https://${this.distributionDomainName}`,
       description: 'Website URL',
     })
+
+    new cdk.CfnOutput(this, 'DistributionId', {
+      value: distribution.distributionId,
+      description: 'CloudFront distribution ID',
+    })
   }
 }

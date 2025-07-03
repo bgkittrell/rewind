@@ -118,18 +118,45 @@ npm run test:e2e:ui
 
 ## 🚀 Deployment
 
-Infrastructure is managed with AWS CDK:
+### Automated Deployment (Recommended)
+
+The project includes automated CI/CD deployment using GitHub Actions. When code is pushed to the `main` branch, both frontend and backend are automatically deployed to AWS.
+
+**Setup Instructions:**
+1. Follow the [Deployment Setup Guide](docs/DEPLOYMENT_SETUP.md) to configure AWS and GitHub
+2. Set up the required GitHub secrets and AWS IAM roles
+3. Push to `main` branch to trigger automatic deployment
+
+**Documentation:**
+- **[DEPLOYMENT_PLAN.md](docs/DEPLOYMENT_PLAN.md)** - Complete deployment strategy
+- **[DEPLOYMENT_SETUP.md](docs/DEPLOYMENT_SETUP.md)** - Step-by-step setup guide
+
+### Manual Deployment
+
+For local testing or manual deployments:
 
 ```bash
-# Deploy backend and infrastructure
+# Use the deployment script
+./scripts/deploy.sh
+
+# Or deploy manually with CDK
 cd infra
 npm run deploy
 
-# Deploy frontend
+# Build and deploy frontend
 cd frontend
 npm run build
-npm run deploy
+aws s3 sync dist/ s3://your-bucket-name/ --delete
 ```
+
+### Deployment Features
+
+- ✅ **Automated CI/CD** with GitHub Actions
+- ✅ **Health checks** and rollback on failure
+- ✅ **Environment configuration** with CDK outputs
+- ✅ **CloudFront invalidation** for immediate updates
+- ✅ **Security scanning** and validation
+- ✅ **Cost monitoring** and optimization
 
 ## 🤝 Contributing
 
