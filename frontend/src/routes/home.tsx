@@ -10,7 +10,7 @@ const sampleEpisodes = [
     releaseDate: '2023-08-15',
     duration: '45 min',
     audioUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3',
-    imageUrl: 'https://via.placeholder.com/80x80/eb4034/ffffff?text=LTW',
+    imageUrl: 'https://images.placeholders.dev/80x80?bgColor=%23eb4034&textColor=%23ffffff&text=LTW',
     description: 'A deep dive into comedy history with classic bits and timeless humor.',
     playbackPosition: 0,
   },
@@ -21,7 +21,7 @@ const sampleEpisodes = [
     releaseDate: '2023-06-22',
     duration: '38 min',
     audioUrl: 'https://file-examples.com/storage/fe86a1e166e06f51de4b5bf/2017/11/file_example_MP3_700KB.mp3',
-    imageUrl: 'https://via.placeholder.com/80x80/26a69a/ffffff?text=BTM',
+    imageUrl: 'https://images.placeholders.dev/80x80?bgColor=%2326a69a&textColor=%23ffffff&text=BTM',
     description: 'Exploring the world of improv comedy with industry veteran Sarah Johnson.',
   },
   {
@@ -31,7 +31,7 @@ const sampleEpisodes = [
     releaseDate: '2023-05-30',
     duration: '52 min',
     audioUrl: 'https://www.kozco.com/tech/LRMonoPhase4.mp3',
-    imageUrl: 'https://via.placeholder.com/80x80/9c27b0/ffffff?text=CC',
+    imageUrl: 'https://images.placeholders.dev/80x80?bgColor=%239c27b0&textColor=%23ffffff&text=CC',
     description: 'The journey of comedians from their first open mic to headlining shows.',
   },
   {
@@ -41,7 +41,7 @@ const sampleEpisodes = [
     releaseDate: '2023-04-18',
     duration: '41 min',
     audioUrl: 'https://www.kozco.com/tech/piano2-CoolEdit-16bitPCM.mp3',
-    imageUrl: 'https://via.placeholder.com/80x80/ff9800/ffffff?text=MC',
+    imageUrl: 'https://images.placeholders.dev/80x80?bgColor=%23ff9800&textColor=%23ffffff&text=MC',
     description: 'A scientific look at humor and its effects on the human brain.',
   },
 ]
