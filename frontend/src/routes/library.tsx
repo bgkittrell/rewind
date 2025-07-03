@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import AddPodcastModal from '../components/AddPodcastModal'
 import PodcastCard from '../components/PodcastCard'
 import { podcastService, Podcast } from '../services/podcastService'
