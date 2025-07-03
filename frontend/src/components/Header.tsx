@@ -44,7 +44,7 @@ export default function Header() {
               <button
                 onClick={() => setIsAuthModalOpen(true)}
                 data-testid="login-button"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                className="text-sm text-primary hover:text-secondary font-medium"
               >
                 Sign In
               </button>

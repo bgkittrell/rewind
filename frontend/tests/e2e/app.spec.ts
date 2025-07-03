@@ -149,7 +149,8 @@ test.describe('Rewind App', () => {
       })
 
       // Test expanding the player
-      await page.click('[data-testid="expand-player"]')
+      await page.locator('[data-testid="expand-player"]').scrollIntoViewIfNeeded()
+      await page.click('[data-testid="expand-player"]', { force: true })
       await page.waitForTimeout(500)
 
       // Take screenshot of expanded player
