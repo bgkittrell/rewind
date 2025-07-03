@@ -109,13 +109,14 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 
 **Goal**: Add differentiating features that make Rewind special
 
-#### Week 5: Episode Management & Playback 📋 NEXT
+#### Week 5: Episode Management & Playback � IN PROGRESS
 
-- [ ] Episode fetching: RSS feed parsing and storage
-- [ ] Episode cards: Display podcast episodes with metadata
-- [ ] Floating media player: Mini and expanded views
-- [ ] Audio controls: Play, pause, seek, volume
-- [ ] Progress tracking: Save playback position
+- [x] Episode cards: Display podcast episodes with metadata (EpisodeCard.tsx complete)
+- [x] Floating media player: Mini and expanded views (FloatingMediaPlayer.tsx complete)
+- [x] Audio controls: Play, pause, seek, volume (UI components ready)
+- [ ] Episode fetching: RSS feed parsing and storage (Backend APIs needed)
+- [ ] Episode backend integration: Connect UI to episode APIs
+- [ ] Progress tracking: Save playback position (Backend + Frontend sync needed)
 
 #### Week 6: Recommendation Engine 📋 PLANNED
 
@@ -175,10 +176,16 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 
 ### 🚧 Next Priorities (Phase 3 In Progress)
 
-- **Episode Management**: Parse and display individual episodes
-- **Media Player**: Audio playback with position tracking
-- **Recommendations**: Basic episode suggestion algorithm
-- **PWA Features**: Service worker and offline capabilities
+**Current Focus: Episode Management & Playback (Week 1 of Phase 3)**
+- **Episode APIs**: Backend episode storage and retrieval from RSS feeds
+- **Media Player Integration**: Connect existing FloatingMediaPlayer to backend
+- **Testing Setup**: Fix missing dependencies and implement test coverage
+- **Episode Display**: Show episodes in Library and Home pages
+- **Progress Tracking**: Save/load playback positions
+
+**Upcoming (Weeks 2-4 of Phase 3)**
+- **Recommendations**: Basic episode suggestion algorithm without ML
+- **PWA Features**: Service worker and offline capabilities  
 - **Library Sharing**: Export/import podcast libraries
 
 ### 📋 Future Enhancements (Phase 4 Planned)
