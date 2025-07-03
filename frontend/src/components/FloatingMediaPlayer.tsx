@@ -117,7 +117,7 @@ export function FloatingMediaPlayer({
     const clickX = e.clientX - rect.left
     const percentage = clickX / rect.width
     const newTime = percentage * duration
-    
+
     audioRef.current.currentTime = newTime
     onSeek(newTime)
   }
