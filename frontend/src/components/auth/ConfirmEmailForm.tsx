@@ -60,11 +60,7 @@ export function ConfirmEmailForm({ email, onConfirmed, onBack }: ConfirmEmailFor
           </p>
         </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -75,7 +71,7 @@ export function ConfirmEmailForm({ email, onConfirmed, onBack }: ConfirmEmailFor
               type="text"
               id="code"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={e => setCode(e.target.value)}
               placeholder="Enter 6-digit code"
               // eslint-disable-next-line max-len
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -104,10 +100,7 @@ export function ConfirmEmailForm({ email, onConfirmed, onBack }: ConfirmEmailFor
           </button>
 
           <div>
-            <button
-              onClick={onBack}
-              className="text-sm text-gray-600 hover:text-gray-500"
-            >
+            <button onClick={onBack} className="text-sm text-gray-600 hover:text-gray-500">
               ← Back to signup
             </button>
           </div>
@@ -115,4 +108,4 @@ export function ConfirmEmailForm({ email, onConfirmed, onBack }: ConfirmEmailFor
       </div>
     </div>
   )
-} 
+}

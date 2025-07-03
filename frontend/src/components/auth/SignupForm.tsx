@@ -38,11 +38,7 @@ export function SignupForm({ onSwitchToLogin, onSwitchToConfirm }: SignupFormPro
       <div className="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 mb-4">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Create Account</h2>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -53,7 +49,7 @@ export function SignupForm({ onSwitchToLogin, onSwitchToConfirm }: SignupFormPro
               type="text"
               id="name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={e => setName(e.target.value)}
               // eslint-disable-next-line max-len
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
@@ -69,7 +65,7 @@ export function SignupForm({ onSwitchToLogin, onSwitchToConfirm }: SignupFormPro
               type="email"
               id="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               // eslint-disable-next-line max-len
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
@@ -85,7 +81,7 @@ export function SignupForm({ onSwitchToLogin, onSwitchToConfirm }: SignupFormPro
               type="password"
               id="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               // eslint-disable-next-line max-len
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
@@ -109,10 +105,7 @@ export function SignupForm({ onSwitchToLogin, onSwitchToConfirm }: SignupFormPro
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
-            <button
-              onClick={onSwitchToLogin}
-              className="text-blue-600 hover:text-blue-500 font-medium"
-            >
+            <button onClick={onSwitchToLogin} className="text-blue-600 hover:text-blue-500 font-medium">
               Sign in here
             </button>
           </p>
@@ -120,4 +113,4 @@ export function SignupForm({ onSwitchToLogin, onSwitchToConfirm }: SignupFormPro
       </div>
     </div>
   )
-} 
+}

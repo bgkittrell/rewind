@@ -57,4 +57,4 @@
     "@aws-cdk/aws-rds:preventRenderingDeprecatedCredentials": true,
     "@aws-cdk/aws-codepipeline-actions:useNewDefaultBranchForSourceAction": true
   }
-} 
+}

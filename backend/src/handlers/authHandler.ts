@@ -29,20 +29,20 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const body = event.body ? JSON.parse(event.body) : {}
 
     switch (true) {
-    case path.includes('/auth/signup') && method === 'POST':
-      return await handleSignUp(body)
+      case path.includes('/auth/signup') && method === 'POST':
+        return await handleSignUp(body)
 
-    case path.includes('/auth/signin') && method === 'POST':
-      return await handleSignIn(body)
+      case path.includes('/auth/signin') && method === 'POST':
+        return await handleSignIn(body)
 
-    case path.includes('/auth/confirm') && method === 'POST':
-      return await handleConfirmSignUp(body)
+      case path.includes('/auth/confirm') && method === 'POST':
+        return await handleConfirmSignUp(body)
 
-    case path.includes('/auth/resend') && method === 'POST':
-      return await handleResendConfirmation(body)
+      case path.includes('/auth/resend') && method === 'POST':
+        return await handleResendConfirmation(body)
 
-    default:
-      return createResponse(404, { error: 'Endpoint not found' })
+      default:
+        return createResponse(404, { error: 'Endpoint not found' })
     }
   } catch (error) {
     console.error('Auth error:', error)

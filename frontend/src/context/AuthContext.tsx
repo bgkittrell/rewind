@@ -106,9 +106,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       return {
         success: true,
-        message: isSignUpComplete
-          ? 'Account created successfully'
-          : 'Please check your email for verification code',
+        message: isSignUpComplete ? 'Account created successfully' : 'Please check your email for verification code',
       }
     } catch (error: any) {
       console.error('Sign up error:', error)

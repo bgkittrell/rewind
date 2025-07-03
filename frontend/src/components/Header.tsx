@@ -21,16 +21,13 @@ export default function Header() {
             </svg>
           </button>
           <h1 className="text-xl font-bold text-primary">Rewind</h1>
-          
+
           {/* Auth section */}
           <div className="flex items-center">
             {isAuthenticated ? (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">Hello, {user?.name}</span>
-                <button
-                  onClick={signOut}
-                  className="text-sm text-red-600 hover:text-red-500"
-                >
+                <button onClick={signOut} className="text-sm text-red-600 hover:text-red-500">
                   Logout
                 </button>
               </div>
@@ -72,10 +69,7 @@ export default function Header() {
       )}
 
       {/* Auth Modal */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-      />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </header>
   )
 }

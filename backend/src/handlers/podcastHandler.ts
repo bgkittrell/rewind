@@ -28,17 +28,17 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const path = event.path
 
     switch (method) {
-    case 'GET':
-      return await getPodcasts(userId, headers, path)
-    case 'POST':
-      return await addPodcast(event, userId, headers, path)
-    case 'DELETE':
-      return await deletePodcast(event, userId, headers, path)
-    default:
-      return {
-        ...createErrorResponse('Method not allowed', 'METHOD_NOT_ALLOWED', 405, path),
-        headers,
-      }
+      case 'GET':
+        return await getPodcasts(userId, headers, path)
+      case 'POST':
+        return await addPodcast(event, userId, headers, path)
+      case 'DELETE':
+        return await deletePodcast(event, userId, headers, path)
+      default:
+        return {
+          ...createErrorResponse('Method not allowed', 'METHOD_NOT_ALLOWED', 405, path),
+          headers,
+        }
     }
   } catch (error) {
     console.error('Handler error:', error)
