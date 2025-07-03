@@ -69,7 +69,7 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 - [x] Backend setup: Lambda functions with TypeScript
 - [x] Infrastructure setup: AWS CDK v2 configuration
 - [x] ESLint and Prettier configuration for code quality
-- [x] Testing setup: Storybook, Vitest, MSW configuration
+- [x] Testing setup: Storybook, Vitest, MSW, Playwright E2E configuration
 
 #### Days 5-7: Core Infrastructure ✅ COMPLETED
 
@@ -139,7 +139,7 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 
 #### Week 8: Testing & Quality
 
-- [ ] Comprehensive testing: Unit, integration, E2E
+- [ ] Comprehensive testing: Unit, integration, E2E (framework already configured with Playwright)
 - [ ] Performance optimization: Bundle size, loading times
 - [ ] Accessibility audit: WCAG compliance
 - [ ] Mobile optimization: Touch interactions, responsive design
@@ -181,6 +181,7 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 - [ ] Configure Cognito User Pool for development and production.
 - [ ] Set up environment variables and configuration files.
 - [x] Initialize testing frameworks (Vitest, Storybook, MSW).
+- [x] Configure Playwright E2E testing with screenshot generation.
 - [ ] Create initial CI/CD workflow structure.
 
 ### Frontend Development
@@ -207,6 +208,7 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 
 ### Testing
 
+- [x] Configure Playwright E2E testing with screenshot generation ([UI_TECH.md](#testing)).
 - [ ] Write Storybook stories for UI components ([UI_TECH.md](#testing)).
 - [ ] Write Vitest tests for components, routes, and Lambda functions ([UI_TECH.md](#testing), [BACKEND_API.md](#testing)).
 - [ ] Test Bluetooth/AirPlay compatibility ([UI_TECH.md](#external-device-support)).

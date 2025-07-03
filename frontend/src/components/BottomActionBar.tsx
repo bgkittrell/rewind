@@ -12,6 +12,7 @@ export default function BottomActionBar() {
       <div className="flex justify-around py-2">
         <Link
           to="/"
+          data-testid="nav-home"
           className={`flex flex-col items-center py-2 px-4 ${isActive('/') ? 'text-primary' : 'text-gray-500'}`}
         >
           <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,6 +29,7 @@ export default function BottomActionBar() {
 
         <Link
           to="/library"
+          data-testid="nav-library"
           className={`flex flex-col items-center py-2 px-4 ${isActive('/library') ? 'text-primary' : 'text-gray-500'}`}
         >
           <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,6 +46,7 @@ export default function BottomActionBar() {
 
         <Link
           to="/search"
+          data-testid="nav-search"
           className={`flex flex-col items-center py-2 px-4 ${isActive('/search') ? 'text-primary' : 'text-gray-500'}`}
         >
           <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

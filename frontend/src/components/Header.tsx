@@ -13,6 +13,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            data-testid="menu-button"
             className="p-2 rounded-lg hover:bg-gray-100"
             aria-label="Menu"
           >
@@ -34,6 +35,7 @@ export default function Header() {
             ) : (
               <button
                 onClick={() => setIsAuthModalOpen(true)}
+                data-testid="login-button"
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
               >
                 Sign In

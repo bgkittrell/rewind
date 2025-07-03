@@ -10,7 +10,7 @@ This document details the technical implementation of the Rewind frontend, a mob
 - Styling: Tailwind CSS for responsive, utility-first design.
 - Build Tool: Vite for fast development and production builds.
 - PWA: Workbox for service worker and offline capabilities (see PWA_FEATURES.md).
-- Testing: Storybook for component development and visual testing, Vitest for unit and integration tests, MSW for mocking API calls.
+- Testing: Playwright for e2e testing with screenshot generation, Storybook for component development and visual testing, Vitest for unit and integration tests, MSW for mocking API calls.
 - State Management: React Context or local storage/IndexedDB for persistence.
 
 ## Project Setup
@@ -23,7 +23,7 @@ This document details the technical implementation of the Rewind frontend, a mob
   ```
 - Install Dependencies:
   ```
-  npm install react-router@7 @types/react-router tailwindcss postcss autoprefixer workbox-window vitest @testing-library/react @testing-library/user-event @vitejs/plugin-react msw @testing-library/jest-dom
+  npm install react-router@7 @types/react-router tailwindcss postcss autoprefixer workbox-window vitest @testing-library/react @testing-library/user-event @vitejs/plugin-react msw @testing-library/jest-dom @playwright/test
   ```
 - Configure Tailwind CSS:
   - Initialize Tailwind:
@@ -345,8 +345,86 @@ This document details the technical implementation of the Rewind frontend, a mob
 
 ## Testing
 
-- Storybook:
-  - Create stories for components (e.g., `EpisodeCard.stories.tsx`).
+The Rewind frontend uses a multi-layered testing strategy to ensure reliability and maintainability:
+
+### Playwright E2E Testing
+
+**End-to-end testing with visual screenshots for comprehensive app validation:**
+
+- **Setup**: Playwright with TypeScript, mobile-first testing configuration
+- **Key Features**:
+  - Non-interactive CI mode for automated testing
+  - Screenshot generation for visual debugging
+  - Mobile and desktop viewport testing  
+  - Authentication flow testing
+  - Navigation and routing validation
+  - Error state handling
+
+- **Configuration** (`playwright.config.ts`):
+  ```typescript
+  export default defineConfig({
+    testDir: './tests/e2e',
+    fullyParallel: true,
+    workers: process.env.CI ? 1 : undefined,
+    globalTimeout: process.env.CI ? 300_000 : undefined,
+    use: {
+      baseURL: 'http://localhost:5173',
+      screenshot: 'only-on-failure',
+      video: 'retain-on-failure',
+      trace: 'on-first-retry',
+    },
+    projects: [
+      { name: 'Mobile Chrome', use: { ...devices['Pixel 5'] } },
+      { name: 'Desktop Chrome', use: { ...devices['Desktop Chrome'] } },
+    ],
+    webServer: {
+      command: 'npm run dev',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env.CI,
+    },
+  })
+  ```
+
+- **Available Commands**:
+  ```bash
+  # Run e2e tests with screenshots (non-interactive)
+  npm run test:e2e:screenshots
+
+  # Run tests in interactive UI mode  
+  npm run test:e2e:ui
+
+  # Run tests with visible browser
+  npm run test:e2e:headed
+
+  # Force screenshot generation even if tests fail
+  npm run test:e2e:force-screenshots
+  ```
+
+- **Example Test** (`tests/e2e/app.spec.ts`):
+  ```typescript
+  test('should load the homepage and take screenshot', async ({ page }) => {
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    
+    await expect(page.locator('h1').filter({ hasText: 'Recommended Episodes' })).toBeVisible()
+    
+    await page.screenshot({ 
+      path: 'test-results/screenshots/homepage-full.png',
+      fullPage: true 
+    })
+  })
+  ```
+
+- **Generated Screenshots**: All screenshots saved to `test-results/screenshots/` including:
+  - Homepage (mobile and desktop)
+  - Authentication modals (login/signup)
+  - Navigation screens (library, search)
+  - Error states and validation flows
+  - Component-level screenshots
+
+### Storybook Component Testing
+
+- Create stories for components (e.g., `EpisodeCard.stories.tsx`).
     ```
     // src/components/EpisodeCard.stories.tsx
     import { EpisodeCard } from "./EpisodeCard";
@@ -373,7 +451,7 @@ This document details the technical implementation of the Rewind frontend, a mob
 
   ```
 
-- Vitest with MSW:
+### Vitest Unit & Integration Testing
   - Write unit tests for components, routes, and services, using MSW to mock API responses.
 
     ```
