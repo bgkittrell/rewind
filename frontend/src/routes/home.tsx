@@ -1,4 +1,5 @@
 import { EpisodeCard } from '../components/EpisodeCard'
+import { useMediaPlayer } from '../context/MediaPlayerContext'
 
 // Sample data for development
 const sampleEpisodes = [
@@ -8,10 +9,10 @@ const sampleEpisodes = [
     podcastName: 'Laugh Track Weekly',
     releaseDate: '2023-08-15',
     duration: '45 min',
-    audioUrl: 'https://example.com/episode1.mp3',
+    audioUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3',
     imageUrl: 'https://via.placeholder.com/80x80/eb4034/ffffff?text=LTW',
     description: 'A deep dive into comedy history with classic bits and timeless humor.',
-    playbackPosition: 65,
+    playbackPosition: 0,
   },
   {
     id: '2',
@@ -19,7 +20,7 @@ const sampleEpisodes = [
     podcastName: 'Behind the Mic',
     releaseDate: '2023-06-22',
     duration: '38 min',
-    audioUrl: 'https://example.com/episode2.mp3',
+    audioUrl: 'https://file-examples.com/storage/fe86a1e166e06f51de4b5bf/2017/11/file_example_MP3_700KB.mp3',
     imageUrl: 'https://via.placeholder.com/80x80/26a69a/ffffff?text=BTM',
     description: 'Exploring the world of improv comedy with industry veteran Sarah Johnson.',
   },
@@ -29,7 +30,7 @@ const sampleEpisodes = [
     podcastName: 'Comedy Circuit',
     releaseDate: '2023-05-30',
     duration: '52 min',
-    audioUrl: 'https://example.com/episode3.mp3',
+    audioUrl: 'https://www.kozco.com/tech/LRMonoPhase4.mp3',
     imageUrl: 'https://via.placeholder.com/80x80/9c27b0/ffffff?text=CC',
     description: 'The journey of comedians from their first open mic to headlining shows.',
   },
@@ -39,13 +40,18 @@ const sampleEpisodes = [
     podcastName: 'Mind & Comedy',
     releaseDate: '2023-04-18',
     duration: '41 min',
-    audioUrl: 'https://example.com/episode4.mp3',
+    audioUrl: 'https://www.kozco.com/tech/piano2-CoolEdit-16bitPCM.mp3',
     imageUrl: 'https://via.placeholder.com/80x80/ff9800/ffffff?text=MC',
     description: 'A scientific look at humor and its effects on the human brain.',
   },
 ]
 
 export default function Home() {
+  const { playEpisode, state } = useMediaPlayer()
+  
+  // Debug logging
+  console.log('MediaPlayer state:', state)
+
   const handlePlay = (episode: {
     id: string
     title: string
@@ -57,8 +63,9 @@ export default function Home() {
     description?: string
     playbackPosition?: number
   }) => {
-    console.log('Playing episode:', episode.title)
-    // TODO: Implement actual playback functionality
+    console.log('handlePlay called with:', episode)
+    playEpisode(episode)
+    console.log('MediaPlayer state after playEpisode:', state)
   }
 
   const handleAIExplanation = (episode: {
@@ -81,6 +88,12 @@ export default function Home() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Recommended Episodes</h1>
         <p className="text-gray-600">Rediscover older episodes from your favorite podcasts</p>
+      </div>
+
+      {/* Debug info */}
+      <div className="mb-4 p-2 bg-gray-100 rounded text-sm text-gray-700">
+        <strong>Debug:</strong> Current episode: {state.currentEpisode?.title || 'None'} |
+        Playing: {state.isPlaying ? 'Yes' : 'No'}
       </div>
 
       {/* Filter Pills */}

@@ -1,8 +1,12 @@
 import { Outlet } from 'react-router'
 import Header from '../components/Header'
 import BottomActionBar from '../components/BottomActionBar'
+import FloatingMediaPlayer from '../components/FloatingMediaPlayer'
+import { MediaPlayerProvider, useMediaPlayer } from '../context/MediaPlayerContext'
 
-export default function Root() {
+function RootContent() {
+  const { state, pause, resume, stop, seek } = useMediaPlayer()
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
@@ -13,7 +17,23 @@ export default function Root() {
 
       <BottomActionBar />
 
-      {/* TODO: Add FloatingMediaPlayer component */}
+      {/* Floating Media Player */}
+      <FloatingMediaPlayer
+        episode={state.currentEpisode}
+        isPlaying={state.isPlaying}
+        onPlay={resume}
+        onPause={pause}
+        onClose={stop}
+        onSeek={seek}
+      />
     </div>
+  )
+}
+
+export default function Root() {
+  return (
+    <MediaPlayerProvider>
+      <RootContent />
+    </MediaPlayerProvider>
   )
 }

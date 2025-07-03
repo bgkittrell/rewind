@@ -113,6 +113,63 @@ test.describe('Rewind App', () => {
     })
   })
 
+  test('should handle audio playback with floating media player', async ({ page }) => {
+    // Wait for page to load
+    await page.waitForTimeout(1000)
+
+    // Initially, media player should not be visible
+    await expect(page.locator('[data-testid="floating-media-player"]')).not.toBeVisible()
+
+    // Click play button on first episode card
+    await page.locator('[data-testid="episode-card"]').first().locator('button:has-text("Play")').click()
+
+    // Wait for media player to appear
+    await page.waitForTimeout(500)
+
+    // Check that floating media player is visible
+    await expect(page.locator('[data-testid="floating-media-player"]')).toBeVisible()
+
+    // Take screenshot of mini player
+    await page.screenshot({
+      path: 'test-results/screenshots/floating-media-player-mini.png',
+      fullPage: true,
+    })
+
+    // Test expanding the player
+    await page.click('[data-testid="expand-player"]')
+    await page.waitForTimeout(500)
+
+    // Take screenshot of expanded player
+    await page.screenshot({
+      path: 'test-results/screenshots/floating-media-player-expanded.png',
+      fullPage: true,
+    })
+
+    // Test minimize button
+    await page.click('[data-testid="minimize-player"]')
+    await page.waitForTimeout(500)
+
+    // Should be back to mini player
+    await expect(page.locator('[data-testid="floating-media-player"]')).toBeVisible()
+
+    // Test pause/play functionality
+    await page.click('[data-testid="mini-play-pause-button"]')
+    await page.waitForTimeout(500)
+
+    // Take screenshot of paused state
+    await page.screenshot({
+      path: 'test-results/screenshots/floating-media-player-paused.png',
+      fullPage: true,
+    })
+
+    // Test close button
+    await page.click('[data-testid="mini-close-player"]')
+    await page.waitForTimeout(500)
+
+    // Media player should no longer be visible
+    await expect(page.locator('[data-testid="floating-media-player"]')).not.toBeVisible()
+  })
+
   test('should handle error states gracefully', async ({ page }) => {
     // Test navigation to non-existent page
     await page.goto('/non-existent-page')
