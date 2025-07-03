@@ -168,7 +168,7 @@ export function FloatingMediaPlayer({
       {/* Player Container */}
       <div
         className={`fixed left-0 right-0 bg-primary text-white z-50 transition-all duration-300 ${
-          isExpanded ? 'bottom-0 h-screen' : 'bottom-0 h-20 shadow-lg'
+          isExpanded ? 'bottom-0 h-screen' : 'bottom-20 h-20 shadow-lg'
         }`}
         data-testid="floating-media-player"
       >
@@ -325,33 +325,31 @@ export function FloatingMediaPlayer({
         ) : (
           /* Mini Player */
           <div className="h-full flex items-center px-4">
-            <div className="flex items-center space-x-3 flex-1">
-              {/* Small Album Art */}
-              <div className="w-12 h-12 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
-                {episode?.imageUrl ? (
-                  <img
-                    src={episode.imageUrl}
-                    alt={`${episode.podcastName} artwork`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-                    </svg>
-                  </div>
-                )}
-              </div>
+            {/* Small Album Art */}
+            <div className="w-12 h-12 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden mr-3">
+              {episode?.imageUrl ? (
+                <img
+                  src={episode.imageUrl}
+                  alt={`${episode.podcastName} artwork`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+                  </svg>
+                </div>
+              )}
+            </div>
 
-              {/* Episode Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{episode?.title}</p>
-                <p className="text-xs text-white text-opacity-80 truncate">{episode?.podcastName}</p>
-              </div>
+            {/* Episode Info */}
+            <div className="flex-1 min-w-0 mr-3">
+              <p className="text-sm font-medium text-white truncate">{episode?.title}</p>
+              <p className="text-xs text-white text-opacity-80 truncate">{episode?.podcastName}</p>
             </div>
 
             {/* Controls */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-shrink-0">
               <button
                 onClick={isPlaying ? onPause : onPlay}
                 className="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
