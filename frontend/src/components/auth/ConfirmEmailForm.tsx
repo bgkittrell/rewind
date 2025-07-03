@@ -73,7 +73,6 @@ export function ConfirmEmailForm({ email, onConfirmed, onBack }: ConfirmEmailFor
               value={code}
               onChange={e => setCode(e.target.value)}
               placeholder="Enter 6-digit code"
-              // eslint-disable-next-line max-len
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
               disabled={isLoading}
@@ -83,7 +82,6 @@ export function ConfirmEmailForm({ email, onConfirmed, onBack }: ConfirmEmailFor
           <button
             type="submit"
             disabled={isLoading}
-            // eslint-disable-next-line max-len
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isLoading ? 'Verifying...' : 'Verify Email'}
@@ -96,7 +94,7 @@ export function ConfirmEmailForm({ email, onConfirmed, onBack }: ConfirmEmailFor
             disabled={isResending}
             className="text-sm text-blue-600 hover:text-blue-500 disabled:opacity-50"
           >
-            {isResending ? 'Sending...' : 'Didn\'t receive the code? Resend'}
+            {isResending ? 'Sending...' : "Didn't receive the code? Resend"}
           </button>
 
           <div>

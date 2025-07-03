@@ -11,7 +11,6 @@ export default function Search() {
         <input
           type="text"
           placeholder="Search episodes or podcasts..."
-          // eslint-disable-next-line max-len
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
         />
       </div>
