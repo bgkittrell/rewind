@@ -3,11 +3,16 @@ export interface User {
   email: string
   name: string
   createdAt: string
+  updatedAt: string
   preferences: {
-    theme: 'light' | 'dark'
+    theme?: 'light' | 'dark'
     autoPlay: boolean
-    downloadQuality: 'low' | 'medium' | 'high'
+    playbackSpeed: number
+    skipIntro: boolean
+    skipOutro: boolean
+    downloadQuality?: 'low' | 'medium' | 'high'
   }
+  subscriptions: string[]
 }
 
 export interface Podcast {

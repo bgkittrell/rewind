@@ -48,3 +48,11 @@ export function createCorsHeaders() {
     'Content-Type': 'application/json',
   }
 }
+
+export function createResponse(statusCode: number, body: any): { statusCode: number; body: string; headers: any } {
+  return {
+    statusCode,
+    body: JSON.stringify(body),
+    headers: createCorsHeaders(),
+  }
+}

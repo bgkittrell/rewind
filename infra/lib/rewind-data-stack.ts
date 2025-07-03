@@ -1,14 +1,75 @@
 import * as cdk from 'aws-cdk-lib'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
+import * as cognito from 'aws-cdk-lib/aws-cognito'
 import { Construct } from 'constructs'
 
 export interface RewindDataStackProps extends cdk.StackProps {}
 
 export class RewindDataStack extends cdk.Stack {
   public readonly tables: { [key: string]: dynamodb.Table } = {}
+  public readonly userPool: cognito.UserPool
+  public readonly userPoolClient: cognito.UserPoolClient
+  public readonly identityPool: cognito.CfnIdentityPool
 
   constructor(scope: Construct, id: string, props?: RewindDataStackProps) {
     super(scope, id, props)
+
+    // Cognito User Pool for authentication
+    this.userPool = new cognito.UserPool(this, 'RewindUserPool', {
+      userPoolName: 'RewindUserPool',
+      selfSignUpEnabled: true,
+      signInAliases: {
+        email: true,
+        username: false,
+      },
+      autoVerify: {
+        email: true,
+      },
+      passwordPolicy: {
+        minLength: 8,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireDigits: true,
+        requireSymbols: false,
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    })
+
+    // User Pool Client
+    this.userPoolClient = new cognito.UserPoolClient(this, 'RewindUserPoolClient', {
+      userPool: this.userPool,
+      userPoolClientName: 'RewindWebClient',
+      generateSecret: false, // For web clients
+      authFlows: {
+        userSrp: true,
+        userPassword: false,
+        adminUserPassword: false,
+      },
+      oAuth: {
+        flows: {
+          authorizationCodeGrant: true,
+        },
+        scopes: [cognito.OAuthScope.EMAIL, cognito.OAuthScope.OPENID, cognito.OAuthScope.PROFILE],
+        callbackUrls: ['http://localhost:5173', 'https://app.rewind.com'], // Development and production URLs
+        logoutUrls: ['http://localhost:5173', 'https://app.rewind.com'],
+      },
+      refreshTokenValidity: cdk.Duration.days(30),
+      accessTokenValidity: cdk.Duration.hours(1),
+      idTokenValidity: cdk.Duration.hours(1),
+    })
+
+    // Identity Pool for AWS resource access
+    this.identityPool = new cognito.CfnIdentityPool(this, 'RewindIdentityPool', {
+      identityPoolName: 'RewindIdentityPool',
+      allowUnauthenticatedIdentities: false,
+      cognitoIdentityProviders: [
+        {
+          clientId: this.userPoolClient.userPoolClientId,
+          providerName: this.userPool.userPoolProviderName,
+        },
+      ],
+    })
 
     // Users table
     this.tables.users = new dynamodb.Table(this, 'RewindUsers', {
@@ -91,6 +152,22 @@ export class RewindDataStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'EpisodesTableName', {
       value: this.tables.episodes.tableName,
       description: 'Episodes table name',
+    })
+
+    // Cognito outputs for frontend configuration
+    new cdk.CfnOutput(this, 'UserPoolId', {
+      value: this.userPool.userPoolId,
+      description: 'Cognito User Pool ID',
+    })
+
+    new cdk.CfnOutput(this, 'UserPoolClientId', {
+      value: this.userPoolClient.userPoolClientId,
+      description: 'Cognito User Pool Client ID',
+    })
+
+    new cdk.CfnOutput(this, 'IdentityPoolId', {
+      value: this.identityPool.ref,
+      description: 'Cognito Identity Pool ID',
     })
   }
 }

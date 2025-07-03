@@ -24,6 +24,8 @@ const backendStack = new RewindBackendStack(app, 'RewindBackendStack', {
   env,
   description: 'Backend Lambda functions and API Gateway for Rewind app',
   tables: dataStack.tables,
+  userPool: dataStack.userPool,
+  userPoolClient: dataStack.userPoolClient,
 })
 
 // Frontend stack (S3, CloudFront)

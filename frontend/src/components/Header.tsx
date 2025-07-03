@@ -1,7 +1,11 @@
 import { useState } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { AuthModal } from './auth/AuthModal'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const { user, isAuthenticated, signOut } = useAuth()
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -17,7 +21,28 @@ export default function Header() {
             </svg>
           </button>
           <h1 className="text-xl font-bold text-primary">Rewind</h1>
-          <div className="w-10"></div> {/* Spacer for center alignment */}
+          
+          {/* Auth section */}
+          <div className="flex items-center">
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">Hello, {user?.name}</span>
+                <button
+                  onClick={signOut}
+                  className="text-sm text-red-600 hover:text-red-500"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -45,6 +70,12 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </header>
   )
 }
