@@ -96,7 +96,7 @@ export function ConfirmEmailForm({ email, onConfirmed, onBack }: ConfirmEmailFor
             disabled={isResending}
             className="text-sm text-blue-600 hover:text-blue-500 disabled:opacity-50"
           >
-            {isResending ? 'Sending...' : "Didn't receive the code? Resend"}
+            {isResending ? 'Sending...' : 'Didn\'t receive the code? Resend'}
           </button>
 
           <div>
