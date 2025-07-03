@@ -11,44 +11,65 @@
 
 The most critical missing piece is **episode management**. We have a beautiful UI for episodes and media playback, but no backend APIs to serve episode data.
 
-### 🔧 Immediate Actions (Next 3-5 Days)
+### 🔧 Immediate Actions (5-Day Sprint)
 
-#### 1. Fix Test Environment (30 minutes)
-```bash
-# Install missing test dependencies
-npm install vitest @vitest/ui --workspace=frontend --save-dev
-npm install vitest --workspace=backend --save-dev
-npm install jest --workspace=infra --save-dev
+**📋 Detailed Implementation Guide**: See `docs/EPISODE_IMPLEMENTATION_CHECKLIST.md` for step-by-step tasks
 
-# Verify tests work
-npm run test
-```
+#### Day 1: Backend Foundation
+1. **RSS Episode Extraction** (2 hours)
+   - Extend `rssService.ts` to parse individual episodes from RSS feeds
+   - Add helper methods for audio URL, duration, images, guests
+   
+2. **DynamoDB Episode Operations** (3 hours)
+   - Extend `dynamoService.ts` with episode CRUD operations
+   - Add progress tracking methods for playback positions
+   - Add batch operations for efficient episode storage
 
-#### 2. Create Episode Backend APIs (Day 1-2)
-**Priority**: Create `backend/src/handlers/episodeHandler.ts`
+#### Day 2: API Handler & Infrastructure
+3. **Episode API Handler** (4 hours)
+   - Create `episodeHandler.ts` with full CRUD endpoints
+   - Add progress tracking APIs for playback positions
+   - Implement proper validation and error handling
 
-**Required endpoints**:
-- `GET /episodes/{podcastId}` - Get episodes for a podcast
-- `POST /episodes/{podcastId}/sync` - Parse RSS and store episodes
-- `PUT /episodes/{episodeId}/progress` - Save playback position
-- `GET /episodes/{episodeId}/progress` - Get playback position
+4. **CDK Infrastructure Updates** (1 hour)
+   - Add episode handler Lambda to CDK stack
+   - Configure API Gateway routes and permissions
+   - Deploy infrastructure changes
 
-**Database schema**: Episodes table with podcast relationship
+#### Day 3: Frontend Integration  
+5. **Episode Service** (2 hours)
+   - Create `episodeService.ts` for API integration
+   - Add TypeScript types and error handling
 
-#### 3. Connect Frontend to Episode APIs (Day 3)
-**Priority**: Create `frontend/src/services/episodeService.ts`
+6. **Library Page Enhancement** (2 hours)
+   - Add podcast expansion functionality
+   - Load and display episodes with pagination
+   - Connect EpisodeCard to real data
 
-**Integration points**:
-- Library page: Load episodes when expanding a podcast
-- EpisodeCard: Pass real episode data instead of mock data  
-- FloatingMediaPlayer: Connect to real audio URLs
-- Progress tracking: Sync with backend
+7. **MediaPlayer Integration** (1 hour)
+   - Connect FloatingMediaPlayer to episode APIs
+   - Add progress persistence and restoration
 
-#### 4. End-to-End Testing (Day 4-5)
-- User can add a podcast (already works)
-- Episodes appear in the library (new functionality)
-- User can play an episode (new functionality)
-- Playback position is saved/restored (new functionality)
+#### Day 4: Testing & Polish
+8. **Automatic Episode Sync** (1 hour)
+   - Episodes sync automatically when adding podcasts
+   - Background processing for RSS feeds
+
+9. **Comprehensive Testing** (3 hours)
+   - Backend API tests (RSS, DynamoDB, handlers)
+   - Frontend integration tests
+   - Fix missing test dependencies
+
+#### Day 5: End-to-End Validation
+10. **User Flow Testing** (2 hours)
+    - Complete podcast-to-playback workflow
+    - Progress persistence across sessions
+    - Error handling and edge cases
+
+11. **Performance & Polish** (2 hours)
+    - Loading states and error messages
+    - Mobile optimization and responsive design
+    - Final deployment and validation
 
 ### 🎛️ Technical Implementation Notes
 
