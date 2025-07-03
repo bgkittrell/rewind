@@ -355,12 +355,13 @@ The Rewind frontend uses a multi-layered testing strategy to ensure reliability 
 - **Key Features**:
   - Non-interactive CI mode for automated testing
   - Screenshot generation for visual debugging
-  - Mobile and desktop viewport testing  
+  - Mobile and desktop viewport testing
   - Authentication flow testing
   - Navigation and routing validation
   - Error state handling
 
 - **Configuration** (`playwright.config.ts`):
+
   ```typescript
   export default defineConfig({
     testDir: './tests/e2e',
@@ -386,11 +387,12 @@ The Rewind frontend uses a multi-layered testing strategy to ensure reliability 
   ```
 
 - **Available Commands**:
+
   ```bash
   # Run e2e tests with screenshots (non-interactive)
   npm run test:e2e:screenshots
 
-  # Run tests in interactive UI mode  
+  # Run tests in interactive UI mode
   npm run test:e2e:ui
 
   # Run tests with visible browser
@@ -401,16 +403,17 @@ The Rewind frontend uses a multi-layered testing strategy to ensure reliability 
   ```
 
 - **Example Test** (`tests/e2e/app.spec.ts`):
+
   ```typescript
   test('should load the homepage and take screenshot', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    
+
     await expect(page.locator('h1').filter({ hasText: 'Recommended Episodes' })).toBeVisible()
-    
-    await page.screenshot({ 
+
+    await page.screenshot({
       path: 'test-results/screenshots/homepage-full.png',
-      fullPage: true 
+      fullPage: true,
     })
   })
   ```
@@ -425,10 +428,11 @@ The Rewind frontend uses a multi-layered testing strategy to ensure reliability 
 ### Storybook Component Testing
 
 - Create stories for components (e.g., `EpisodeCard.stories.tsx`).
-    ```
-    // src/components/EpisodeCard.stories.tsx
-    import { EpisodeCard } from "./EpisodeCard";
-    ```
+
+  ```
+  // src/components/EpisodeCard.stories.tsx
+  import { EpisodeCard } from "./EpisodeCard";
+  ```
 
   export default {
   title: "Components/EpisodeCard",
@@ -452,65 +456,66 @@ The Rewind frontend uses a multi-layered testing strategy to ensure reliability 
   ```
 
 ### Vitest Unit & Integration Testing
-  - Write unit tests for components, routes, and services, using MSW to mock API responses.
 
-    ```
-    // src/components/EpisodeCard.test.tsx
-    import { render, screen } from "@testing-library/react";
-    import { EpisodeCard } from "./EpisodeCard";
+- Write unit tests for components, routes, and services, using MSW to mock API responses.
 
-    test("renders episode title", () => {
-      render(<EpisodeCard episode={{ id: "1", title: "Test Episode" }} />);
-      expect(screen.getByText("Test Episode")).toBeInTheDocument();
-    });
-    ```
+  ```
+  // src/components/EpisodeCard.test.tsx
+  import { render, screen } from "@testing-library/react";
+  import { EpisodeCard } from "./EpisodeCard";
 
-    ```
-    // src/routes/home.test.tsx
-    import { render, screen } from "@testing-library/react";
-    import { createMemoryRouter, RouterProvider } from "react-router";
-    import Home, { clientLoader } from "./home";
+  test("renders episode title", () => {
+    render(<EpisodeCard episode={{ id: "1", title: "Test Episode" }} />);
+    expect(screen.getByText("Test Episode")).toBeInTheDocument();
+  });
+  ```
 
-    test("renders recommendations", async () => {
-      const router = createMemoryRouter(
-        [{ path: "/", element: <Home />, loader: clientLoader }],
-        { initialEntries: ["/"] }
-      );
-      render(<RouterProvider router={router} />);
-      expect(await screen.findByText("Test Episode")).toBeInTheDocument();
-    });
-    ```
+  ```
+  // src/routes/home.test.tsx
+  import { render, screen } from "@testing-library/react";
+  import { createMemoryRouter, RouterProvider } from "react-router";
+  import Home, { clientLoader } from "./home";
 
-    ```
-    // src/services/recommendationService.test.tsx
-    import { getRecommendations } from "./recommendationService";
-    import { server } from "../setupTests";
-    import { http, HttpResponse } from "msw";
+  test("renders recommendations", async () => {
+    const router = createMemoryRouter(
+      [{ path: "/", element: <Home />, loader: clientLoader }],
+      { initialEntries: ["/"] }
+    );
+    render(<RouterProvider router={router} />);
+    expect(await screen.findByText("Test Episode")).toBeInTheDocument();
+  });
+  ```
 
-    test("fetches recommendations", async () => {
-      server.use(
-        http.get("/api/recommendations", () =>
-          HttpResponse.json([{ id: "1", title: "Test Episode" }])
-        )
-      );
-      const recommendations = await getRecommendations();
-      expect(recommendations).toHaveLength(1);
-      expect(recommendations[0].title).toBe("Test Episode");
-    });
-    ```
+  ```
+  // src/services/recommendationService.test.tsx
+  import { getRecommendations } from "./recommendationService";
+  import { server } from "../setupTests";
+  import { http, HttpResponse } from "msw";
 
-  - Run tests:
-    ```
-    npm run test
-    ```
-  - Run Storybook and tests together:
-    ```
-    npm run storybook & npm run test
-    ```
-  - Generate coverage report:
-    ```
-    npm run test -- --coverage
-    ```
+  test("fetches recommendations", async () => {
+    server.use(
+      http.get("/api/recommendations", () =>
+        HttpResponse.json([{ id: "1", title: "Test Episode" }])
+      )
+    );
+    const recommendations = await getRecommendations();
+    expect(recommendations).toHaveLength(1);
+    expect(recommendations[0].title).toBe("Test Episode");
+  });
+  ```
+
+- Run tests:
+  ```
+  npm run test
+  ```
+- Run Storybook and tests together:
+  ```
+  npm run storybook & npm run test
+  ```
+- Generate coverage report:
+  ```
+  npm run test -- --coverage
+  ```
 
 ## Notes for AI Agent
 

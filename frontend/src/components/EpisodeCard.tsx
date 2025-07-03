@@ -43,11 +43,7 @@ export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardPro
         {/* Podcast Thumbnail */}
         <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
           {episode.imageUrl ? (
-            <img
-              src={episode.imageUrl}
-              alt={`${episode.podcastName} artwork`}
-              className="w-full h-full object-cover"
-            />
+            <img src={episode.imageUrl} alt={`${episode.podcastName} artwork`} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-gray-300 flex items-center justify-center">
               <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
