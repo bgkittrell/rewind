@@ -33,20 +33,43 @@ export interface Episode {
   title: string
   description: string
   audioUrl: string
-  imageUrl?: string
-  duration: number
+  duration: string
   releaseDate: string
+  imageUrl?: string
+  guests?: string[]
+  tags?: string[]
   createdAt: string
 }
+
+// Re-export EpisodeData from RSS service to avoid duplication
+export type { EpisodeData } from '../services/rssService'
 
 export interface ListeningHistory {
   userId: string
   episodeId: string
   podcastId: string
-  position: number
+  playbackPosition: number
   duration: number
-  completedAt?: string
-  lastPlayedAt: string
+  isCompleted: boolean
+  lastPlayed: string
+  firstPlayed: string
+  playCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ListeningHistoryItem {
+  userId: string
+  episodeId: string
+  podcastId: string
+  playbackPosition: number
+  duration: number
+  isCompleted: boolean
+  lastPlayed: string
+  firstPlayed: string
+  playCount: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface ShareLink {

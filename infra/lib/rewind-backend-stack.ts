@@ -61,11 +61,35 @@ export class RewindBackendStack extends cdk.Stack {
       },
     })
 
+    // Create Lambda function for episode operations
+    const episodeFunction = new NodejsFunction(this, 'EpisodeHandler', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../../backend/src/handlers/episodeHandler.ts'),
+      environment: {
+        PODCASTS_TABLE: props.tables.podcasts.tableName,
+        EPISODES_TABLE: props.tables.episodes.tableName,
+        LISTENING_HISTORY_TABLE: props.tables.listeningHistory.tableName,
+      },
+      timeout: cdk.Duration.seconds(60), // Longer timeout for RSS parsing
+      memorySize: 512, // More memory for episode processing
+      bundling: {
+        minify: false,
+        sourceMap: true,
+        externalModules: ['aws-sdk'],
+      },
+    })
+
     // Grant DynamoDB permissions to the Lambda functions
     Object.values(props.tables).forEach(table => {
       table.grantReadWriteData(podcastFunction)
       table.grantReadWriteData(authFunction)
     })
+
+    // Grant specific permissions to episode function
+    props.tables.podcasts.grantReadData(episodeFunction)
+    props.tables.episodes.grantReadWriteData(episodeFunction)
+    props.tables.listeningHistory.grantReadWriteData(episodeFunction)
 
     // Create Cognito authorizer for API Gateway
     const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'RewindAuthorizer', {
@@ -142,6 +166,52 @@ export class RewindBackendStack extends cdk.Stack {
 
     const podcastById = podcasts.addResource('{podcastId}')
     podcastById.addMethod('DELETE', new apigateway.LambdaIntegration(podcastFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // Add episode routes
+    const episodes = api.root.addResource('episodes')
+    
+    // GET /episodes/{podcastId} - Get episodes for a podcast
+    const episodesByPodcast = episodes.addResource('{podcastId}')
+    episodesByPodcast.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // POST /episodes/{podcastId}/sync - Sync episodes from RSS
+    const syncEpisodes = episodesByPodcast.addResource('sync')
+    syncEpisodes.addMethod('POST', new apigateway.LambdaIntegration(episodeFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // DELETE /episodes/{podcastId} - Delete all episodes for a podcast
+    episodesByPodcast.addMethod('DELETE', new apigateway.LambdaIntegration(episodeFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // Episode progress routes
+    const episodeById = episodes.addResource('{episodeId}')
+    const progress = episodeById.addResource('progress')
+    
+    // GET /episodes/{episodeId}/progress - Get playback progress
+    progress.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // PUT /episodes/{episodeId}/progress - Save playback progress
+    progress.addMethod('PUT', new apigateway.LambdaIntegration(episodeFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // GET /listening-history - Get user's listening history
+    const listeningHistory = api.root.addResource('listening-history')
+    listeningHistory.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
