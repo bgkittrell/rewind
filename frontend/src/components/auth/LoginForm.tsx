@@ -4,9 +4,10 @@ import { useAuth } from '../../context/AuthContext'
 interface LoginFormProps {
   onSwitchToSignup: () => void
   onSwitchToConfirm?: () => void
+  onSuccess?: () => void
 }
 
-export function LoginForm({ onSwitchToSignup, onSwitchToConfirm }: LoginFormProps) {
+export function LoginForm({ onSwitchToSignup, onSwitchToConfirm, onSuccess }: LoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -24,6 +25,11 @@ export function LoginForm({ onSwitchToSignup, onSwitchToConfirm }: LoginFormProp
         setError(result.message)
         if (result.message.includes('not verified') && onSwitchToConfirm) {
           onSwitchToConfirm()
+        }
+      } else {
+        // Sign in successful
+        if (onSuccess) {
+          onSuccess()
         }
       }
     } catch (err) {

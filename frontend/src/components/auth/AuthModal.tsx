@@ -45,7 +45,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </button>
 
         {currentView === 'login' && (
-          <LoginForm onSwitchToSignup={handleSwitchToSignup} onSwitchToConfirm={() => handleSwitchToConfirm('')} />
+          <LoginForm
+            onSwitchToSignup={handleSwitchToSignup}
+            onSwitchToConfirm={() => handleSwitchToConfirm('')}
+            onSuccess={onClose}
+          />
         )}
 
         {currentView === 'signup' && (

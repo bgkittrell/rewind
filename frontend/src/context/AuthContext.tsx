@@ -8,6 +8,7 @@ import {
   resendSignUpCode,
   getCurrentUser,
   fetchAuthSession,
+  fetchUserAttributes,
 } from 'aws-amplify/auth'
 
 // Configuration will be set at runtime
@@ -75,10 +76,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const session = await fetchAuthSession()
 
       if (currentUser && session.tokens) {
+        // Fetch user attributes to get the name
+        const attributes = await fetchUserAttributes()
         setUser({
           id: currentUser.userId,
-          email: currentUser.signInDetails?.loginId || '',
-          name: '', // Will be fetched from user attributes
+          email: currentUser.signInDetails?.loginId || attributes.email || '',
+          name: attributes.name || attributes.preferred_username || '',
         })
         setIsAuthenticated(true)
       }
