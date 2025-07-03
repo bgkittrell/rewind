@@ -47,10 +47,7 @@ const sampleEpisodes = [
 ]
 
 export default function Home() {
-  const { playEpisode, state } = useMediaPlayer()
-  
-  // Debug logging
-  console.log('MediaPlayer state:', state)
+  const { playEpisode } = useMediaPlayer()
 
   const handlePlay = (episode: {
     id: string
@@ -63,12 +60,10 @@ export default function Home() {
     description?: string
     playbackPosition?: number
   }) => {
-    console.log('handlePlay called with:', episode)
     playEpisode(episode)
-    console.log('MediaPlayer state after playEpisode:', state)
   }
 
-  const handleAIExplanation = (episode: {
+  const handleAIExplanation = (_episode: {
     id: string
     title: string
     podcastName: string
@@ -79,7 +74,6 @@ export default function Home() {
     description?: string
     playbackPosition?: number
   }) => {
-    console.log('Getting AI explanation for:', episode.title)
     // TODO: Implement AI explanation modal
   }
 
@@ -88,12 +82,6 @@ export default function Home() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Recommended Episodes</h1>
         <p className="text-gray-600">Rediscover older episodes from your favorite podcasts</p>
-      </div>
-
-      {/* Debug info */}
-      <div className="mb-4 p-2 bg-gray-100 rounded text-sm text-gray-700">
-        <strong>Debug:</strong> Current episode: {state.currentEpisode?.title || 'None'} |
-        Playing: {state.isPlaying ? 'Yes' : 'No'}
       </div>
 
       {/* Filter Pills */}

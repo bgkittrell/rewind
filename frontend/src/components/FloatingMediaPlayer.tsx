@@ -29,15 +29,13 @@ export function FloatingMediaPlayer({
   onClose,
   onSeek,
 }: FloatingMediaPlayerProps) {
+  // ALL HOOKS MUST BE CALLED FIRST - BEFORE ANY EARLY RETURNS
   const [isExpanded, setIsExpanded] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [playbackRate, setPlaybackRate] = useState(1)
   const [volume, setVolume] = useState(1)
   const audioRef = useRef<HTMLAudioElement>(null)
-
-  // Don't render if no episode
-  if (!episode) return null
 
   // Setup MediaSession API for lock screen controls
   useEffect(() => {
@@ -77,7 +75,7 @@ export function FloatingMediaPlayer({
 
   // Update audio element when episode changes
   useEffect(() => {
-    if (audioRef.current && episode.audioUrl) {
+    if (audioRef.current && episode?.audioUrl) {
       audioRef.current.src = episode.audioUrl
       audioRef.current.currentTime = episode.playbackPosition || 0
       audioRef.current.playbackRate = playbackRate
@@ -95,6 +93,9 @@ export function FloatingMediaPlayer({
       audioRef.current.pause()
     }
   }, [isPlaying])
+
+  // EARLY RETURN AFTER ALL HOOKS - THIS FIXES THE HOOKS ERROR
+  if (!episode) return null
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
@@ -116,7 +117,7 @@ export function FloatingMediaPlayer({
     const clickX = e.clientX - rect.left
     const percentage = clickX / rect.width
     const newTime = percentage * duration
-
+    
     audioRef.current.currentTime = newTime
     onSeek(newTime)
   }
@@ -158,7 +159,7 @@ export function FloatingMediaPlayer({
 
       {/* Overlay for expanded view */}
       {isExpanded && (
-        <div
+        <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={() => setIsExpanded(false)}
         />
@@ -351,9 +352,9 @@ export function FloatingMediaPlayer({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-white text-opacity-60"
-                    fill="currentColor"
+                  <svg 
+                    className="w-6 h-6 text-white text-opacity-60" 
+                    fill="currentColor" 
                     viewBox="0 0 24 24"
                   >
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
@@ -366,7 +367,7 @@ export function FloatingMediaPlayer({
             <div className="flex-1 mx-4 min-w-0">
               <h3 className="font-semibold text-sm truncate">{episode.title}</h3>
               <p className="text-xs text-white text-opacity-80 truncate">{episode.podcastName}</p>
-
+              
               {/* Progress Bar */}
               <div
                 className="bg-white bg-opacity-30 rounded-full h-1 mt-2 cursor-pointer"

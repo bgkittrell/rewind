@@ -117,57 +117,75 @@ test.describe('Rewind App', () => {
     // Wait for page to load
     await page.waitForTimeout(1000)
 
+    // Take initial screenshot
+    await page.screenshot({
+      path: 'test-results/screenshots/initial-state.png',
+      fullPage: true,
+    })
+
     // Initially, media player should not be visible
     await expect(page.locator('[data-testid="floating-media-player"]')).not.toBeVisible()
 
-    // Click play button on first episode card
+    // Click the episode card play button
     await page.locator('[data-testid="episode-card"]').first().locator('button:has-text("Play")').click()
+    await page.waitForTimeout(1000)
 
-    // Wait for media player to appear
-    await page.waitForTimeout(500)
-
-    // Check that floating media player is visible
-    await expect(page.locator('[data-testid="floating-media-player"]')).toBeVisible()
-
-    // Take screenshot of mini player
+    // Take screenshot after episode card play button
     await page.screenshot({
-      path: 'test-results/screenshots/floating-media-player-mini.png',
+      path: 'test-results/screenshots/after-episode-play.png',
       fullPage: true,
     })
 
-    // Test expanding the player
-    await page.click('[data-testid="expand-player"]')
-    await page.waitForTimeout(500)
+    // Check if media player appears
+    const mediaPlayer = page.locator('[data-testid="floating-media-player"]')
 
-    // Take screenshot of expanded player
-    await page.screenshot({
-      path: 'test-results/screenshots/floating-media-player-expanded.png',
-      fullPage: true,
-    })
+    if (await mediaPlayer.isVisible()) {
+      console.log('Success! Media player is visible')
 
-    // Test minimize button
-    await page.click('[data-testid="minimize-player"]')
-    await page.waitForTimeout(500)
+      // Take screenshot of mini player
+      await page.screenshot({
+        path: 'test-results/screenshots/floating-media-player-mini.png',
+        fullPage: true,
+      })
 
-    // Should be back to mini player
-    await expect(page.locator('[data-testid="floating-media-player"]')).toBeVisible()
+      // Test expanding the player
+      await page.click('[data-testid="expand-player"]')
+      await page.waitForTimeout(500)
 
-    // Test pause/play functionality
-    await page.click('[data-testid="mini-play-pause-button"]')
-    await page.waitForTimeout(500)
+      // Take screenshot of expanded player
+      await page.screenshot({
+        path: 'test-results/screenshots/floating-media-player-expanded.png',
+        fullPage: true,
+      })
 
-    // Take screenshot of paused state
-    await page.screenshot({
-      path: 'test-results/screenshots/floating-media-player-paused.png',
-      fullPage: true,
-    })
+      // Test minimize button
+      await page.click('[data-testid="minimize-player"]')
+      await page.waitForTimeout(500)
 
-    // Test close button
-    await page.click('[data-testid="mini-close-player"]')
-    await page.waitForTimeout(500)
+      // Should be back to mini player
+      await expect(page.locator('[data-testid="floating-media-player"]')).toBeVisible()
 
-    // Media player should no longer be visible
-    await expect(page.locator('[data-testid="floating-media-player"]')).not.toBeVisible()
+      // Test pause/play functionality
+      await page.click('[data-testid="mini-play-pause-button"]')
+      await page.waitForTimeout(500)
+
+      // Take screenshot of paused state
+      await page.screenshot({
+        path: 'test-results/screenshots/floating-media-player-paused.png',
+        fullPage: true,
+      })
+
+      // Test close button
+      await page.click('[data-testid="mini-close-player"]')
+      await page.waitForTimeout(500)
+
+      // Media player should no longer be visible
+      await expect(page.locator('[data-testid="floating-media-player"]')).not.toBeVisible()
+    } else {
+      // If media player is still not visible, this will fail the test
+      console.log('Media player still not visible, failing test')
+      await expect(page.locator('[data-testid="floating-media-player"]')).toBeVisible()
+    }
   })
 
   test('should handle error states gracefully', async ({ page }) => {
