@@ -1,15 +1,18 @@
 # Rewind Error Handling Specifications
 
 ## Overview
+
 This document outlines the error handling strategy for Rewind, ensuring robust management of errors across the mobile-first Progressive Web App (PWA) and its AWS serverless backend. It supports podcast enthusiasts aged 35+ by providing clear feedback and maintaining system stability, aligning with backend APIs (see BACKEND_API.md) and infrastructure (see AWS_CONFIG.md).
 
 ## Error Handling Principles
+
 - **Consistency**: Standardized error responses across frontend and backend.
 - **User Feedback**: Informative messages without exposing sensitive data.
 - **Logging**: Capture errors for debugging via CloudWatch.
 - **Recovery**: Graceful degradation and retry mechanisms where applicable.
 
 ## Backend Error Handling
+
 - **API Error Responses**:
   - Format: `{ "error": { "message": "Detailed message", "code": "ERROR_CODE", "details": {} }, "timestamp": "2024-01-15T10:30:00Z", "path": "/api/podcasts" }\`
   - Common Codes:
@@ -35,6 +38,7 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
   - Cognito service unavailable: Return 503 with retry-after.
 
 ## Frontend Error Handling
+
 - **API Error Handling**:
   - Parse error responses and show user-friendly messages.
   - Display specific error messages for validation errors.
@@ -55,6 +59,7 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
 ## Error Categories
 
 ### User Input Errors (400-level)
+
 - **Validation Errors**: Invalid RSS URLs, malformed data.
 - **Authentication Errors**: Missing or expired tokens.
 - **Authorization Errors**: Insufficient permissions.
@@ -66,6 +71,7 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
   - "Podcast not found"
 
 ### System Errors (500-level)
+
 - **Database Errors**: DynamoDB unavailable, throttling.
 - **External Service Errors**: RSS feed unavailable, Cognito down.
 - **Lambda Errors**: Timeout, memory exceeded, code errors.
@@ -75,6 +81,7 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
   - "Service is experiencing high load, please wait"
 
 ### Network Errors
+
 - **Offline State**: No internet connection.
 - **Timeout Errors**: Request took too long.
 - **DNS Errors**: Cannot resolve domain.
@@ -84,6 +91,7 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
   - "Network error, check your connection"
 
 ## Logging Strategy
+
 - **Frontend Logging**:
   - Use console.error for development.
   - Send critical errors to monitoring service (optional).
@@ -95,6 +103,7 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
   - Set up CloudWatch alarms for error rates.
 
 ## Error Recovery
+
 - **Retry Logic**:
   - Automatic retry for transient errors (3 attempts max).
   - Exponential backoff for rate-limited requests.
@@ -108,6 +117,7 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
   - Show appropriate user messaging during outages.
 
 ## Monitoring and Alerting
+
 - **CloudWatch Metrics**:
   - Error rate by endpoint and error type.
   - Lambda duration and memory usage.
@@ -121,6 +131,7 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
   - Slack integration for critical errors.
 
 ## Testing Error Scenarios
+
 - **Unit Tests**:
   - Test error handling in all service functions.
   - Mock API failures and verify error responses.
@@ -134,6 +145,7 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
   - Verify monitoring and alerting systems.
 
 ## Notes for AI Agent
+
 - Implement consistent error handling across all Lambda functions.
 - Use proper HTTP status codes and standardized error formats.
 - Add comprehensive logging with structured data.
@@ -145,6 +157,7 @@ This document outlines the error handling strategy for Rewind, ensuring robust m
 - Report complex error scenarios in PLAN.md.
 
 ## References
+
 - BACKEND_API.md: API endpoint error specifications.
 - AWS_CONFIG.md: CloudWatch and monitoring setup.
 - UI_TECH.md: Frontend error handling patterns.

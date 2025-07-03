@@ -1,9 +1,11 @@
 # Rewind PWA Features Specifications
 
 ## Overview
+
 This document outlines the Progressive Web App (PWA) features for Rewind, a mobile-first application for podcast enthusiasts aged 35+. These features enhance offline capabilities, performance, and user engagement, integrating with the frontend (see UI_TECH.md) and backend (see BACKEND_API.md).
 
 ## Service Worker
+
 - **Purpose**: Manages caching, offline access, and push notifications.
 - **Implementation**:
   - Use Workbox to generate and manage the service worker.
@@ -20,6 +22,7 @@ This document outlines the Progressive Web App (PWA) features for Rewind, a mobi
   - Use Web Push API with VAPID keys for subscription.
 
 ## Manifest Configuration
+
 - **File**: `manifest.json`
 - **Contents**:
   ```
@@ -49,6 +52,7 @@ This document outlines the Progressive Web App (PWA) features for Rewind, a mobi
   - Defines app icon and theme colors.
 
 ## Offline Playback
+
 - **Mechanism**:
   - Cache episode audio files using the service worker when played.
   - Store playback position in IndexedDB (see UI_TECH.md for `playbackService.ts`).
@@ -60,6 +64,7 @@ This document outlines the Progressive Web App (PWA) features for Rewind, a mobi
   - Show error if audio file is unavailable.
 
 ## Performance Optimization
+
 - **Preloading**:
   - Preload critical assets (e.g., episode thumbnails) using `<link rel="preload">`.
 - **Lazy Loading**:
@@ -68,6 +73,7 @@ This document outlines the Progressive Web App (PWA) features for Rewind, a mobi
   - Serve compressed assets (e.g., Gzip) via Vite build.
 
 ## Installation Prompt
+
 - **Trigger**:
   - Show "Add to Home Screen" prompt after 2 visits or 5 minutes.
   - Use `beforeinstallprompt` event in JavaScript.
@@ -75,6 +81,7 @@ This document outlines the Progressive Web App (PWA) features for Rewind, a mobi
   - Provide clear instructions and benefits (e.g., offline access).
 
 ## Notes for AI Agent
+
 - Implement service worker with Workbox and `vite-plugin-pwa`.
 - Configure `manifest.json` in the public directory.
 - Test offline scenarios with Lighthouse or DevTools.
@@ -83,6 +90,7 @@ This document outlines the Progressive Web App (PWA) features for Rewind, a mobi
 - Report issues (e.g., unclear caching strategy) in PLAN.md.
 
 ## References
+
 - UI_TECH.md: Frontend integration details.
 - BACKEND_API.md: API endpoint definitions.
 - BACKEND_LOGIC.md: Business logic details.

@@ -1,0 +1,29 @@
+{
+  "name": "rewind-infra",
+  "version": "1.0.0",
+  "description": "AWS CDK infrastructure for Rewind app",
+  "main": "bin/rewind.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "deploy": "cdk deploy --all --require-approval never",
+    "destroy": "cdk destroy --all",
+    "synth": "cdk synth",
+    "diff": "cdk diff"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.150.0",
+    "constructs": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "aws-cdk": "^2.150.0",
+    "jest": "^29.0.0",
+    "@types/jest": "^29.0.0"
+  },
+  "author": "",
+  "license": "MIT"
+} 

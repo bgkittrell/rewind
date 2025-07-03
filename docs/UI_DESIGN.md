@@ -1,9 +1,11 @@
 # Rewind UI Design Specifications
 
 ## Overview
+
 This document outlines the user interface design for Rewind, a mobile-first Progressive Web App (PWA) for podcast enthusiasts aged 35+ who enjoy rediscovering older episodes, particularly comedy podcasts. The UI follows a standard mobile app look with a fixed header, bottom action bar, and floating media player, prioritizing simplicity, thumb-friendly navigation, and accessibility for the target audience.
 
 ## Design Principles
+
 - **Mobile-First**: Optimized for smartphone screens (e.g., 375px–414px width).
 - **Thumb-Friendly**: Large touch targets (minimum 48x48 pixels) for easy navigation.
 - **Color Scheme**: Red theme with primary color #eb4034 and secondary color #c72e20.
@@ -14,6 +16,7 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
 ## Key UI Components
 
 ### Header
+
 - **Description**: Fixed at the top of all screens, providing navigation and context.
 - **Elements**:
   - **Menu Button**: Hamburger icon (left) opens side menu.
@@ -25,6 +28,7 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
   - ARIA label for menu button: "Open navigation menu".
 
 ### Bottom Action Bar
+
 - **Description**: Fixed navigation bar at the bottom for core app sections.
 - **Elements**:
   - **Home Button**: Navigates to recommendations list (house icon, label: "Home").
@@ -37,6 +41,7 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
   - ARIA labels: e.g., "Navigate to Home".
 
 ### Side Menu
+
 - **Description**: Accessible via header menu button, slides in from the left.
 - **Options**:
   - Profile: View/edit name, email.
@@ -51,6 +56,7 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
   - ARIA label: "Navigation menu".
 
 ### Home Screen
+
 - **Description**: Displays a scrollable list of recommended episodes, the default landing screen.
 - **Elements**:
   - **Filter Pills**: Clickable pills at the top for filtering recommendations ("Not Recently Heard," "Favorites," "Favorite Guests").
@@ -62,6 +68,7 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
   - ARIA label for filters: "Filter recommendations".
 
 ### Library Screen
+
 - **Description**: Displays subscribed podcasts for management.
 - **Elements**:
   - **Podcast List**: Grid or list of podcast cards with:
@@ -80,6 +87,7 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
   - ARIA labels: e.g., "View podcast episodes".
 
 ### Search Screen
+
 - **Description**: Allows full-text search within the user's library (episode titles, descriptions, guests).
 - **Elements**:
   - **Search Bar**: At the top, placeholder: "Search your episodes…".
@@ -90,6 +98,7 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
   - ARIA label for search bar: "Search library".
 
 ### Episode Details Page
+
 - **Description**: Displays when an episode is selected from Home, Library, or Search.
 - **Elements**:
   - Podcast thumbnail.
@@ -107,6 +116,7 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
   - ARIA labels: e.g., "Toggle favorite".
 
 ### Episode Cards
+
 - **Description**: Used in Home, Search, and podcast-specific episode lists.
 - **Elements**:
   - Podcast thumbnail (~80x80 pixels).
@@ -124,6 +134,7 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
   - ARIA labels: e.g., "Play episode", "Get AI explanation".
 
 ### Floating Media Player
+
 - **Description**: Persistent player that appears when an episode is playing.
 - **States**:
   - **Minimized**: Shows at bottom of screen, doesn't block content.
@@ -146,11 +157,13 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
   - ARIA labels for all playback controls.
 
 ### Loading States
+
 - **Skeleton Screens**: Use for all content loading (episode lists, podcast details).
 - **Spinners**: Small spinners for button actions (e.g., adding podcast).
 - **Progress Indicators**: Show RSS feed sync progress, audio loading.
 
 ### Responsive Design
+
 - **Breakpoints**:
   - Mobile: 320px - 768px (primary focus).
   - Tablet: 768px - 1024px (2-column layout for library).
@@ -162,6 +175,7 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
   - Episode cards adjust layout based on screen width.
 
 ### Accessibility Features
+
 - **Screen Reader Support**: All interactive elements have proper ARIA labels.
 - **Keyboard Navigation**: Full app navigable via keyboard with visible focus indicators.
 - **High Contrast**: Text meets WCAG 2.1 AA contrast requirements (4.5:1).
@@ -169,11 +183,13 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
 - **Reduced Motion**: Respects user's motion preferences for animations.
 
 ### Dark Mode (Future Enhancement)
+
 - **Toggle**: Available in side menu settings.
 - **Colors**: Dark background with light text, red accents maintained.
 - **Images**: Overlay dark tint on bright episode thumbnails for better contrast.
 
 ## Notes for AI Agent
+
 - Follow mobile-first design principles in all implementations.
 - Use semantic HTML elements for better accessibility.
 - Implement designs with React components and Tailwind CSS.
@@ -184,6 +200,7 @@ This document outlines the user interface design for Rewind, a mobile-first Prog
 - Report design inconsistencies or unclear requirements in PLAN.md.
 
 ## References
+
 - UI_TECH.md: Technical implementation details.
 - PWA_FEATURES.md: Progressive Web App requirements.
 - PLAN.md: Development milestones and task tracking.

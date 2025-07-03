@@ -1,9 +1,11 @@
 # Rewind Database Schema Specifications
 
 ## Overview
+
 This document defines the DynamoDB schema for the Rewind backend, a mobile-first Progressive Web App (PWA) for podcast enthusiasts aged 35+. The schema supports user management, podcast storage, episode tracking, listening history, and library sharing, integrating with the API (see BACKEND_API.md) and business logic (see BACKEND_LOGIC.md).
 
 ## Database Configuration
+
 - **Engine**: Amazon DynamoDB
 - **Access**: Managed via AWS SDK v3 with IAM roles
 - **Billing Mode**: Pay-per-request (on-demand)
@@ -12,6 +14,7 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
 ## Tables
 
 ### Users
+
 - **Description**: Stores user profile information (Cognito handles authentication).
 - **Partition Key**: `userId` (String) - from Cognito sub claim
 - **Attributes**:
@@ -25,6 +28,7 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
 - **Notes**: User authentication handled by Cognito, this stores app-specific profile data.
 
 ### Podcasts
+
 - **Description**: Stores podcast metadata and user associations.
 - **Partition Key**: `userId` (String)
 - **Sort Key**: `podcastId` (String)
@@ -45,6 +49,7 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
   - For uniqueness checks.
 
 ### Episodes
+
 - **Description**: Stores episode details for each podcast.
 - **Partition Key**: `podcastId` (String)
 - **Sort Key**: `episodeId` (String)
@@ -67,6 +72,7 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
   - For sorting by release date.
 
 ### ListeningHistory
+
 - **Description**: Tracks episode playback and completion status.
 - **Partition Key**: `userId` (String)
 - **Sort Key**: `episodeId` (String)
@@ -89,6 +95,7 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
   - For recent listening activity queries
 
 ### UserFavorites
+
 - **Description**: Tracks user favorites and ratings.
 - **Partition Key**: `userId` (String)
 - **Sort Key**: `itemId` (String) - can be episodeId or podcastId
@@ -108,6 +115,7 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
   - For filtering by favorites type
 
 ### UserFeedback
+
 - **Description**: Stores user feedback on episodes.
 - **Partition Key**: `userId` (String)
 - **Sort Key**: `episodeId#feedbackId` (String)
@@ -122,6 +130,7 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
 - **Notes**: Composite sort key combines `episodeId` and `feedbackId` for uniqueness.
 
 ### Shares
+
 - **Description**: Stores share links and associated podcast IDs.
 - **Partition Key**: `shareId` (String)
 - **Attributes**:
@@ -137,6 +146,7 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
   - For user's share history.
 
 ## Relationships
+
 - **One-to-Many**: `Users` to `Podcasts` (accessed via `userId` partition key)
 - **One-to-Many**: `Podcasts` to `Episodes` (accessed via `podcastId` partition key)
 - **One-to-Many**: `Users` to `ListeningHistory` (accessed via `userId` partition key)
@@ -145,6 +155,7 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
 - **One-to-Many**: `Users` to `Shares` via `UserSharesIndex` GSI
 
 ## Query Patterns
+
 - **Get user podcasts**: Query `Podcasts` table with `userId` partition key
 - **Get podcast episodes**: Query `Episodes` table with `podcastId` partition key
 - **Get user listening history**: Query `ListeningHistory` table with `userId` partition key
@@ -156,6 +167,7 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
 - **Get shared library**: Direct query on `Shares` with `shareId`
 
 ## Data Migration
+
 - **Initial Setup**:
   - Create tables with partition keys, sort keys, and GSIs using AWS CDK v2.
   - Enable DynamoDB Streams for recommendation engine data pipeline.
@@ -164,6 +176,7 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
   - Back up data using DynamoDB backup before updates.
 
 ## Notes for AI Agent
+
 - Implement schema with DynamoDB using AWS CDK v2
 - Use AWS SDK v3 for all database operations
 - Ensure partition keys are optimized for query patterns listed above
@@ -175,6 +188,7 @@ This document defines the DynamoDB schema for the Rewind backend, a mobile-first
 - Report issues (e.g., unclear attribute requirements) in PLAN.md
 
 ## References
+
 - BACKEND_API.md: API endpoint definitions and data formats
 - BACKEND_LOGIC.md: Business logic implementation details
 - AWS_CONFIG.md: DynamoDB CDK infrastructure setup

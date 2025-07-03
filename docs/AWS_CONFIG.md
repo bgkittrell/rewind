@@ -1,9 +1,11 @@
 # Rewind AWS CDK Configuration Specifications
 
 ## Overview
+
 This document defines the AWS CDK configuration for Rewind, a mobile-first Progressive Web App (PWA) for podcast enthusiasts aged 35+. The configuration sets up serverless infrastructure using AWS Lambda, API Gateway, S3, CloudFront, DynamoDB, and Personalize, aligning with the architecture (see PLAN.md) and backend requirements (see BACKEND_API.md).
 
 ## CDK Setup
+
 - **Version**: AWS CDK v2
 - **Language**: TypeScript
 - **Dependencies**:
@@ -19,6 +21,7 @@ This document defines the AWS CDK configuration for Rewind, a mobile-first Progr
 ## Stacks
 
 ### RewindFrontendStack
+
 - **Description**: Hosts the frontend on S3 with CloudFront distribution.
 - **Resources**:
   - **S3 Bucket**:
@@ -39,6 +42,7 @@ This document defines the AWS CDK configuration for Rewind, a mobile-first Progr
   - Automatic CloudFront invalidation on deploy.
 
 ### RewindBackendStack
+
 - **Description**: Manages Lambda functions, API Gateway HTTP API, and DynamoDB.
 - **Resources**:
   - **API Gateway HTTP API**:
@@ -49,7 +53,7 @@ This document defines the AWS CDK configuration for Rewind, a mobile-first Progr
     - Request validation and throttling (10000 requests/second).
   - **Lambda Functions**:
     - Runtime: Node.js 18.x.
-    - Functions: 
+    - Functions:
       - `podcastHandler`: Manages podcast CRUD operations.
       - `episodeHandler`: Manages episode operations and playback tracking.
       - `recommendationHandler`: Provides episode recommendations.
@@ -66,6 +70,7 @@ This document defines the AWS CDK configuration for Rewind, a mobile-first Progr
     - No Lambda function required for token validation.
 
 ### RewindDataStack
+
 - **Description**: Manages DynamoDB tables and related infrastructure.
 - **Resources**:
   - **DynamoDB Tables** (as defined in DATABASE.md):
@@ -86,6 +91,7 @@ This document defines the AWS CDK configuration for Rewind, a mobile-first Progr
     - Least privilege access patterns.
 
 ### RewindPersonalizeStack (Optional for v1)
+
 - **Description**: Sets up AWS Personalize for recommendation engine.
 - **Resources**:
   - **Personalize Dataset Group**: `RewindDatasetGroup`.
@@ -100,21 +106,22 @@ This document defines the AWS CDK configuration for Rewind, a mobile-first Progr
 ## Code Structure
 
 ### CDK App Entry Point
+
 ```typescript
 // bin/rewind.ts
-import * as cdk from 'aws-cdk-lib';
-import { RewindFrontendStack } from '../lib/rewind-frontend-stack';
-import { RewindBackendStack } from '../lib/rewind-backend-stack';
-import { RewindDataStack } from '../lib/rewind-data-stack';
+import * as cdk from 'aws-cdk-lib'
+import { RewindFrontendStack } from '../lib/rewind-frontend-stack'
+import { RewindBackendStack } from '../lib/rewind-backend-stack'
+import { RewindDataStack } from '../lib/rewind-data-stack'
 
-const app = new cdk.App();
+const app = new cdk.App()
 
 const dataStack = new RewindDataStack(app, 'RewindDataStack', {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION,
   },
-});
+})
 
 const backendStack = new RewindBackendStack(app, 'RewindBackendStack', {
   dynamoTables: dataStack.tables,
@@ -122,7 +129,7 @@ const backendStack = new RewindBackendStack(app, 'RewindBackendStack', {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION,
   },
-});
+})
 
 const frontendStack = new RewindFrontendStack(app, 'RewindFrontendStack', {
   apiUrl: backendStack.apiUrl,
@@ -130,21 +137,22 @@ const frontendStack = new RewindFrontendStack(app, 'RewindFrontendStack', {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION,
   },
-});
+})
 ```
 
 ### Data Stack Implementation
+
 ```typescript
 // lib/rewind-data-stack.ts
-import * as cdk from 'aws-cdk-lib';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import { Construct } from 'constructs';
+import * as cdk from 'aws-cdk-lib'
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
+import { Construct } from 'constructs'
 
 export class RewindDataStack extends cdk.Stack {
-  public readonly tables: { [key: string]: dynamodb.Table } = {};
+  public readonly tables: { [key: string]: dynamodb.Table } = {}
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+    super(scope, id, props)
 
     // Users table
     this.tables.users = new dynamodb.Table(this, 'RewindUsers', {
@@ -153,7 +161,7 @@ export class RewindDataStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       pointInTimeRecovery: true,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
+    })
 
     // Podcasts table with GSI
     this.tables.podcasts = new dynamodb.Table(this, 'RewindPodcasts', {
@@ -163,12 +171,12 @@ export class RewindDataStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       pointInTimeRecovery: true,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
+    })
 
     this.tables.podcasts.addGlobalSecondaryIndex({
       indexName: 'RssUrlIndex',
       partitionKey: { name: 'rssUrl', type: dynamodb.AttributeType.STRING },
-    });
+    })
 
     // Episodes table with GSI
     this.tables.episodes = new dynamodb.Table(this, 'RewindEpisodes', {
@@ -179,13 +187,13 @@ export class RewindDataStack extends cdk.Stack {
       pointInTimeRecovery: true,
       stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
+    })
 
     this.tables.episodes.addGlobalSecondaryIndex({
       indexName: 'ReleaseDateIndex',
       partitionKey: { name: 'podcastId', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'releaseDate', type: dynamodb.AttributeType.STRING },
-    });
+    })
 
     // ListeningHistory table with GSI
     this.tables.listeningHistory = new dynamodb.Table(this, 'RewindListeningHistory', {
@@ -196,13 +204,13 @@ export class RewindDataStack extends cdk.Stack {
       pointInTimeRecovery: true,
       stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
+    })
 
     this.tables.listeningHistory.addGlobalSecondaryIndex({
       indexName: 'LastPlayedIndex',
       partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'lastPlayed', type: dynamodb.AttributeType.STRING },
-    });
+    })
 
     // UserFavorites table with GSI
     this.tables.userFavorites = new dynamodb.Table(this, 'RewindUserFavorites', {
@@ -212,13 +220,13 @@ export class RewindDataStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       pointInTimeRecovery: true,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
+    })
 
     this.tables.userFavorites.addGlobalSecondaryIndex({
       indexName: 'ItemTypeIndex',
       partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'itemType', type: dynamodb.AttributeType.STRING },
-    });
+    })
 
     // UserFeedback table
     this.tables.userFeedback = new dynamodb.Table(this, 'RewindUserFeedback', {
@@ -228,7 +236,7 @@ export class RewindDataStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       pointInTimeRecovery: true,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
+    })
 
     // Shares table with GSI
     this.tables.shares = new dynamodb.Table(this, 'RewindShares', {
@@ -238,58 +246,57 @@ export class RewindDataStack extends cdk.Stack {
       pointInTimeRecovery: true,
       timeToLiveAttribute: 'expiresAt',
       removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
+    })
 
     this.tables.shares.addGlobalSecondaryIndex({
       indexName: 'UserSharesIndex',
       partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'createdAt', type: dynamodb.AttributeType.STRING },
-    });
+    })
   }
 }
 ```
 
 ### Backend Stack Implementation
+
 ```typescript
 // lib/rewind-backend-stack.ts
-import * as cdk from 'aws-cdk-lib';
-import * as apigateway from 'aws-cdk-lib/aws-apigatewayv2';
-import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
-import * as authorizers from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as events from 'aws-cdk-lib/aws-events';
-import * as targets from 'aws-cdk-lib/aws-events-targets';
-import * as iam from 'aws-cdk-lib/aws-iam';
-import { Construct } from 'constructs';
+import * as cdk from 'aws-cdk-lib'
+import * as apigateway from 'aws-cdk-lib/aws-apigatewayv2'
+import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations'
+import * as authorizers from 'aws-cdk-lib/aws-apigatewayv2-authorizers'
+import * as lambda from 'aws-cdk-lib/aws-lambda'
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
+import * as events from 'aws-cdk-lib/aws-events'
+import * as targets from 'aws-cdk-lib/aws-events-targets'
+import * as iam from 'aws-cdk-lib/aws-iam'
+import { Construct } from 'constructs'
 
 interface RewindBackendStackProps extends cdk.StackProps {
-  dynamoTables: { [key: string]: dynamodb.Table };
+  dynamoTables: { [key: string]: dynamodb.Table }
 }
 
 export class RewindBackendStack extends cdk.Stack {
-  public readonly apiUrl: string;
+  public readonly apiUrl: string
 
   constructor(scope: Construct, id: string, props: RewindBackendStackProps) {
-    super(scope, id, props);
+    super(scope, id, props)
 
     // Lambda execution role
     const lambdaRole = new iam.Role(this, 'LambdaExecutionRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
-      ],
-    });
+      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')],
+    })
 
     // Grant DynamoDB permissions
     Object.values(props.dynamoTables).forEach(table => {
-      table.grantReadWriteData(lambdaRole);
-    });
+      table.grantReadWriteData(lambdaRole)
+    })
 
     // Common Lambda environment variables (Cognito handled by API Gateway)
     const commonEnv = {
       DYNAMODB_TABLE_PREFIX: 'Rewind',
-    };
+    }
 
     // HTTP API with built-in JWT authorizer
     const httpApi = new apigateway.HttpApi(this, 'RewindHttpApi', {
@@ -300,13 +307,16 @@ export class RewindBackendStack extends cdk.Stack {
         allowMethods: [apigateway.CorsHttpMethod.ANY],
         allowHeaders: ['Content-Type', 'Authorization'],
       },
-    });
+    })
 
     // JWT Authorizer for Amazon Cognito
-    const jwtAuthorizer = new apigateway.HttpJwtAuthorizer('CognitoAuthorizer', 
-      `https://cognito-idp.${this.region}.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`, {
-      jwtAudience: [process.env.COGNITO_CLIENT_ID],
-    });
+    const jwtAuthorizer = new apigateway.HttpJwtAuthorizer(
+      'CognitoAuthorizer',
+      `https://cognito-idp.${this.region}.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`,
+      {
+        jwtAudience: [process.env.COGNITO_CLIENT_ID],
+      },
+    )
 
     // Lambda functions
     const podcastFunction = new lambda.Function(this, 'PodcastFunction', {
@@ -317,7 +327,7 @@ export class RewindBackendStack extends cdk.Stack {
       environment: commonEnv,
       timeout: cdk.Duration.seconds(30),
       memorySize: 512,
-    });
+    })
 
     const episodeFunction = new lambda.Function(this, 'EpisodeFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -327,7 +337,7 @@ export class RewindBackendStack extends cdk.Stack {
       environment: commonEnv,
       timeout: cdk.Duration.seconds(30),
       memorySize: 512,
-    });
+    })
 
     const recommendationFunction = new lambda.Function(this, 'RecommendationFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -337,7 +347,7 @@ export class RewindBackendStack extends cdk.Stack {
       environment: commonEnv,
       timeout: cdk.Duration.seconds(30),
       memorySize: 1024,
-    });
+    })
 
     const shareFunction = new lambda.Function(this, 'ShareFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -347,7 +357,7 @@ export class RewindBackendStack extends cdk.Stack {
       environment: commonEnv,
       timeout: cdk.Duration.seconds(15),
       memorySize: 256,
-    });
+    })
 
     // HTTP API routes with JWT authorization
     httpApi.addRoutes({
@@ -355,14 +365,14 @@ export class RewindBackendStack extends cdk.Stack {
       methods: [apigateway.HttpMethod.GET, apigateway.HttpMethod.POST],
       integration: new apigateway.HttpLambdaIntegration('PodcastIntegration', podcastFunction),
       authorizer: jwtAuthorizer,
-    });
+    })
 
     httpApi.addRoutes({
       path: '/v1/podcasts/{podcastId}',
       methods: [apigateway.HttpMethod.DELETE],
       integration: new apigateway.HttpLambdaIntegration('PodcastDeleteIntegration', podcastFunction),
       authorizer: jwtAuthorizer,
-    });
+    })
 
     // Episodes routes
     httpApi.addRoutes({
@@ -370,7 +380,7 @@ export class RewindBackendStack extends cdk.Stack {
       methods: [apigateway.HttpMethod.GET],
       integration: new apigateway.HttpLambdaIntegration('PodcastEpisodesIntegration', episodeFunction),
       authorizer: jwtAuthorizer,
-    });
+    })
 
     // Episode playback routes
     httpApi.addRoutes({
@@ -378,7 +388,7 @@ export class RewindBackendStack extends cdk.Stack {
       methods: [apigateway.HttpMethod.GET, apigateway.HttpMethod.PUT],
       integration: new apigateway.HttpLambdaIntegration('EpisodePlaybackIntegration', episodeFunction),
       authorizer: jwtAuthorizer,
-    });
+    })
 
     // Episode feedback routes
     httpApi.addRoutes({
@@ -386,7 +396,7 @@ export class RewindBackendStack extends cdk.Stack {
       methods: [apigateway.HttpMethod.POST],
       integration: new apigateway.HttpLambdaIntegration('EpisodeFeedbackIntegration', episodeFunction),
       authorizer: jwtAuthorizer,
-    });
+    })
 
     // Recommendations routes
     httpApi.addRoutes({
@@ -394,7 +404,7 @@ export class RewindBackendStack extends cdk.Stack {
       methods: [apigateway.HttpMethod.GET],
       integration: new apigateway.HttpLambdaIntegration('RecommendationIntegration', recommendationFunction),
       authorizer: jwtAuthorizer,
-    });
+    })
 
     // Share routes
     httpApi.addRoutes({
@@ -402,14 +412,14 @@ export class RewindBackendStack extends cdk.Stack {
       methods: [apigateway.HttpMethod.POST],
       integration: new apigateway.HttpLambdaIntegration('ShareCreateIntegration', shareFunction),
       authorizer: jwtAuthorizer,
-    });
+    })
 
     // Public share access (no auth required)
     httpApi.addRoutes({
       path: '/v1/share/{shareId}',
       methods: [apigateway.HttpMethod.GET],
       integration: new apigateway.HttpLambdaIntegration('ShareGetIntegration', shareFunction),
-    });
+    })
 
     // Add shared content to user library (auth required)
     httpApi.addRoutes({
@@ -417,48 +427,51 @@ export class RewindBackendStack extends cdk.Stack {
       methods: [apigateway.HttpMethod.POST],
       integration: new apigateway.HttpLambdaIntegration('ShareAddIntegration', shareFunction),
       authorizer: jwtAuthorizer,
-    });
+    })
 
     // EventBridge rule for RSS updates
     const rssUpdateRule = new events.Rule(this, 'RssUpdateRule', {
       schedule: events.Schedule.cron({ hour: '8', minute: '0' }),
       description: 'Daily RSS feed updates',
-    });
+    })
 
-    rssUpdateRule.addTarget(new targets.LambdaFunction(podcastFunction, {
-      event: events.RuleTargetInput.fromObject({
-        action: 'updateRssFeeds',
+    rssUpdateRule.addTarget(
+      new targets.LambdaFunction(podcastFunction, {
+        event: events.RuleTargetInput.fromObject({
+          action: 'updateRssFeeds',
+        }),
       }),
-    }));
+    )
 
     // Output API URL
-    this.apiUrl = httpApi.url || '';
+    this.apiUrl = httpApi.url || ''
 
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: this.apiUrl,
       description: 'API Gateway URL',
-    });
+    })
   }
 }
 ```
 
 ### Frontend Stack Implementation
+
 ```typescript
 // lib/rewind-frontend-stack.ts
-import * as cdk from 'aws-cdk-lib';
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
-import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
-import { Construct } from 'constructs';
+import * as cdk from 'aws-cdk-lib'
+import * as s3 from 'aws-cdk-lib/aws-s3'
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront'
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins'
+import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment'
+import { Construct } from 'constructs'
 
 interface RewindFrontendStackProps extends cdk.StackProps {
-  apiUrl: string;
+  apiUrl: string
 }
 
 export class RewindFrontendStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: RewindFrontendStackProps) {
-    super(scope, id, props);
+    super(scope, id, props)
 
     // S3 bucket for frontend
     const bucket = new s3.Bucket(this, 'RewindFrontendBucket', {
@@ -466,14 +479,14 @@ export class RewindFrontendStack extends cdk.Stack {
       versioned: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
-    });
+    })
 
     // Origin Access Identity for CloudFront
     const oai = new cloudfront.OriginAccessIdentity(this, 'RewindOAI', {
       comment: 'OAI for Rewind frontend',
-    });
+    })
 
-    bucket.grantRead(oai);
+    bucket.grantRead(oai)
 
     // CloudFront distribution
     const distribution = new cloudfront.Distribution(this, 'RewindDistribution', {
@@ -497,7 +510,7 @@ export class RewindFrontendStack extends cdk.Stack {
           ttl: cdk.Duration.minutes(5),
         },
       ],
-    });
+    })
 
     // Deploy frontend
     new s3deploy.BucketDeployment(this, 'RewindFrontendDeployment', {
@@ -505,23 +518,24 @@ export class RewindFrontendStack extends cdk.Stack {
       destinationBucket: bucket,
       distribution,
       distributionPaths: ['/*'],
-    });
+    })
 
     // Output URLs
     new cdk.CfnOutput(this, 'CloudFrontUrl', {
       value: distribution.distributionDomainName,
       description: 'CloudFront distribution URL',
-    });
+    })
 
     new cdk.CfnOutput(this, 'BucketName', {
       value: bucket.bucketName,
       description: 'S3 bucket name',
-    });
+    })
   }
 }
 ```
 
 ## Deployment Process
+
 - **Bootstrap**:
   ```
   cdk bootstrap aws://<account-id>/us-east-1
@@ -543,6 +557,7 @@ export class RewindFrontendStack extends cdk.Stack {
   - Use CDK `diff` to identify changes, revert with `cdk destroy` if needed.
 
 ## Environment Variables
+
 - **Required Environment Variables**:
   - `COGNITO_USER_POOL_ID`: Cognito User Pool ID
   - `COGNITO_CLIENT_ID`: Cognito App Client ID
@@ -551,6 +566,7 @@ export class RewindFrontendStack extends cdk.Stack {
   - `CDK_DEFAULT_REGION`: AWS region (e.g., us-east-1)
 
 ## Cost Management
+
 - **Optimization**:
   - DynamoDB: Pay-per-request billing, efficient partition key design.
   - Lambda: Right-sized memory allocation, efficient code.
@@ -560,6 +576,7 @@ export class RewindFrontendStack extends cdk.Stack {
   - CloudWatch alarms for unexpected usage.
 
 ## Security
+
 - **IAM Roles**:
   - Least privilege for Lambda functions.
   - Separate roles for each service.
@@ -571,6 +588,7 @@ export class RewindFrontendStack extends cdk.Stack {
   - S3 encryption with SSE-S3.
 
 ## Notes for AI Agent
+
 - Configure infrastructure via AWS CDK v2 TypeScript.
 - Use proper construct patterns and least privilege IAM.
 - Test deployment in `dev` stage first.
@@ -581,6 +599,7 @@ export class RewindFrontendStack extends cdk.Stack {
 - Report issues (e.g., deployment failures) in PLAN.md.
 
 ## References
+
 - PLAN.md: Deployment and monitoring tasks.
 - DATABASE.md: DynamoDB table specifications.
 - BACKEND_API.md: API Gateway endpoint mapping.

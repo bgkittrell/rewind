@@ -182,7 +182,6 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
 ## Playback
 
 - **Save Playback Position**:
-
   - URL: `/episodes/:episodeId/playback`
   - Method: `PUT`
   - Authorization: Required
@@ -224,7 +223,6 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
 ## Library Sharing
 
 - **Generate Share Link**:
-
   - URL: `/share`
   - Method: `POST`
   - Authorization: Required
@@ -247,7 +245,6 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
     - `400`: Invalid podcast IDs
 
 - **Get Shared Library**:
-
   - URL: `/share/:shareId`
   - Method: `GET`
   - Authorization: Not required (public)

@@ -1,9 +1,11 @@
 # Rewind Recommendation Engine Specifications
 
 ## Overview
+
 This document outlines the recommendation engine for Rewind, designed to help users aged 35+ rediscover older podcast episodes, with a focus on comedy content. The engine uses AWS Personalize to provide tailored suggestions based on listening history, favorites, and guest preferences, integrating with the backend (see BACKEND_API.md) and database (see DATABASE.md).
 
 ## Setup
+
 - **Service**: AWS Personalize
 - **Dependencies**:
   ```
@@ -17,6 +19,7 @@ This document outlines the recommendation engine for Rewind, designed to help us
     - `interactions`: `userId`, `episodeId`, `eventType` (play, favorite, like, dislike), `timestamp`, `lastListened` (from DynamoDB `HISTORY#<episodeId>#lastListened`).
 
 ## Logic
+
 - **Algorithm**:
   - Recipe: SIMS (Similar Items) with time-based scoring.
   - Scoring Weights:
@@ -37,18 +40,20 @@ This document outlines the recommendation engine for Rewind, designed to help us
   - If Personalize data is insufficient, suggest oldest episodes from subscribed podcasts.
 
 ## Implementation
+
 - **Campaign Configuration**:
   - Solution: Trained weekly via EventBridge.
   - Campaign ARN exported for Lambda use (see AWS_CONFIG.md).
-- **Lambda Integration** (`recommendationHandler`)**:
+- **Lambda Integration** (`recommendationHandler`)\*\*:
   - Fetch user data from DynamoDB.
   - Call Personalize `GetRecommendations` API.
   - Return JSON response with episode details.
 - **API Endpoint**:
   - `GET /recommendations`: Query parameters `limit`, `filters` (e.g., `history,tech`).
-  - Response: ``[{ "id": "1", "title": "Test Episode", "podcastName": "Test Podcast", "releaseDate": "2023-01-15", "duration": "45 min", "audioUrl": "http://example.com/episode.mp3" }]\``。
+  - Response: `[{ "id": "1", "title": "Test Episode", "podcastName": "Test Podcast", "releaseDate": "2023-01-15", "duration": "45 min", "audioUrl": "http://example.com/episode.mp3" }]\`。
 
 ## Testing
+
 - **Unit Tests**:
   - Verify scoring logic and filter application (Vitest).
 - **Integration Tests**:
@@ -57,6 +62,7 @@ This document outlines the recommendation engine for Rewind, designed to help us
   - Ensure recommendation cards display correctly in Storybook (see UI_TECH.md).
 
 ## Optimization
+
 - **Performance**:
   - Cache recommendations in Lambda memory during execution.
   - Batch Personalize calls for multiple users.
@@ -66,6 +72,7 @@ This document outlines the recommendation engine for Rewind, designed to help us
   - Consider simplified recommendation logic for MVP to reduce Personalize costs.
 
 ## Notes for AI Agent
+
 - Configure Personalize datasets and campaign via AWS CDK (see AWS_CONFIG.md).
 - Implement Lambda function with TypeScript.
 - Test with sample data for comedy podcast focus.
@@ -73,6 +80,7 @@ This document outlines the recommendation engine for Rewind, designed to help us
 - Report issues (e.g., Personalize cold start) in PLAN.md.
 
 ## References
+
 - PLAN.md: Development milestones.
 - UI_TECH.md: Frontend integration.
 - BACKEND_API.md: Recommendation endpoint.

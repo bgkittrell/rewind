@@ -1,15 +1,19 @@
 # Rewind Infrastructure Specifications
 
 ## Overview
+
 This document outlines the AWS infrastructure for Rewind, a mobile-first Progressive Web App (PWA) targeting podcast enthusiasts aged 35+. The setup leverages serverless resources for low-cost hosting and scalability, aligning with the architecture (see PLAN.md), CDK configuration (see AWS_CONFIG.md), and deployment requirements.
 
 ## Cloud Provider
+
 - **Provider**: Amazon Web Services (AWS)
 - **Regions**: Primary: `us-east-1` (N. Virginia), with failover to `us-west-2` (Oregon)
 - **Management**: AWS CDK for Infrastructure as Code (IaC)
 
 ## Infrastructure Components
+
 ### Frontend Hosting
+
 - **S3 Bucket**:
   - Name: `rewind-frontend-bucket-${AWS::AccountId}`
   - Configuration: Static website hosting, public read access, versioning enabled.
@@ -22,6 +26,7 @@ This document outlines the AWS infrastructure for Rewind, a mobile-first Progres
   - Invalidation: Automatic on deploy to clear cache.
 
 ### Backend Hosting
+
 - **API Gateway**:
   - REST API with CORS enabled.
   - Stages: `dev`, `prod`.
@@ -38,6 +43,7 @@ This document outlines the AWS infrastructure for Rewind, a mobile-first Progres
   - Target: `podcastHandler` Lambda.
 
 ### Database
+
 - **DynamoDB**:
   - Table: `RewindDataTable` (see DATABASE.md).
   - Billing Mode: Pay-per-request.
@@ -45,17 +51,20 @@ This document outlines the AWS infrastructure for Rewind, a mobile-first Progres
   - Streams: Enabled for Personalize data ingestion.
 
 ### Recommendation Engine
+
 - **AWS Personalize**:
   - Dataset Group: `RewindDatasetGroup`.
   - Campaign: SIMS recipe, trained weekly via EventBridge.
   - Data Source: DynamoDB Streams to Personalize batch export.
 
 ### Authentication
+
 - **Amazon Cognito**:
   - User Pool ID and Client ID configured in CDK environment.
   - JWT validation in API Gateway authorizer.
 
 ### Monitoring
+
 - **CloudWatch**:
   - Logs: Capture Lambda errors and API metrics.
   - Alarms: Trigger on 5% `500` errors over 5 minutes.
@@ -64,6 +73,7 @@ This document outlines the AWS infrastructure for Rewind, a mobile-first Progres
   - Track usage of Lambda, DynamoDB, Personalize.
 
 ## Deployment Process
+
 - **Bootstrap**:
   ```
   cdk bootstrap aws://<account-id>/us-east-1
@@ -75,10 +85,11 @@ This document outlines the AWS infrastructure for Rewind, a mobile-first Progres
   ```
 - **Rollback**:
   - Use CDK `diff` to identify changes, revert with `cdk destroy` if needed.
-- **CI/CD** (Optional)**:
+- **CI/CD** (Optional)\*\*:
   - Integrate with AWS CodePipeline for automated deploys.
 
 ## Cost Management
+
 - **Optimization**:
   - Lambda: Minimum execution duration, cold start mitigation with provisioned concurrency.
   - DynamoDB: Efficient queries, auto-scaling.
@@ -88,6 +99,7 @@ This document outlines the AWS infrastructure for Rewind, a mobile-first Progres
   - Set SNS notifications for budget overruns.
 
 ## Security
+
 - **IAM Roles**:
   - Least privilege for Lambda (DynamoDB, S3, Personalize).
   - Separate roles for deployment and runtime.
@@ -99,6 +111,7 @@ This document outlines the AWS infrastructure for Rewind, a mobile-first Progres
   - Secure S3 objects with SSE-S3.
 
 ## Notes for AI Agent
+
 - Configure infrastructure via AWS CDK TypeScript.
 - Test deployment in `dev` stage first.
 - Monitor costs and adjust auto-scaling as needed.
@@ -106,6 +119,7 @@ This document outlines the AWS infrastructure for Rewind, a mobile-first Progres
 - Report issues (e.g., region latency) in PLAN.md.
 
 ## References
+
 - PLAN.md: Deployment and monitoring tasks.
 - AWS_CONFIG.md: CDK stack definitions.
 - UI_TECH.md: Frontend hosting integration.
@@ -113,4 +127,4 @@ This document outlines the AWS infrastructure for Rewind, a mobile-first Progres
 - BACKEND_LOGIC.md: Lambda logic.
 - DATABASE.md: DynamoDB setup.
 - RECOMMENDATION_ENGINE.md: Personalize integration.
-- 
+-

@@ -58,8 +58,8 @@ This document details the technical implementation of the Rewind frontend, a mob
   npx storybook@latest init
   ```
 - Configure Vitest:
-
   - Update `vite.config.ts`:
+
     ```
     import { defineConfig } from "vite";
     import react from "@vitejs/plugin-react";
@@ -94,6 +94,7 @@ This document details the technical implementation of the Rewind frontend, a mob
     ```
 
   - Create `src/setupTests.ts`:
+
     ```
     import "@testing-library/jest-dom";
     import { setupServer } from "msw/node";
@@ -107,12 +108,12 @@ This document details the technical implementation of the Rewind frontend, a mob
     ```
 
 - Configure MSW for Mocking:
-
   - Install MSW:
     ```
     npm install msw --save-dev
     ```
   - Create `src/mocks/handlers.ts`:
+
     ```
     import { http, HttpResponse } from "msw";
 
@@ -137,6 +138,7 @@ This document details the technical implementation of the Rewind frontend, a mob
     ```
 
   - Create `src/mocks/browser.ts` for browser-based testing (if needed):
+
     ```
     import { setupWorker } from "msw";
     import { handlers } from "./handlers";
@@ -199,79 +201,8 @@ This document details the technical implementation of the Rewind frontend, a mob
   - `/episode/:episodeId`: Episode details page.
   - `/share/:shareId`: Share library prompt (add podcasts to user’s library).
 - Implementation:
-
   - Route files use kebab-case to match route paths (e.g., `library-podcast-id.tsx`).
   - Minimal view logic; business logic in `clientLoader` (fetch data) and `clientAction` (handle actions).
-    ```
-    // src/routes/home.tsx
-    import { useLoaderData } from "react-router-dom";
-    import { EpisodeCard, FilterPills } from "../components";
-    import { getRecommendations } from "../services/recommendationService";
-
-  export async function clientLoader() {
-  const recommendations = await getRecommendations();
-  return { recommendations };
-  }
-
-  export default function Home() {
-  const { recommendations } = useLoaderData();
-  return (
-  <div className="p-4">
-  <FilterPills />
-  {recommendations.map((episode) => (
-  <EpisodeCard key={episode.id} episode={episode} />
-  ))}
-  </div>
-  );
-  }
-  ```
-  ```
-  // src/routes/library.tsx
-  import { useLoaderData, useActionData } from "react-router-dom";
-  import { PodcastCard } from "../components";
-  import { addPodcast, getPodcasts } from "../services/podcastService";
-
-  export async function clientLoader() {
-  const podcasts = await getPodcasts();
-  return { podcasts };
-  }
-
-  export async function clientAction({ request }) {
-  const formData = await request.formData();
-  const rssUrl = formData.get("rssUrl");
-  await addPodcast(rssUrl);
-  return { success: true };
-  }
-
-  export default function Library() {
-  const { podcasts } = useLoaderData();
-  return (
-  <div className="p-4">
-  {podcasts.map((podcast) => (
-  <PodcastCard key={podcast.id} podcast={podcast} />
-  ))}
-  </div>
-  );
-  }
-  ```
-
-- Router Setup:
-  ```
-  // src/main.tsx
-  import { createBrowserRouter, RouterProvider } from "react-router";
-  import Home, { clientLoader as homeLoader } from "./routes/home";
-  import Library, { clientLoader as libraryLoader, clientAction as libraryAction } from "./routes/library";
-
-  const router = createBrowserRouter([
-  { path: "/", element: <Home />, loader: homeLoader },
-  { path: "/library", element: <Library />, loader: libraryLoader, action: libraryAction },
-  // Add other routes
-  ]);
-
-  function App() {
-  return <RouterProvider router={router} />;
-  }
-  ```
 
 ## Service Layer
 
@@ -281,6 +212,7 @@ This document details the technical implementation of the Rewind frontend, a mob
   - `recommendationService.ts`: Fetch recommendations, submit feedback.
   - `shareService.ts`: Generate and handle share links.
 - Example:
+
   ```
   // src/services/podcastService.ts
   export async function addPodcast(rssUrl: string) {
@@ -303,6 +235,7 @@ This document details the technical implementation of the Rewind frontend, a mob
 ## State Management
 
 - Global State: Use React Context for shared state (e.g., user authentication, playback state).
+
   ```
   // src/context/AppContext.tsx
   import { createContext, useContext, useState } from "react";
@@ -327,12 +260,12 @@ This document details the technical implementation of the Rewind frontend, a mob
   ```
 
 - Persistent State: Store playback position and library data in IndexedDB.
-
   - Install `idb-keyval`:
     ```
     npm install idb-keyval
     ```
   - Example:
+
     ```
     // src/services/playbackService.ts
     import { get, set } from "idb-keyval";
@@ -370,6 +303,7 @@ This document details the technical implementation of the Rewind frontend, a mob
 
 - Implementation: Use HTML5 `<audio>` element with MediaSession API for lock screen controls.
 - Example:
+
   ```
   // src/components/FloatingMediaPlayer.tsx
   import { useEffect } from "react";
@@ -412,11 +346,11 @@ This document details the technical implementation of the Rewind frontend, a mob
 ## Testing
 
 - Storybook:
-
   - Create stories for components (e.g., `EpisodeCard.stories.tsx`).
     ```
     // src/components/EpisodeCard.stories.tsx
     import { EpisodeCard } from "./EpisodeCard";
+    ```
 
   export default {
   title: "Components/EpisodeCard",
@@ -434,11 +368,14 @@ This document details the technical implementation of the Rewind frontend, a mob
       }}
   />
   );
+
+  ```
+
   ```
 
 - Vitest with MSW:
-
   - Write unit tests for components, routes, and services, using MSW to mock API responses.
+
     ```
     // src/components/EpisodeCard.test.tsx
     import { render, screen } from "@testing-library/react";
@@ -449,6 +386,7 @@ This document details the technical implementation of the Rewind frontend, a mob
       expect(screen.getByText("Test Episode")).toBeInTheDocument();
     });
     ```
+
     ```
     // src/routes/home.test.tsx
     import { render, screen } from "@testing-library/react";
@@ -464,6 +402,7 @@ This document details the technical implementation of the Rewind frontend, a mob
       expect(await screen.findByText("Test Episode")).toBeInTheDocument();
     });
     ```
+
     ```
     // src/services/recommendationService.test.tsx
     import { getRecommendations } from "./recommendationService";

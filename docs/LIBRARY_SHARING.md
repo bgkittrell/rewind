@@ -28,11 +28,11 @@ This document outlines the library sharing feature for Rewind, enabling users to
 
 - **API Endpoints**:
   - **Generate Share Link** (`POST /share/generate`):
-    - Request: ``{ "podcastIds": ["67890", "69123"] }\``
-    - Response: ``{ "shareId": "abc123", "url": "https://rewindpodcast.com/share/abc123" }\``
+    - Request: `{ "podcastIds": ["67890", "69123"] }\`
+    - Response: `{ "shareId": "abc123", "url": "https://rewindpodcast.com/share/abc123" }\`
     - Logic: Validate `podcastIds` belong to the user, generate a UUID `shareId`, store with 30-day TTL.
   - **Add Podcasts from Share** (`POST /share/:shareId`):
-    - Response: ``{ "message": "Podcasts added to library", "addedPodcastIds": ["67890", "69123"] }\``
+    - Response: `{ "message": "Podcasts added to library", "addedPodcastIds": ["67890", "69123"] }\`
     - Logic: Validate `shareId`, check for duplicates, add new podcasts to user’s library.
 - **Storage**:
   - DynamoDB table (`RewindDataTable` from DATABASE.md):

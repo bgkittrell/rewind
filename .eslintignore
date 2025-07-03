@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+coverage/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+cdk.out/
+storybook-static/
+*.config.js
+*.config.ts
+vite.config.ts
+tailwind.config.js
+postcss.config.js 
