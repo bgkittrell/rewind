@@ -55,13 +55,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // In a real app, these would come from environment variables
     // For now, we'll set them as placeholders
+    const userPoolId = import.meta.env.VITE_USER_POOL_ID || 'placeholder'
+    const userPoolClientId = import.meta.env.VITE_USER_POOL_CLIENT_ID || 'placeholder'
+    const identityPoolId = import.meta.env.VITE_IDENTITY_POOL_ID || 'placeholder'
+
+    console.log('AuthContext: Environment variables loaded:', {
+      userPoolId: userPoolId === 'placeholder' ? 'NOT SET' : userPoolId.substring(0, 10) + '...',
+      userPoolClientId: userPoolClientId === 'placeholder' ? 'NOT SET' : userPoolClientId.substring(0, 10) + '...',
+      identityPoolId: identityPoolId === 'placeholder' ? 'NOT SET' : identityPoolId.substring(0, 15) + '...',
+    })
+
     const config = {
       ...amplifyConfig,
       Auth: {
         Cognito: {
-          userPoolId: import.meta.env.VITE_USER_POOL_ID || 'placeholder',
-          userPoolClientId: import.meta.env.VITE_USER_POOL_CLIENT_ID || 'placeholder',
-          identityPoolId: import.meta.env.VITE_IDENTITY_POOL_ID || 'placeholder',
+          userPoolId,
+          userPoolClientId,
+          identityPoolId,
         },
       },
     }
