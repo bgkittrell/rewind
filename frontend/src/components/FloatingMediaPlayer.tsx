@@ -168,7 +168,7 @@ export function FloatingMediaPlayer({
       {/* Player Container */}
       <div
         className={`fixed left-0 right-0 bg-primary text-white z-50 transition-all duration-300 ${
-          isExpanded ? 'bottom-0 h-screen' : 'bottom-20 h-20 shadow-lg'
+          isExpanded ? 'bottom-0 h-screen' : 'bottom-18 h-20 shadow-lg'
         }`}
         data-testid="floating-media-player"
       >
@@ -250,8 +250,8 @@ export function FloatingMediaPlayer({
                   data-testid="skip-back-button"
                 >
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
-                    <text x="12" y="16" textAnchor="middle" className="text-xs fill-current">15</text>
+                    <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z" />
+                    <text x="12" y="15" textAnchor="middle" fontSize="8" fill="white">15</text>
                   </svg>
                 </button>
 
@@ -279,8 +279,8 @@ export function FloatingMediaPlayer({
                   data-testid="skip-forward-button"
                 >
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z" />
-                    <text x="12" y="16" textAnchor="middle" className="text-xs fill-current">15</text>
+                    <path d="M13 6v12l8.5-6L13 6zM4 18l8.5-6L4 6v12z" />
+                    <text x="12" y="15" textAnchor="middle" fontSize="8" fill="white">15</text>
                   </svg>
                 </button>
               </div>
@@ -324,7 +324,7 @@ export function FloatingMediaPlayer({
           </div>
         ) : (
           /* Mini Player */
-          <div className="h-full flex items-center px-4">
+          <div className="h-full flex items-center px-2">
             {/* Small Album Art */}
             <div className="w-12 h-12 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden mr-3">
               {episode?.imageUrl ? (
@@ -343,13 +343,13 @@ export function FloatingMediaPlayer({
             </div>
 
             {/* Episode Info */}
-            <div className="flex-1 min-w-0 mr-3">
+            <div className="flex-1 min-w-0 mr-2">
               <p className="text-sm font-medium text-white truncate">{episode?.title}</p>
               <p className="text-xs text-white text-opacity-80 truncate">{episode?.podcastName}</p>
             </div>
 
             {/* Controls */}
-            <div className="flex items-center space-x-2 flex-shrink-0">
+            <div className="flex items-center space-x-1 flex-shrink-0">
               <button
                 onClick={isPlaying ? onPause : onPlay}
                 className="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
