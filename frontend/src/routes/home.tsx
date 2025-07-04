@@ -108,12 +108,12 @@ export default function Home() {
       {/* Episode Cards */}
       <div className="space-y-4">
         {sampleEpisodes.map(episode => (
-          <EpisodeCard 
-            key={episode.id} 
-            episode={episode} 
+          <EpisodeCard
+            key={episode.id}
+            episode={episode}
             podcastImageUrl={episode.podcastImageUrl}
-            onPlay={handlePlay} 
-            onAIExplanation={handleAIExplanation} 
+            onPlay={handlePlay}
+            onAIExplanation={handleAIExplanation}
           />
         ))}
       </div>

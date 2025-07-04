@@ -41,6 +41,16 @@ describe('EpisodeCard', () => {
     expect(image).toHaveAttribute('src', 'https://example.com/image.jpg')
   })
 
+  it('renders podcast image when episode image is not provided', () => {
+    const episodeWithoutImage = { ...mockEpisode, imageUrl: undefined }
+    const podcastImageUrl = 'https://example.com/podcast-image.jpg'
+    render(<EpisodeCard episode={episodeWithoutImage} podcastImageUrl={podcastImageUrl} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+
+    const image = screen.getByAltText('Test Episode artwork')
+    expect(image).toBeInTheDocument()
+    expect(image).toHaveAttribute('src', podcastImageUrl)
+  })
+
   it('renders default icon when no image provided', () => {
     const episodeWithoutImage = { ...mockEpisode, imageUrl: undefined }
     render(<EpisodeCard episode={episodeWithoutImage} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
@@ -48,6 +58,15 @@ describe('EpisodeCard', () => {
     const episodeCard = screen.getByTestId('episode-card')
     const svg = episodeCard.querySelector('svg')
     expect(svg).toBeInTheDocument()
+  })
+
+  it('prioritizes episode image over podcast image', () => {
+    const podcastImageUrl = 'https://example.com/podcast-image.jpg'
+    render(<EpisodeCard episode={mockEpisode} podcastImageUrl={podcastImageUrl} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+
+    const image = screen.getByAltText('Test Episode artwork')
+    expect(image).toBeInTheDocument()
+    expect(image).toHaveAttribute('src', 'https://example.com/image.jpg')
   })
 
   it('calls onPlay when play button is clicked', () => {
