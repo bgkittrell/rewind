@@ -17,6 +17,7 @@ The `PWAService` class handles all PWA-related functionality including:
 - **Installation Detection**: Detects if app is installed as PWA
 
 **Key Features:**
+
 - Automatic update checking every 30 seconds
 - Skip waiting functionality to force immediate updates
 - Native notification support for background updates
@@ -51,6 +52,7 @@ VitePWA({
 ```
 
 **Key Settings:**
+
 - `registerType: 'prompt'`: Allows custom update handling
 - `skipWaiting: true`: New service worker takes control immediately
 - `clientsClaim: true`: New service worker claims all clients
@@ -88,12 +90,14 @@ The implementation supports multiple notification methods:
 ## Benefits
 
 ### For Users
+
 - **Immediate Updates**: Users get the latest features and bug fixes quickly
 - **No App Store**: Updates happen instantly without app store approval
 - **Offline Support**: App works offline with cached content
 - **Native Experience**: Feels like a native app when installed
 
 ### For Developers
+
 - **Instant Deployment**: Changes are live immediately after deployment
 - **No Version Fragmentation**: All users get updates quickly
 - **Better User Experience**: Seamless update process
@@ -250,6 +254,7 @@ expiration: {
 This implementation provides a robust, user-friendly way to handle PWA updates. Users get immediate access to new features while maintaining full control over when updates are applied. The system is designed to be reliable, performant, and easy to maintain.
 
 The key to success is the combination of:
+
 - Automatic background update detection
 - User-friendly notification system
 - Immediate update application

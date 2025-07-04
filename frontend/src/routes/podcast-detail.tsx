@@ -176,6 +176,7 @@ export default function PodcastDetail() {
       audioUrl: episode.audioUrl,
       imageUrl: episode.imageUrl,
       description: episode.description,
+      podcastImageUrl: podcast?.imageUrl,
     }
   }
 
