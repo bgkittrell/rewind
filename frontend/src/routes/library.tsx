@@ -175,7 +175,6 @@ export default function Library() {
       audioUrl: episode.audioUrl,
       imageUrl: episode.imageUrl,
       description: episode.description,
-      playbackPosition: 0, // TODO: Get from progress tracking
     }
 
     playEpisode(episodeForPlayer)

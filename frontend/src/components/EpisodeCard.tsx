@@ -109,11 +109,11 @@ export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardPro
               <div className="w-full bg-gray-200 rounded-full h-1">
                 <div
                   className="bg-primary h-1 rounded-full transition-all"
-                  style={{ width: `${(episode.playbackPosition! / 100) * 100}%` }}
+                  style={{ width: `${episode.playbackPosition!}%` }}
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                {Math.round((episode.playbackPosition! / 100) * 100)}% complete
+                {Math.round(episode.playbackPosition!)}% complete
               </p>
             </div>
           )}
