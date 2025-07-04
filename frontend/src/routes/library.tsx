@@ -1,29 +1,15 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router'
 import AddPodcastModal from '../components/AddPodcastModal'
-import EpisodeCard from '../components/EpisodeCard'
 import { podcastService, Podcast } from '../services/podcastService'
-import { episodeService, Episode } from '../services/episodeService'
+import { episodeService } from '../services/episodeService'
 import { APIError } from '../services/api'
 import { useAuth } from '../context/AuthContext'
-import { useMediaPlayer } from '../context/MediaPlayerContext'
 import { stripAndTruncate } from '../utils/textUtils'
-
-// Import the Episode type from MediaPlayerContext to avoid confusion
-type MediaPlayerEpisode = {
-  id: string
-  title: string
-  podcastName: string
-  releaseDate: string
-  duration: string
-  audioUrl?: string
-  imageUrl?: string
-  description?: string
-  playbackPosition?: number
-}
 
 export default function Library() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth()
-  const { playEpisode } = useMediaPlayer()
+  const navigate = useNavigate()
   const [podcasts, setPodcasts] = useState<Podcast[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -31,10 +17,6 @@ export default function Library() {
   const [deletingPodcastId, setDeletingPodcastId] = useState<string | null>(null)
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
 
-  // Episode management state
-  const [expandedPodcasts, setExpandedPodcasts] = useState<Set<string>>(new Set())
-  const [episodesByPodcast, setEpisodesByPodcast] = useState<Record<string, Episode[]>>({})
-  const [loadingEpisodes, setLoadingEpisodes] = useState<Set<string>>(new Set())
   const [syncingEpisodes, setSyncingEpisodes] = useState<Set<string>>(new Set())
 
   // Load podcasts only after authentication is complete
@@ -98,57 +80,14 @@ export default function Library() {
     }
   }
 
-  // Episode management functions
-  const handlePodcastExpand = async (podcastId: string) => {
-    const isCurrentlyExpanded = expandedPodcasts.has(podcastId)
-
-    if (isCurrentlyExpanded) {
-      // Collapse podcast
-      setExpandedPodcasts(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(podcastId)
-        return newSet
-      })
-    } else {
-      // Expand podcast and load episodes if not already loaded
-      setExpandedPodcasts(prev => new Set([...prev, podcastId]))
-
-      if (!episodesByPodcast[podcastId]) {
-        await loadEpisodes(podcastId)
-      }
-    }
-  }
-
-  const loadEpisodes = async (podcastId: string) => {
-    try {
-      setLoadingEpisodes(prev => new Set([...prev, podcastId]))
-      const response = await episodeService.getEpisodes(podcastId, 20)
-
-      setEpisodesByPodcast(prev => ({
-        ...prev,
-        [podcastId]: response.episodes,
-      }))
-    } catch (err) {
-      console.error('Failed to load episodes:', err)
-      // If no episodes found, try to sync them
-      await syncEpisodes(podcastId)
-    } finally {
-      setLoadingEpisodes(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(podcastId)
-        return newSet
-      })
-    }
-  }
-
   const syncEpisodes = async (podcastId: string) => {
     try {
-      setSyncingEpisodes(prev => new Set([...prev, podcastId]))
+      setSyncingEpisodes((prev: Set<string>) => new Set([...prev, podcastId]))
       const response = await episodeService.syncEpisodes(podcastId)
 
       if (response.episodeCount > 0) {
-        // Reload episodes after successful sync
-        await loadEpisodes(podcastId)
+        // Episodes synced successfully - user will see them when navigating to podcast detail
+        console.log(`Successfully synced ${response.episodeCount} episodes`)
       }
     } catch (err) {
       console.error('Failed to sync episodes:', err)
@@ -158,7 +97,7 @@ export default function Library() {
         setError('Failed to sync episodes')
       }
     } finally {
-      setSyncingEpisodes(prev => {
+      setSyncingEpisodes((prev: Set<string>) => {
         const newSet = new Set(prev)
         newSet.delete(podcastId)
         return newSet
@@ -166,45 +105,8 @@ export default function Library() {
     }
   }
 
-  const handlePlayEpisode = (episode: Episode, podcast: Podcast) => {
-    // Connect to media player context
-    const episodeForPlayer: MediaPlayerEpisode = {
-      id: episode.episodeId,
-      title: episode.title,
-      podcastName: podcast.title,
-      releaseDate: episode.releaseDate,
-      duration: episode.duration,
-      audioUrl: episode.audioUrl,
-      imageUrl: episode.imageUrl,
-      description: episode.description,
-    }
-
-    playEpisode(episodeForPlayer)
-  }
-
-  const handleAIExplanation = (episode: Episode) => {
-    // TODO: Implement AI explanation modal
-    console.log('AI explanation for:', episode.title)
-  }
-
   const handleImageError = (podcastId: string) => {
-    setImageErrors(prev => new Set([...prev, podcastId]))
-  }
-
-  // Transform Episode to EpisodeCard format
-  const transformEpisodeForCard = (episode: Episode, podcast: Podcast) => {
-    return {
-      id: episode.episodeId,
-      title: episode.title,
-      podcastName: podcast.title,
-      releaseDate: episode.releaseDate,
-      duration: episode.duration,
-      audioUrl: episode.audioUrl,
-      imageUrl: episode.imageUrl,
-      description: episode.description,
-      // Don't set playbackPosition to 0 - leave it undefined to prevent progress indicator
-      // playbackPosition: 0, // TODO: Get from progress tracking
-    }
+    setImageErrors((prev: Set<string>) => new Set([...prev, podcastId]))
   }
 
   return (
@@ -266,9 +168,6 @@ export default function Library() {
       {!authLoading && !isLoading && isAuthenticated && podcasts.length > 0 && (
         <div className="space-y-4">
           {podcasts.map(podcast => {
-            const isExpanded = expandedPodcasts.has(podcast.podcastId)
-            const episodes = episodesByPodcast[podcast.podcastId] || []
-            const isLoadingEpisodes = loadingEpisodes.has(podcast.podcastId)
             const isSyncing = syncingEpisodes.has(podcast.podcastId)
 
             return (
@@ -276,7 +175,10 @@ export default function Library() {
                 {/* Enhanced Podcast Card */}
                 <div className="p-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4 flex-1">
+                    <div
+                      className="flex items-center space-x-4 flex-1 cursor-pointer hover:bg-gray-50 -m-2 p-2 rounded-lg transition-colors"
+                      onClick={() => navigate(`/library/${podcast.podcastId}`)}
+                    >
                       {/* Podcast Image */}
                       <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
                         {podcast.imageUrl && !imageErrors.has(podcast.podcastId) ? (
@@ -337,22 +239,6 @@ export default function Library() {
                         )}
                       </button>
 
-                      {/* Expand/Collapse Button */}
-                      <button
-                        onClick={() => handlePodcastExpand(podcast.podcastId)}
-                        className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
-                        title={isExpanded ? 'Hide episodes' : 'Show episodes'}
-                      >
-                        <svg
-                          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-
                       {/* Delete Button */}
                       <button
                         onClick={() => handleDeletePodcast(podcast.podcastId)}
@@ -376,59 +262,6 @@ export default function Library() {
                     </div>
                   </div>
                 </div>
-
-                {/* Episodes Section */}
-                {isExpanded && (
-                  <div className="border-t border-gray-200">
-                    {/* Episodes Header */}
-                    <div className="p-4 bg-gray-50">
-                      <h4 className="font-medium text-gray-900">
-                        Episodes
-                        {episodes.length > 0 && <span className="text-gray-500">({episodes.length})</span>}
-                      </h4>
-                    </div>
-
-                    {/* Episodes Loading */}
-                    {isLoadingEpisodes && (
-                      <div className="p-4 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                        <span className="ml-2 text-gray-600">Loading episodes...</span>
-                      </div>
-                    )}
-
-                    {/* Episodes List */}
-                    {!isLoadingEpisodes && episodes.length > 0 && (
-                      <div className="divide-y divide-gray-100">
-                        {episodes.map(episode => {
-                          const episodeCardData = transformEpisodeForCard(episode, podcast)
-                          return (
-                            <div key={episode.episodeId} className="p-4">
-                              <EpisodeCard
-                                episode={episodeCardData}
-                                onPlay={() => handlePlayEpisode(episode, podcast)}
-                                onAIExplanation={() => handleAIExplanation(episode)}
-                              />
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-
-                    {/* No Episodes State */}
-                    {!isLoadingEpisodes && episodes.length === 0 && (
-                      <div className="p-4 text-center text-gray-500">
-                        <p>No episodes found.</p>
-                        <button
-                          onClick={() => syncEpisodes(podcast.podcastId)}
-                          disabled={isSyncing}
-                          className="mt-2 text-primary hover:text-secondary"
-                        >
-                          {isSyncing ? 'Syncing...' : 'Try syncing episodes'}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             )
           })}
