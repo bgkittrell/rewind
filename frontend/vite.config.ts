@@ -7,23 +7,41 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,mp3}'],
+        skipWaiting: true,
+        clientsClaim: true,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.amazonaws\.com\/.*$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 86400, // 24 hours
+              },
+            },
+          },
+        ],
       },
       manifest: {
-        name: 'Rewind',
+        name: 'Rewind - Rediscover Podcasts',
         short_name: 'Rewind',
-        description: 'Rediscover older podcast episodes',
+        description: 'Rediscover older podcast episodes with AI-powered recommendations',
         theme_color: '#eb4034',
         background_color: '#ffffff',
         display: 'standalone',
+        orientation: 'portrait-primary',
         start_url: '/',
+        scope: '/',
         icons: [
           {
             src: '/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
+            purpose: 'any maskable',
           },
           {
             src: '/icon-512.png',
@@ -31,6 +49,9 @@ export default defineConfig({
             type: 'image/png',
           },
         ],
+      },
+      devOptions: {
+        enabled: true,
       },
     }),
   ],
