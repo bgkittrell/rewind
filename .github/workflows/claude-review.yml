@@ -1,0 +1,41 @@
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  claude-review:
+    # Only run if it's a PR event or contains @claude mention
+    if: |
+      github.event_name == 'pull_request' || 
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude Review
+        uses: grll/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          timeout_minutes: "30"
+          # Optional: add custom environment variables for the Rewind project context
+          claude_env: |
+            PROJECT_NAME: Rewind Podcast App
+            TECH_STACK: React Router v7, TypeScript, Tailwind CSS, AWS Serverless
+            TARGET_AUDIENCE: Podcast enthusiasts aged 35+
+            PRIMARY_COLOR: #eb4034
+            API_BASE_URL: https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1

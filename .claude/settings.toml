@@ -1,0 +1,74 @@
+[review]
+# Focus areas for code reviews
+focus_areas = ["security", "performance", "accessibility", "typescript", "react"]
+
+# File patterns to include in reviews
+file_patterns = [
+  "frontend/**/*.tsx", 
+  "frontend/**/*.ts", 
+  "backend/**/*.ts", 
+  "infra/**/*.ts",
+  "**/*.js",
+  "**/*.jsx"
+]
+
+# Patterns to exclude from reviews
+excluded_patterns = [
+  "**/*.test.ts", 
+  "**/*.test.tsx",
+  "**/*.spec.ts",
+  "**/node_modules/**", 
+  "**/dist/**",
+  "**/build/**",
+  "**/*.d.ts",
+  "**/coverage/**",
+  "**/.next/**"
+]
+
+# Maximum diff size to review (in characters)
+max_diff_size = 50000
+
+[prompts]
+# Project context for Claude to understand the codebase
+context = """
+This is the Rewind podcast application - a mobile-first PWA for podcast enthusiasts to rediscover older episodes.
+
+Project Details:
+- Target audience: Podcast enthusiasts aged 35+
+- Key feature: Rediscovery of older podcast episodes through recommendation engine
+- Architecture: Mobile-first PWA with AWS serverless backend
+- API Base URL: https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1
+- Primary Color: #eb4034 (red)
+
+Tech Stack:
+- Frontend: React Router v7, TypeScript, Tailwind CSS, Vite
+- Backend: AWS Lambda, TypeScript, DynamoDB
+- Infrastructure: AWS CDK
+- Testing: Vitest, Playwright, Storybook
+- Development: ESLint, Prettier, npm workspaces
+
+Code Quality Standards:
+- Always run `npm run lint` and `npm run test` before commits
+- Use TypeScript strict mode
+- Follow React best practices and hooks patterns
+- Implement proper error handling and user feedback
+- Ensure mobile-first responsive design
+- Maintain accessibility standards (WCAG 2.1)
+- Use semantic commit messages
+"""
+
+# Custom review instructions
+instructions = """
+When reviewing code, please focus on:
+
+1. **Security**: Check for potential vulnerabilities, API key exposure, input validation
+2. **Performance**: Identify inefficient operations, unnecessary re-renders, bundle size impacts
+3. **Accessibility**: Ensure proper ARIA labels, keyboard navigation, screen reader support
+4. **TypeScript**: Verify proper typing, avoid 'any' usage, use discriminated unions where appropriate
+5. **React Best Practices**: Proper hook usage, component composition, state management
+6. **Mobile Experience**: Responsive design, touch targets, performance on mobile devices
+7. **Error Handling**: Proper try-catch blocks, user-friendly error messages, fallback UI
+8. **Code Quality**: DRY principles, readable variable names, appropriate comments
+
+Please be constructive and specific in your feedback, providing examples or suggestions where possible.
+"""
