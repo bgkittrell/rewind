@@ -164,13 +164,11 @@ export default function PodcastDetail() {
     console.log('AI explanation for:', episode.title)
   }
 
-  const transformEpisodeForCard = (episode: Episode) => {
-    if (!podcast) return episode
-
+  const transformEpisodeForCard = (episode: Episode): MediaPlayerEpisode => {
     return {
       id: episode.episodeId,
       title: episode.title,
-      podcastName: podcast.title,
+      podcastName: podcast?.title || 'Unknown Podcast',
       releaseDate: episode.releaseDate,
       duration: episode.duration,
       audioUrl: episode.audioUrl,
