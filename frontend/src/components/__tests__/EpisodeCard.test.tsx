@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { EpisodeCard } from '../EpisodeCard'
 
 describe('EpisodeCard', () => {
@@ -97,7 +97,6 @@ describe('EpisodeCard', () => {
       render(<EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
 
       expect(screen.getByText('34% complete')).toBeInTheDocument()
-      
       const progressBar = screen.getByText('34% complete').previousElementSibling?.querySelector('.bg-primary')
       expect(progressBar).toHaveStyle('width: 33.7%')
     })
@@ -107,7 +106,6 @@ describe('EpisodeCard', () => {
       render(<EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
 
       expect(screen.getByText('100% complete')).toBeInTheDocument()
-      
       const progressBar = screen.getByText('100% complete').previousElementSibling?.querySelector('.bg-primary')
       expect(progressBar).toHaveStyle('width: 100%')
     })
@@ -117,7 +115,6 @@ describe('EpisodeCard', () => {
       render(<EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
 
       expect(screen.getByText('0% complete')).toBeInTheDocument()
-      
       const progressBar = screen.getByText('0% complete').previousElementSibling?.querySelector('.bg-primary')
       expect(progressBar).toHaveStyle('width: 0.1%')
     })
