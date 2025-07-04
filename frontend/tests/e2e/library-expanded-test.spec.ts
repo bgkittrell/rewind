@@ -25,7 +25,8 @@ const mockEpisodesResponse = {
     {
       episodeId: 'episode-1',
       podcastId: 'podcast-1',
-      title: 'Episode 1: This Is An Extremely Long Episode Title That Should Cause Significant Layout Issues When Displayed In The Episode Card Component Because It Exceeds All Normal Length Expectations',
+      title:
+        'Episode 1: This Is An Extremely Long Episode Title That Should Cause Significant Layout Issues When Displayed In The Episode Card Component Because It Exceeds All Normal Length Expectations',
       description: 'Long episode description that tests the layout.',
       audioUrl: 'https://example.com/audio1.mp3',
       duration: '1:45:30',
@@ -112,7 +113,7 @@ test.describe('Library Expanded Episodes Test', () => {
     // Find and click the expand button
     const expandButton = page.locator('button[title="Show episodes"]').first()
     await expect(expandButton).toBeVisible()
-    
+
     console.log('Clicking expand button...')
     await expandButton.click()
 
@@ -126,7 +127,7 @@ test.describe('Library Expanded Episodes Test', () => {
 
     if (episodeCount > 0) {
       console.log('Episodes loaded successfully!')
-      
+
       // Take screenshot of expanded state
       await page.screenshot({
         path: 'test-results/screenshots/library-improved-expanded-episodes.png',
@@ -148,7 +149,6 @@ test.describe('Library Expanded Episodes Test', () => {
         path: 'test-results/screenshots/library-improved-broken-images.png',
         fullPage: true,
       })
-
     } else {
       console.log('No episodes found, taking debug screenshot')
       await page.screenshot({
@@ -161,7 +161,7 @@ test.describe('Library Expanded Episodes Test', () => {
   test('should show improved mobile layout with expanded episodes', async ({ page }) => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 812 })
-    
+
     await page.goto('http://localhost:5173/library')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)

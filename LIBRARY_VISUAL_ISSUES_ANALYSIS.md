@@ -6,7 +6,8 @@
 
 **Problem**: Episode cards and podcast cards don't properly handle broken/failed image loads.
 
-**Location**: 
+**Location**:
+
 - `EpisodeCard.tsx` line 44: `<img src={episode.imageUrl} alt={...} />`
 - `library.tsx` line 291: `<img src={podcast.imageUrl} alt={...} />`
 
@@ -19,10 +20,12 @@
 **Problem**: Very long podcast and episode titles cause layout issues.
 
 **Locations**:
+
 - `library.tsx` line 305: Podcast title uses `break-words` but can still overflow
 - `EpisodeCard.tsx` line 54: Episode title uses `flex-1` but may overflow container
 
 **Issues**:
+
 - Titles push action buttons off screen
 - Text wrapping causes vertical expansion
 - Mobile layout becomes cramped
@@ -42,11 +45,13 @@
 ### 4. **Mobile Layout Issues** 📱
 
 **Problems**:
+
 - Fixed image sizes (w-16, w-20) don't scale on small screens
 - Action buttons get cramped with long titles
 - Episode cards have too much padding on mobile
 
 **Locations**:
+
 - `library.tsx` line 289: `w-16 h-16` fixed size
 - `EpisodeCard.tsx` line 42: `w-20 h-20` fixed size
 
@@ -57,6 +62,7 @@
 **Location**: `library.tsx` lines 367-428
 
 **Issues**:
+
 - Episode cards might overflow parent container
 - No proper loading states for episode thumbnails
 - Nested scrolling issues
@@ -137,7 +143,7 @@ const [descriptionExpanded, setDescriptionExpanded] = useState(false)
 ## Test Coverage Needed
 
 1. **Image Error States**: Test broken image URLs
-2. **Long Content**: Test extremely long titles and descriptions  
+2. **Long Content**: Test extremely long titles and descriptions
 3. **Mobile Breakpoints**: Test at various screen sizes
 4. **Episode Expansion**: Verify episode cards render properly when expanded
 5. **Responsive Layout**: Test layout doesn't break with long content
@@ -153,6 +159,7 @@ const [descriptionExpanded, setDescriptionExpanded] = useState(false)
 ## Screenshots Analysis
 
 From the generated test screenshots:
+
 - `library-long-titles-desktop.png` - Shows title overflow issues
 - `library-long-titles-mobile.png` - Reveals mobile layout problems
 - `library-broken-images-showcase.png` - Demonstrates broken image handling
