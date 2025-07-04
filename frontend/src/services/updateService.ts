@@ -1,5 +1,10 @@
 import { Workbox } from 'workbox-window'
 
+// Constants
+const MIN_UPDATE_INTERVAL = 60 * 1000 // 1 minute
+const UPDATE_CHECK_INTERVAL = 5 * 60 * 1000 // 5 minutes
+const VISIBILITY_DEBOUNCE_TIME = 1000 // 1 second
+
 // Type definitions for workbox-window events
 interface WorkboxEvent {
   isUpdate?: boolean
@@ -12,6 +17,8 @@ export class UpdateService {
   private registration: ServiceWorkerRegistration | null = null
   private updateAvailable = false
   private onUpdateCallback: (() => void) | null = null
+  private lastUpdateCheck = 0
+  private isUpdateInProgress = false
 
   async initialize() {
     if ('serviceWorker' in navigator) {
@@ -38,12 +45,6 @@ export class UpdateService {
         this.reloadApp()
       })
 
-      // Service worker update check
-      this.wb.addEventListener('waiting', (event: WorkboxEvent) => {
-        console.log('External service worker waiting:', event)
-        this.updateAvailable = true
-        this.showUpdatePrompt()
-      })
 
       try {
         const registration = await this.wb.register()
@@ -59,10 +60,17 @@ export class UpdateService {
   }
 
   private startUpdateCheck() {
-    // Check for updates when app becomes visible
+    let debounceTimer: NodeJS.Timeout | null = null
+    
+    // Check for updates when app becomes visible (debounced)
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
-        this.checkForUpdates()
+        if (debounceTimer) {
+          clearTimeout(debounceTimer)
+        }
+        debounceTimer = setTimeout(() => {
+          this.checkForUpdates()
+        }, VISIBILITY_DEBOUNCE_TIME)
       }
     })
 
@@ -71,18 +79,38 @@ export class UpdateService {
       () => {
         this.checkForUpdates()
       },
-      5 * 60 * 1000,
+      UPDATE_CHECK_INTERVAL,
     )
   }
 
   async checkForUpdates() {
+    const now = Date.now()
+    
+    // Throttle update checks to prevent excessive calls
+    if (now - this.lastUpdateCheck < MIN_UPDATE_INTERVAL) {
+      console.log('Update check throttled - too soon since last check')
+      return
+    }
+    
+    if (this.isUpdateInProgress) {
+      console.log('Update check already in progress')
+      return
+    }
+    
+    this.lastUpdateCheck = now
+    this.isUpdateInProgress = true
+    
     if (this.registration) {
       try {
         await this.registration.update()
         console.log('Checked for service worker updates')
       } catch (error) {
         console.error('Update check failed:', error)
+      } finally {
+        this.isUpdateInProgress = false
       }
+    } else {
+      this.isUpdateInProgress = false
     }
   }
 

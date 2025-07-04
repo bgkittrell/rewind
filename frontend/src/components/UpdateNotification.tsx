@@ -1,36 +1,62 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { updateService } from '../services/updateService'
+
+const DISMISS_TIMEOUT = 60 * 60 * 1000 // 1 hour
 
 export const UpdateNotification = () => {
   const [showUpdate, setShowUpdate] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    updateService.onUpdateReady(() => {
-      setShowUpdate(true)
-    })
+    try {
+      updateService.onUpdateReady(() => {
+        setShowUpdate(true)
+        setError(null) // Clear any previous errors
+      })
+    } catch (error) {
+      console.error('Failed to setup update service:', error)
+      setError('Failed to setup update notifications')
+    }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
   }, [])
 
   const handleUpdate = async () => {
     setIsUpdating(true)
+    setError(null)
+    
     try {
-      await updateService.applyUpdate()
+      const updateResult = await updateService.applyUpdate()
+      if (!updateResult) {
+        throw new Error('Update failed - no update available')
+      }
       // App will reload automatically
     } catch (error) {
       console.error('Update failed:', error)
+      setError(error instanceof Error ? error.message : 'Update failed')
       setIsUpdating(false)
     }
   }
 
   const handleDismiss = () => {
     setShowUpdate(false)
+    
+    // Clear existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    
     // Show again in 1 hour
-    setTimeout(
-      () => {
-        setShowUpdate(true)
-      },
-      60 * 60 * 1000,
-    )
+    timeoutRef.current = setTimeout(() => {
+      setShowUpdate(true)
+    }, DISMISS_TIMEOUT)
   }
 
   if (!showUpdate) return null
@@ -43,6 +69,11 @@ export const UpdateNotification = () => {
           <p className="text-xs opacity-90 mt-1">
             A new version of Rewind is available with improvements and bug fixes.
           </p>
+          {error && (
+            <p className="text-xs mt-2 bg-red-700 px-2 py-1 rounded">
+              Error: {error}
+            </p>
+          )}
         </div>
         <button onClick={handleDismiss} className="text-white opacity-75 hover:opacity-100 ml-2" aria-label="Dismiss">
           ×

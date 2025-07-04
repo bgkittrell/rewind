@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
+import packageJson from '../package.json'
 
 export default defineConfig({
   plugins: [
@@ -55,7 +56,7 @@ export default defineConfig({
     }),
   ],
   define: {
-    'import.meta.env.VITE_APP_VERSION': JSON.stringify('1.0.0'),
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
   },
   resolve: {
     alias: {
