@@ -68,8 +68,7 @@ export class PWAService {
   }
 
   isInstalled(): boolean {
-    return window.matchMedia('(display-mode: standalone)').matches ||
-           (window.navigator as any).standalone === true
+    return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true
   }
 
   async requestNotificationPermission(): Promise<boolean> {
@@ -89,7 +88,7 @@ export class PWAService {
         tag: 'app-update',
         requireInteraction: true,
         // Actions are supported in some browsers but not in TypeScript types
-        ...(('actions' in Notification.prototype) && {
+        ...('actions' in Notification.prototype && {
           actions: [
             {
               action: 'update',
@@ -110,7 +109,7 @@ export class PWAService {
 
       // Handle notification actions if supported
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.addEventListener('notificationclick', (event) => {
+        navigator.serviceWorker.addEventListener('notificationclick', event => {
           const notificationEvent = event as any
           if (notificationEvent.action === 'update') {
             this.applyUpdate()

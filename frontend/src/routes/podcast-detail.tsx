@@ -19,6 +19,7 @@ type MediaPlayerEpisode = {
   imageUrl?: string
   description?: string
   playbackPosition?: number
+  podcastImageUrl?: string
 }
 
 export default function PodcastDetail() {
@@ -154,6 +155,7 @@ export default function PodcastDetail() {
       audioUrl: episode.audioUrl,
       imageUrl: episode.imageUrl,
       description: episode.description,
+      podcastImageUrl: podcast.imageUrl,
     }
 
     playEpisode(episodeForPlayer)
@@ -300,7 +302,7 @@ export default function PodcastDetail() {
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
             Episodes
-            {episodes.length > 0 && <span className="text-gray-500 ml-2">({episodes.length})</span>}
+            {podcast && <span className="text-gray-500 ml-2">({podcast.episodeCount})</span>}
           </h2>
         </div>
 
@@ -313,6 +315,7 @@ export default function PodcastDetail() {
                 <div key={episode.episodeId} className="p-4">
                   <EpisodeCard
                     episode={episodeCardData}
+                    podcastImageUrl={podcast.imageUrl}
                     onPlay={() => handlePlayEpisode(episode)}
                     onAIExplanation={() => handleAIExplanation(episode)}
                   />

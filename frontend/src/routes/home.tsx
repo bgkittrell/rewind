@@ -13,6 +13,7 @@ const sampleEpisodes = [
     imageUrl: 'https://images.placeholders.dev/80x80?bgColor=%23eb4034&textColor=%23ffffff&text=LTW',
     description: 'A deep dive into comedy history with classic bits and timeless humor.',
     playbackPosition: 0,
+    podcastImageUrl: 'https://images.placeholders.dev/80x80?bgColor=%23eb4034&textColor=%23ffffff&text=LTW',
   },
   {
     id: '2',
@@ -23,6 +24,7 @@ const sampleEpisodes = [
     audioUrl: 'https://file-examples.com/storage/fe86a1e166e06f51de4b5bf/2017/11/file_example_MP3_700KB.mp3',
     imageUrl: 'https://images.placeholders.dev/80x80?bgColor=%2326a69a&textColor=%23ffffff&text=BTM',
     description: 'Exploring the world of improv comedy with industry veteran Sarah Johnson.',
+    podcastImageUrl: 'https://images.placeholders.dev/80x80?bgColor=%2326a69a&textColor=%23ffffff&text=BTM',
   },
   {
     id: '3',
@@ -33,6 +35,7 @@ const sampleEpisodes = [
     audioUrl: 'https://www.kozco.com/tech/LRMonoPhase4.mp3',
     imageUrl: 'https://images.placeholders.dev/80x80?bgColor=%239c27b0&textColor=%23ffffff&text=CC',
     description: 'The journey of comedians from their first open mic to headlining shows.',
+    podcastImageUrl: 'https://images.placeholders.dev/80x80?bgColor=%239c27b0&textColor=%23ffffff&text=CC',
   },
   {
     id: '4',
@@ -43,6 +46,7 @@ const sampleEpisodes = [
     audioUrl: 'https://www.kozco.com/tech/piano2-CoolEdit-16bitPCM.mp3',
     imageUrl: 'https://images.placeholders.dev/80x80?bgColor=%23ff9800&textColor=%23ffffff&text=MC',
     description: 'A scientific look at humor and its effects on the human brain.',
+    podcastImageUrl: 'https://images.placeholders.dev/80x80?bgColor=%23ff9800&textColor=%23ffffff&text=MC',
   },
 ]
 
@@ -59,6 +63,7 @@ export default function Home() {
     imageUrl?: string
     description?: string
     playbackPosition?: number
+    podcastImageUrl?: string
   }) => {
     playEpisode(episode)
   }
@@ -73,6 +78,7 @@ export default function Home() {
     imageUrl?: string
     description?: string
     playbackPosition?: number
+    podcastImageUrl?: string
   }) => {
     // TODO: Implement AI explanation modal
   }
@@ -102,7 +108,13 @@ export default function Home() {
       {/* Episode Cards */}
       <div className="space-y-4">
         {sampleEpisodes.map(episode => (
-          <EpisodeCard key={episode.id} episode={episode} onPlay={handlePlay} onAIExplanation={handleAIExplanation} />
+          <EpisodeCard
+            key={episode.id}
+            episode={episode}
+            podcastImageUrl={episode.podcastImageUrl}
+            onPlay={handlePlay}
+            onAIExplanation={handleAIExplanation}
+          />
         ))}
       </div>
     </div>

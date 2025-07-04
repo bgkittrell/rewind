@@ -57,7 +57,7 @@ pwaService.initialize()
 // Show update notification when available
 let updateNotificationElement: HTMLDivElement | null = null
 
-pwaService.onUpdateAvailable((showReload) => {
+pwaService.onUpdateAvailable(showReload => {
   if (showReload && !updateNotificationElement) {
     updateNotificationElement = document.createElement('div')
     updateNotificationElement.className = 'fixed top-0 left-0 right-0 z-50 bg-red-500 text-white px-4 py-3 shadow-lg'
