@@ -80,8 +80,6 @@ export default function Library() {
     }
   }
 
-
-
   const syncEpisodes = async (podcastId: string) => {
     try {
       setSyncingEpisodes((prev: Set<string>) => new Set([...prev, podcastId]))
@@ -167,7 +165,7 @@ export default function Library() {
       )}
 
       {/* Podcast List */}
-              {!authLoading && !isLoading && isAuthenticated && podcasts.length > 0 && (
+      {!authLoading && !isLoading && isAuthenticated && podcasts.length > 0 && (
         <div className="space-y-4">
           {podcasts.map(podcast => {
             const isSyncing = syncingEpisodes.has(podcast.podcastId)
@@ -177,7 +175,7 @@ export default function Library() {
                 {/* Enhanced Podcast Card */}
                 <div className="p-4">
                   <div className="flex items-center justify-between">
-                    <div 
+                    <div
                       className="flex items-center space-x-4 flex-1 cursor-pointer hover:bg-gray-50 -m-2 p-2 rounded-lg transition-colors"
                       onClick={() => navigate(`/library/${podcast.podcastId}`)}
                     >
@@ -241,8 +239,6 @@ export default function Library() {
                         )}
                       </button>
 
-
-
                       {/* Delete Button */}
                       <button
                         onClick={() => handleDeletePodcast(podcast.podcastId)}
@@ -266,8 +262,6 @@ export default function Library() {
                     </div>
                   </div>
                 </div>
-
-
               </div>
             )
           })}

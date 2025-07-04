@@ -39,7 +39,8 @@ describe('textUtils', () => {
     })
 
     it('should strip HTML and truncate when necessary', () => {
-      const longHtmlText = '<div><p>This is a very long HTML text that contains <strong>multiple</strong> tags and should be <em>truncated</em> properly</p></div>'
+      const longHtmlText =
+        '<div><p>This is a very long HTML text that contains <strong>multiple</strong> tags and should be <em>truncated</em> properly</p></div>'
       const result = stripAndTruncate(longHtmlText, 50)
       expect(result).toContain('This is a very long HTML text that contains...')
       expect(result).not.toContain('<')

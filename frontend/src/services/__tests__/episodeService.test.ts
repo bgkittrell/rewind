@@ -117,7 +117,9 @@ describe('EpisodeService', () => {
     it('should handle save progress errors', async () => {
       vi.mocked(apiClient.put).mockRejectedValue(new Error('Save failed'))
 
-      await expect(episodeService.saveProgress('episode-1', 150, 300, 'podcast-1')).rejects.toThrow('Failed to save progress')
+      await expect(episodeService.saveProgress('episode-1', 150, 300, 'podcast-1')).rejects.toThrow(
+        'Failed to save progress',
+      )
     })
   })
 

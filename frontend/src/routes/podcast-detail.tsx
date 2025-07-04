@@ -26,7 +26,7 @@ export default function PodcastDetail() {
   const navigate = useNavigate()
   const { isAuthenticated, isLoading: authLoading } = useAuth()
   const { playEpisode } = useMediaPlayer()
-  
+
   const [podcast, setPodcast] = useState<Podcast | null>(null)
   const [episodes, setEpisodes] = useState<Episode[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -64,11 +64,11 @@ export default function PodcastDetail() {
     try {
       setIsLoading(true)
       setError(null)
-      
+
       // Get all podcasts and find the one we need
       const response = await podcastService.getPodcasts()
       const foundPodcast = response.podcasts.find(p => p.podcastId === podcastId)
-      
+
       if (!foundPodcast) {
         setError('Podcast not found')
         return
@@ -209,17 +209,11 @@ export default function PodcastDetail() {
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
           <p className="text-sm text-red-800">{error || 'Podcast not found'}</p>
           <div className="mt-2 space-x-2">
-            <button 
-              onClick={() => navigate('/library')} 
-              className="text-sm text-red-600 hover:text-red-800"
-            >
+            <button onClick={() => navigate('/library')} className="text-sm text-red-600 hover:text-red-800">
               Back to Library
             </button>
             {error && (
-              <button 
-                onClick={() => window.location.reload()} 
-                className="text-sm text-red-600 hover:text-red-800"
-              >
+              <button onClick={() => window.location.reload()} className="text-sm text-red-600 hover:text-red-800">
                 Retry
               </button>
             )}
@@ -259,11 +253,7 @@ export default function PodcastDetail() {
                 />
               ) : (
                 <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                  <svg
-                    className="w-12 h-12 text-gray-400"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
                   </svg>
                 </div>
@@ -273,9 +263,7 @@ export default function PodcastDetail() {
             {/* Podcast Information */}
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">{podcast.title}</h1>
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                {stripAndTruncate(podcast.description, 300)}
-              </p>
+              <p className="text-gray-600 mb-4 leading-relaxed">{stripAndTruncate(podcast.description, 300)}</p>
               <div className="flex items-center space-x-4 text-sm text-gray-500">
                 <span>{podcast.episodeCount} episodes</span>
                 <span>•</span>
@@ -321,7 +309,7 @@ export default function PodcastDetail() {
         {/* Episodes List */}
         {episodes.length > 0 ? (
           <div className="divide-y divide-gray-100">
-            {episodes.map((episode) => {
+            {episodes.map(episode => {
               const episodeCardData = transformEpisodeForCard(episode)
               return (
                 <div key={episode.episodeId} className="p-4">
@@ -333,7 +321,7 @@ export default function PodcastDetail() {
                 </div>
               )
             })}
-            
+
             {/* Load More / Loading State */}
             {hasMore && (
               <div className="p-4 text-center">
@@ -343,16 +331,13 @@ export default function PodcastDetail() {
                     <span className="ml-2 text-gray-600">Loading more episodes...</span>
                   </div>
                 ) : (
-                  <button
-                    onClick={handleLoadMore}
-                    className="text-primary hover:text-secondary font-medium"
-                  >
+                  <button onClick={handleLoadMore} className="text-primary hover:text-secondary font-medium">
                     Load More Episodes
                   </button>
                 )}
               </div>
             )}
-            
+
             {/* End of Episodes */}
             {!hasMore && episodes.length > 0 && (
               <div className="p-4 text-center text-gray-500">
