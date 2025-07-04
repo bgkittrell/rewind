@@ -7,9 +7,29 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt', // Changed from autoUpdate to allow user control
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,mp3}'],
+        // Clean old caches
+        cleanupOutdatedCaches: true,
+        // Skip waiting for user action
+        skipWaiting: false, // Let user control when to update
+        // Client claim control
+        clientsClaim: false,
+        // Runtime caching strategies
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/12c77xnz00\.execute-api\.us-east-1\.amazonaws\.com\/v1\/.*/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24, // 24 hours
+              },
+            },
+          },
+        ],
       },
       manifest: {
         name: 'Rewind',
@@ -34,6 +54,9 @@ export default defineConfig({
       },
     }),
   ],
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify('1.0.0'),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

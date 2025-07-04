@@ -6,6 +6,13 @@ import './index.css'
 // Import context providers
 import { AuthProvider } from './context/AuthContext'
 
+// Import PWA services
+import { updateService } from './services/updateService'
+import { versionService } from './services/versionService'
+
+// Import components
+import { UpdateNotification } from './components/UpdateNotification'
+
 // Import routes
 import Root from './routes/root'
 import Home from './routes/home'
@@ -47,10 +54,15 @@ const router = createBrowserRouter([
   },
 ])
 
+// Initialize PWA services
+updateService.initialize()
+versionService.initialize()
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AuthProvider>
       <RouterProvider router={router} />
+      <UpdateNotification />
     </AuthProvider>
   </React.StrictMode>,
 )
