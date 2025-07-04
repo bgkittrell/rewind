@@ -6,6 +6,7 @@ import { episodeService, Episode } from '../services/episodeService'
 import { APIError } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useMediaPlayer } from '../context/MediaPlayerContext'
+import { stripAndTruncate } from '../utils/textUtils'
 
 // Import the Episode type from MediaPlayerContext to avoid confusion
 type MediaPlayerEpisode = {
@@ -303,7 +304,9 @@ export default function Library() {
                         <h3 className="font-semibold text-gray-900 text-sm sm:text-base line-clamp-2 break-words pr-2">
                           {podcast.title}
                         </h3>
-                        <p className="text-sm text-gray-600 line-clamp-2 break-words">{podcast.description}</p>
+                        <p className="text-sm text-gray-600 line-clamp-2 break-words">
+                          {stripAndTruncate(podcast.description, 150)}
+                        </p>
                         <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
                           <span>{podcast.episodeCount} episodes</span>
                           <span>Added {new Date(podcast.createdAt).toLocaleDateString()}</span>
