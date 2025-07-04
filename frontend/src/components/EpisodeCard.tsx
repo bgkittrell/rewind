@@ -14,9 +14,10 @@ interface EpisodeCardProps {
   }
   onPlay?: (_episode: EpisodeCardProps['episode']) => void
   onAIExplanation?: (_episode: EpisodeCardProps['episode']) => void
+  showPodcastName?: boolean // When true, shows podcast name instead of episode title
 }
 
-export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardProps) {
+export function EpisodeCard({ episode, onPlay, onAIExplanation, showPodcastName = false }: EpisodeCardProps) {
   const [imageError, setImageError] = useState(false)
 
   const handlePlay = () => {
@@ -66,7 +67,7 @@ export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardPro
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-2">
             <h3 className="font-semibold text-gray-900 text-sm leading-tight flex-1 line-clamp-2 break-words pr-1">
-              {episode.title}
+              {showPodcastName ? episode.podcastName : episode.title}
             </h3>
 
             {/* AI Explanation Button */}
@@ -91,7 +92,9 @@ export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardPro
             </button>
           </div>
 
-          <p className="text-sm text-gray-600 truncate mb-1">{episode.podcastName}</p>
+          {showPodcastName && (
+            <p className="text-sm text-gray-600 truncate mb-1">{episode.title}</p>
+          )}
 
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-500">

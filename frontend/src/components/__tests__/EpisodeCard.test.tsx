@@ -135,4 +135,25 @@ describe('EpisodeCard', () => {
       expect(screen.getByText('Dec 25, 2023 • 30:00')).toBeInTheDocument()
     })
   })
+
+  describe('showPodcastName prop', () => {
+    it('shows episode title by default', () => {
+      render(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+
+      expect(screen.getByText('Test Episode')).toBeInTheDocument()
+    })
+
+    it('shows podcast name when showPodcastName is true', () => {
+      render(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} showPodcastName={true} />)
+
+      expect(screen.getByText('Test Podcast')).toBeInTheDocument()
+      expect(screen.getByText('Test Episode')).toBeInTheDocument()
+    })
+
+    it('shows episode title when showPodcastName is false', () => {
+      render(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} showPodcastName={false} />)
+
+      expect(screen.getByText('Test Episode')).toBeInTheDocument()
+    })
+  })
 })

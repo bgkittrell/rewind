@@ -300,7 +300,7 @@ export default function PodcastDetail() {
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
             Episodes
-            {episodes.length > 0 && <span className="text-gray-500 ml-2">({episodes.length})</span>}
+            <span className="text-gray-500 ml-2">({podcast.episodeCount})</span>
           </h2>
         </div>
 
