@@ -1,0 +1,103 @@
+name: Claude PR Review (Alternative)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  claude-review:
+    if: |
+      github.event_name == 'pull_request' || 
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        id: pr-diff
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
+          else
+            # Extract PR number from issue comment
+            PR_URL="${{ github.event.issue.pull_request.url }}"
+            if [ ! -z "$PR_URL" ]; then
+              PR_NUMBER=$(basename "$PR_URL")
+              gh pr diff $PR_NUMBER > pr_diff.txt
+            fi
+          fi
+          echo "diff-size=$(wc -c < pr_diff.txt)" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Claude Review with cURL
+        if: steps.pr-diff.outputs.diff-size > 0
+        run: |
+          # Read the diff
+          DIFF_CONTENT=$(cat pr_diff.txt)
+          
+          # Create prompt for Claude
+          PROMPT="You are a senior software engineer reviewing a pull request for the Rewind podcast application.
+
+          Project context:
+          - React Router v7 frontend with TypeScript and Tailwind CSS
+          - AWS serverless backend with Lambda functions
+          - Mobile-first PWA targeting podcast enthusiasts aged 35+
+          - Primary color: #eb4034
+          
+          Please review the following diff and provide:
+          1. Overall assessment
+          2. Security considerations
+          3. Performance implications
+          4. TypeScript/React best practices
+          5. Code quality feedback
+          
+          Diff:
+          $DIFF_CONTENT"
+          
+          # Call Claude API
+          RESPONSE=$(curl -s -X POST "https://api.anthropic.com/v1/messages" \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: ${{ secrets.ANTHROPIC_API_KEY }}" \
+            -H "anthropic-version: 2023-06-01" \
+            -d '{
+              "model": "claude-3-5-sonnet-20241022",
+              "max_tokens": 4000,
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "'"$(echo "$PROMPT" | sed 's/"/\\"/g' | tr '\n' ' ')"'"
+                }
+              ]
+            }')
+          
+          # Extract the response text
+          REVIEW_TEXT=$(echo "$RESPONSE" | jq -r '.content[0].text')
+          
+          # Post comment on PR
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            gh pr comment ${{ github.event.pull_request.number }} --body "## 🤖 Claude AI Code Review
+
+          $REVIEW_TEXT
+
+          ---
+          *This review was generated automatically by Claude AI*"
+          else
+            gh issue comment ${{ github.event.issue.number }} --body "## 🤖 Claude AI Code Review
+
+          $REVIEW_TEXT
+
+          ---
+          *This review was generated automatically by Claude AI*"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
