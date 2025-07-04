@@ -112,9 +112,7 @@ export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardPro
                   style={{ width: `${episode.playbackPosition!}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                {Math.round(episode.playbackPosition!)}% complete
-              </p>
+              <p className="text-xs text-gray-500 mt-1">{Math.round(episode.playbackPosition!)}% complete</p>
             </div>
           )}
         </div>
