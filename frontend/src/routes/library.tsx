@@ -28,6 +28,7 @@ export default function Library() {
   const [error, setError] = useState<string | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [deletingPodcastId, setDeletingPodcastId] = useState<string | null>(null)
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
 
   // Episode management state
   const [expandedPodcasts, setExpandedPodcasts] = useState<Set<string>>(new Set())
@@ -185,6 +186,10 @@ export default function Library() {
     console.log('AI explanation for:', episode.title)
   }
 
+  const handleImageError = (podcastId: string) => {
+    setImageErrors(prev => new Set([...prev, podcastId]))
+  }
+
   // Transform Episode to EpisodeCard format
   const transformEpisodeForCard = (episode: Episode, podcast: Podcast) => {
     return {
@@ -272,16 +277,17 @@ export default function Library() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4 flex-1">
                       {/* Podcast Image */}
-                      <div className="w-16 h-16 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
-                        {podcast.imageUrl ? (
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
+                        {podcast.imageUrl && !imageErrors.has(podcast.podcastId) ? (
                           <img
                             src={podcast.imageUrl}
                             alt={`${podcast.title} artwork`}
                             className="w-full h-full object-cover"
+                            onError={() => handleImageError(podcast.podcastId)}
                           />
                         ) : (
                           <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
                             </svg>
                           </div>
@@ -290,8 +296,10 @@ export default function Library() {
 
                       {/* Podcast Info */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 break-words">{podcast.title}</h3>
-                        <p className="text-sm text-gray-600 truncate">{podcast.description}</p>
+                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base line-clamp-2 break-words pr-2">
+                          {podcast.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 line-clamp-2 break-words">{podcast.description}</p>
                         <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
                           <span>{podcast.episodeCount} episodes</span>
                           <span>Added {new Date(podcast.createdAt).toLocaleDateString()}</span>
