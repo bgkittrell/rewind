@@ -105,10 +105,10 @@ describe('Smoke Tests for Modified Components', () => {
     })
   })
 
-    describe('Type Definitions', () => {
+  describe('Type Definitions', () => {
     it('should have proper Episode interface in MediaPlayerContext', async () => {
       const module = await import('../context/MediaPlayerContext')
-      
+
       // Test that the hook and provider are properly exported
       expect(module.useMediaPlayer).toBeDefined()
       expect(module.MediaPlayerProvider).toBeDefined()
@@ -117,14 +117,14 @@ describe('Smoke Tests for Modified Components', () => {
     })
   })
 
-    describe('Component Functionality', () => {
+  describe('Component Functionality', () => {
     it('should have EpisodeCard component that accepts podcastImageUrl prop', async () => {
       const { EpisodeCard } = await import('../components/EpisodeCard')
-      
+
       // Test that component has the expected structure
       expect(EpisodeCard).toBeDefined()
       expect(typeof EpisodeCard).toBe('function')
-      
+
       // Verify the component accepts the required props (no instantiation needed)
       const componentString = EpisodeCard.toString()
       expect(componentString).toContain('podcastImageUrl')
@@ -132,11 +132,11 @@ describe('Smoke Tests for Modified Components', () => {
 
     it('should have FloatingMediaPlayer component that accepts episode with podcastImageUrl', async () => {
       const { FloatingMediaPlayer } = await import('../components/FloatingMediaPlayer')
-      
+
       // Test that component has the expected structure
       expect(FloatingMediaPlayer).toBeDefined()
       expect(typeof FloatingMediaPlayer).toBe('function')
-      
+
       // Component exists and is properly exported
       expect(FloatingMediaPlayer.name).toBe('FloatingMediaPlayer')
     })

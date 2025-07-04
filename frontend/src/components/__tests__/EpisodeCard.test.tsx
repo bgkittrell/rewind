@@ -44,7 +44,14 @@ describe('EpisodeCard', () => {
   it('renders podcast image when episode image is not provided', () => {
     const episodeWithoutImage = { ...mockEpisode, imageUrl: undefined }
     const podcastImageUrl = 'https://example.com/podcast-image.jpg'
-    render(<EpisodeCard episode={episodeWithoutImage} podcastImageUrl={podcastImageUrl} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+    render(
+      <EpisodeCard
+        episode={episodeWithoutImage}
+        podcastImageUrl={podcastImageUrl}
+        onPlay={mockOnPlay}
+        onAIExplanation={mockOnAIExplanation}
+      />,
+    )
 
     const image = screen.getByAltText('Test Episode artwork')
     expect(image).toBeInTheDocument()
@@ -62,7 +69,14 @@ describe('EpisodeCard', () => {
 
   it('prioritizes episode image over podcast image', () => {
     const podcastImageUrl = 'https://example.com/podcast-image.jpg'
-    render(<EpisodeCard episode={mockEpisode} podcastImageUrl={podcastImageUrl} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+    render(
+      <EpisodeCard
+        episode={mockEpisode}
+        podcastImageUrl={podcastImageUrl}
+        onPlay={mockOnPlay}
+        onAIExplanation={mockOnAIExplanation}
+      />,
+    )
 
     const image = screen.getByAltText('Test Episode artwork')
     expect(image).toBeInTheDocument()

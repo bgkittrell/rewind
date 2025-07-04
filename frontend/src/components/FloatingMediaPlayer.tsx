@@ -201,7 +201,7 @@ export function FloatingMediaPlayer({
             <div className="flex-1 flex flex-col items-center justify-center space-y-6">
               {/* Large Album Art */}
               <div className="w-48 h-48 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
-                {(episode?.imageUrl || episode?.podcastImageUrl) ? (
+                {episode?.imageUrl || episode?.podcastImageUrl ? (
                   <img
                     src={episode?.imageUrl || episode?.podcastImageUrl}
                     alt={`${episode.podcastName} artwork`}
@@ -307,7 +307,7 @@ export function FloatingMediaPlayer({
           <div className="h-full flex items-center px-2">
             {/* Small Album Art */}
             <div className="w-12 h-12 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden mr-3">
-              {(episode?.imageUrl || episode?.podcastImageUrl) ? (
+              {episode?.imageUrl || episode?.podcastImageUrl ? (
                 <img
                   src={episode?.imageUrl || episode?.podcastImageUrl}
                   alt={`${episode.podcastName} artwork`}
