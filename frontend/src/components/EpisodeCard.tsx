@@ -43,7 +43,7 @@ export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardPro
         {/* Podcast Thumbnail */}
         <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
           {episode.imageUrl ? (
-            <img src={episode.imageUrl} alt={`${episode.podcastName} artwork`} className="w-full h-full object-cover" />
+            <img src={episode.imageUrl} alt={`${episode.title} artwork`} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-gray-300 flex items-center justify-center">
               <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
@@ -56,7 +56,7 @@ export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardPro
         {/* Episode Details */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-2">
-            <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm">{episode.title}</h3>
+            <h3 className="font-semibold text-gray-900 text-sm leading-tight flex-1">{episode.title}</h3>
 
             {/* AI Explanation Button */}
             <button
@@ -109,11 +109,11 @@ export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardPro
               <div className="w-full bg-gray-200 rounded-full h-1">
                 <div
                   className="bg-primary h-1 rounded-full transition-all"
-                  style={{ width: `${(episode.playbackPosition! / 100) * 100}%` }}
+                  style={{ width: `${episode.playbackPosition!}%` }}
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                {Math.round((episode.playbackPosition! / 100) * 100)}% complete
+                {Math.round(episode.playbackPosition!)}% complete
               </p>
             </div>
           )}

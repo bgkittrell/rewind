@@ -5,9 +5,24 @@ import { podcastService, Podcast } from '../services/podcastService'
 import { episodeService, Episode } from '../services/episodeService'
 import { APIError } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import { useMediaPlayer } from '../context/MediaPlayerContext'
+
+// Import the Episode type from MediaPlayerContext to avoid confusion
+type MediaPlayerEpisode = {
+  id: string
+  title: string
+  podcastName: string
+  releaseDate: string
+  duration: string
+  audioUrl?: string
+  imageUrl?: string
+  description?: string
+  playbackPosition?: number
+}
 
 export default function Library() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth()
+  const { playEpisode } = useMediaPlayer()
   const [podcasts, setPodcasts] = useState<Podcast[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -149,9 +164,20 @@ export default function Library() {
     }
   }
 
-  const handlePlayEpisode = (episode: Episode) => {
-    // TODO: Connect to media player context
-    console.log('Play episode:', episode.title)
+  const handlePlayEpisode = (episode: Episode, podcast: Podcast) => {
+    // Connect to media player context
+    const episodeForPlayer: MediaPlayerEpisode = {
+      id: episode.episodeId,
+      title: episode.title,
+      podcastName: podcast.title,
+      releaseDate: episode.releaseDate,
+      duration: episode.duration,
+      audioUrl: episode.audioUrl,
+      imageUrl: episode.imageUrl,
+      description: episode.description,
+    }
+
+    playEpisode(episodeForPlayer)
   }
 
   const handleAIExplanation = (episode: Episode) => {
@@ -170,7 +196,8 @@ export default function Library() {
       audioUrl: episode.audioUrl,
       imageUrl: episode.imageUrl,
       description: episode.description,
-      playbackPosition: 0, // TODO: Get from progress tracking
+      // Don't set playbackPosition to 0 - leave it undefined to prevent progress indicator
+      // playbackPosition: 0, // TODO: Get from progress tracking
     }
   }
 
@@ -263,7 +290,7 @@ export default function Library() {
 
                       {/* Podcast Info */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 truncate">{podcast.title}</h3>
+                        <h3 className="font-semibold text-gray-900 break-words">{podcast.title}</h3>
                         <p className="text-sm text-gray-600 truncate">{podcast.description}</p>
                         <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
                           <span>{podcast.episodeCount} episodes</span>
@@ -363,7 +390,7 @@ export default function Library() {
                             <div key={episode.episodeId} className="p-4">
                               <EpisodeCard
                                 episode={episodeCardData}
-                                onPlay={() => handlePlayEpisode(episode)}
+                                onPlay={() => handlePlayEpisode(episode, podcast)}
                                 onAIExplanation={() => handleAIExplanation(episode)}
                               />
                             </div>
