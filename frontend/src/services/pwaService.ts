@@ -8,7 +8,7 @@ export class PWAService {
       try {
         // Register service worker
         this.registration = await navigator.serviceWorker.register('/sw.js')
-        
+
         // Check for updates every 30 seconds when app is active
         setInterval(() => {
           this.checkForUpdates()
@@ -68,7 +68,7 @@ export class PWAService {
   }
 
   isInstalled(): boolean {
-    return window.matchMedia('(display-mode: standalone)').matches || 
+    return window.matchMedia('(display-mode: standalone)').matches ||
            (window.navigator as any).standalone === true
   }
 
@@ -93,15 +93,15 @@ export class PWAService {
           actions: [
             {
               action: 'update',
-              title: 'Update Now'
+              title: 'Update Now',
             },
             {
               action: 'dismiss',
-              title: 'Later'
-            }
-          ]
-        })
-      } as NotificationOptions)
+              title: 'Later',
+            },
+          ],
+        }),
+      } as any)
 
       notification.addEventListener('click', () => {
         this.applyUpdate()

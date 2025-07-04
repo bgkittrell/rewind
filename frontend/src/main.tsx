@@ -76,14 +76,14 @@ pwaService.onUpdateAvailable((showReload) => {
         </div>
       </div>
     `
-    
+
     document.body.appendChild(updateNotificationElement)
-    
+
     // Handle update button click
     document.getElementById('update-btn')?.addEventListener('click', () => {
       pwaService.applyUpdate()
     })
-    
+
     // Handle dismiss button click
     document.getElementById('dismiss-btn')?.addEventListener('click', () => {
       updateNotificationElement?.remove()
