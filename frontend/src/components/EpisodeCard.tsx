@@ -12,11 +12,12 @@ interface EpisodeCardProps {
     description?: string
     playbackPosition?: number
   }
+  podcastImageUrl?: string
   onPlay?: (_episode: EpisodeCardProps['episode']) => void
   onAIExplanation?: (_episode: EpisodeCardProps['episode']) => void
 }
 
-export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardProps) {
+export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation }: EpisodeCardProps) {
   const [imageError, setImageError] = useState(false)
 
   const handlePlay = () => {
@@ -44,11 +45,11 @@ export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardPro
       data-testid="episode-card"
     >
       <div className="flex gap-3 sm:gap-4">
-        {/* Podcast Thumbnail */}
+        {/* Episode/Podcast Thumbnail */}
         <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
-          {episode.imageUrl && !imageError ? (
+          {(episode.imageUrl || podcastImageUrl) && !imageError ? (
             <img
-              src={episode.imageUrl}
+              src={episode.imageUrl || podcastImageUrl}
               alt={`${episode.title} artwork`}
               className="w-full h-full object-cover"
               onError={() => setImageError(true)}

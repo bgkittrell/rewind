@@ -21,6 +21,7 @@ interface Episode {
   imageUrl?: string
   description?: string
   playbackPosition?: number
+  podcastImageUrl?: string
 }
 
 interface FloatingMediaPlayerProps {
@@ -193,23 +194,16 @@ export function FloatingMediaPlayer({
               >
                 <IconChevronDown />
               </button>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
-                aria-label="Close player"
-                data-testid="close-player"
-              >
-                <IconX />
-              </button>
+              <div></div>
             </div>
 
             {/* Center Content */}
             <div className="flex-1 flex flex-col items-center justify-center space-y-6">
               {/* Large Album Art */}
               <div className="w-48 h-48 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
-                {episode?.imageUrl ? (
+                {(episode?.imageUrl || episode?.podcastImageUrl) ? (
                   <img
-                    src={episode.imageUrl}
+                    src={episode?.imageUrl || episode?.podcastImageUrl}
                     alt={`${episode.podcastName} artwork`}
                     className="w-full h-full object-cover"
                   />
@@ -313,9 +307,9 @@ export function FloatingMediaPlayer({
           <div className="h-full flex items-center px-2">
             {/* Small Album Art */}
             <div className="w-12 h-12 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden mr-3">
-              {episode?.imageUrl ? (
+              {(episode?.imageUrl || episode?.podcastImageUrl) ? (
                 <img
-                  src={episode.imageUrl}
+                  src={episode?.imageUrl || episode?.podcastImageUrl}
                   alt={`${episode.podcastName} artwork`}
                   className="w-full h-full object-cover"
                 />

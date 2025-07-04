@@ -10,6 +10,7 @@ interface Episode {
   imageUrl?: string
   description?: string
   playbackPosition?: number
+  podcastImageUrl?: string
 }
 
 interface MediaPlayerState {
