@@ -1,5 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { EpisodeCard } from '../EpisodeCard'
 
 describe('EpisodeCard', () => {
@@ -19,6 +19,10 @@ describe('EpisodeCard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    cleanup()
   })
 
   it('renders episode card with basic information', () => {
@@ -41,14 +45,15 @@ describe('EpisodeCard', () => {
     const episodeWithoutImage = { ...mockEpisode, imageUrl: undefined }
     render(<EpisodeCard episode={episodeWithoutImage} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
 
-    const svg = screen.getByTestId('episode-card').querySelector('svg')
+    const episodeCard = screen.getByTestId('episode-card')
+    const svg = episodeCard.querySelector('svg')
     expect(svg).toBeInTheDocument()
   })
 
   it('calls onPlay when play button is clicked', () => {
     render(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
 
-    const playButton = screen.getByRole('button', { name: 'Play Test Episode' })
+    const playButton = screen.getByLabelText('Play Test Episode')
     fireEvent.click(playButton)
 
     expect(mockOnPlay).toHaveBeenCalledWith(mockEpisode)
@@ -57,7 +62,7 @@ describe('EpisodeCard', () => {
   it('calls onAIExplanation when AI explanation button is clicked', () => {
     render(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
 
-    const aiButton = screen.getByRole('button', { name: 'Get AI explanation' })
+    const aiButton = screen.getByLabelText('Get AI explanation')
     fireEvent.click(aiButton)
 
     expect(mockOnAIExplanation).toHaveBeenCalledWith(mockEpisode)
@@ -72,7 +77,9 @@ describe('EpisodeCard', () => {
 
     it('does not show progress indicator when playbackPosition is 0', () => {
       const episodeWithZeroProgress = { ...mockEpisode, playbackPosition: 0 }
-      render(<EpisodeCard episode={episodeWithZeroProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+      render(
+        <EpisodeCard episode={episodeWithZeroProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />,
+      )
 
       expect(screen.queryByText(/% complete/)).not.toBeInTheDocument()
     })

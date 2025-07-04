@@ -1,5 +1,6 @@
 // Setup for vitest testing environment
 import { vi } from 'vitest'
+import '@testing-library/jest-dom/vitest'
 
 // Mock global fetch for tests
 global.fetch = vi.fn()
