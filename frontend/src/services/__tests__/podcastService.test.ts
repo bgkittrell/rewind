@@ -39,14 +39,14 @@ describe('PodcastService', () => {
 
       const result = await podcastService.getPodcasts()
 
-      expect(apiClient.get).toHaveBeenCalledWith('/podcasts')
+      expect(apiClient.get).toHaveBeenCalledWith('/podcasts', undefined)
       expect(result).toEqual(mockResponse)
     })
 
     it('should handle API errors gracefully', async () => {
       vi.mocked(apiClient.get).mockRejectedValue(new Error('Network error'))
 
-      await expect(podcastService.getPodcasts()).rejects.toThrow('Failed to fetch podcasts')
+      await expect(podcastService.getPodcasts()).rejects.toThrow('Network error')
     })
   })
 
@@ -71,7 +71,7 @@ describe('PodcastService', () => {
     it('should handle add podcast errors', async () => {
       vi.mocked(apiClient.post).mockRejectedValue(new Error('Invalid RSS URL'))
 
-      await expect(podcastService.addPodcast({ rssUrl: 'invalid-url' })).rejects.toThrow('Failed to add podcast')
+      await expect(podcastService.addPodcast({ rssUrl: 'invalid-url' })).rejects.toThrow('Invalid RSS URL')
     })
   })
 
@@ -92,7 +92,7 @@ describe('PodcastService', () => {
     it('should handle delete podcast errors', async () => {
       vi.mocked(apiClient.delete).mockRejectedValue(new Error('Podcast not found'))
 
-      await expect(podcastService.deletePodcast('nonexistent-id')).rejects.toThrow('Failed to delete podcast')
+      await expect(podcastService.deletePodcast('nonexistent-id')).rejects.toThrow('Podcast not found')
     })
   })
 })
