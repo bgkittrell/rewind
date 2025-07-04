@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 interface EpisodeCardProps {
   episode: {
     id: string
@@ -15,6 +17,8 @@ interface EpisodeCardProps {
 }
 
 export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardProps) {
+  const [imageError, setImageError] = useState(false)
+
   const handlePlay = () => {
     onPlay?.(episode)
   }
@@ -36,17 +40,22 @@ export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardPro
 
   return (
     <div
-      className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow"
+      className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 sm:p-4 hover:shadow-md transition-shadow"
       data-testid="episode-card"
     >
-      <div className="flex gap-4">
+      <div className="flex gap-3 sm:gap-4">
         {/* Podcast Thumbnail */}
-        <div className="w-20 h-20 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
-          {episode.imageUrl ? (
-            <img src={episode.imageUrl} alt={`${episode.title} artwork`} className="w-full h-full object-cover" />
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
+          {episode.imageUrl && !imageError ? (
+            <img
+              src={episode.imageUrl}
+              alt={`${episode.title} artwork`}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
           ) : (
             <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
               </svg>
             </div>
@@ -56,7 +65,9 @@ export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardPro
         {/* Episode Details */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-2">
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight flex-1">{episode.title}</h3>
+            <h3 className="font-semibold text-gray-900 text-sm leading-tight flex-1 line-clamp-2 break-words pr-1">
+              {episode.title}
+            </h3>
 
             {/* AI Explanation Button */}
             <button
@@ -112,9 +123,7 @@ export function EpisodeCard({ episode, onPlay, onAIExplanation }: EpisodeCardPro
                   style={{ width: `${episode.playbackPosition!}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                {Math.round(episode.playbackPosition!)}% complete
-              </p>
+              <p className="text-xs text-gray-500 mt-1">{Math.round(episode.playbackPosition!)}% complete</p>
             </div>
           )}
         </div>
