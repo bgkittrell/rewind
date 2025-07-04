@@ -5,38 +5,153 @@ on:
     types: [opened, synchronize, reopened]
   issue_comment:
     types: [created]
-  pull_request_review_comment:
-    types: [created]
 
 jobs:
   claude-review:
     # Only run if it's a PR event or contains @claude mention
     if: |
       github.event_name == 'pull_request' || 
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
       issues: write
-      id-token: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Run Claude Review
-        uses: grll/claude-code-action@beta
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          timeout_minutes: '30'
-          # Optional: add custom environment variables for the Rewind project context
-          claude_env: |
-            PROJECT_NAME: Rewind Podcast App
-            TECH_STACK: React Router v7, TypeScript, Tailwind CSS, AWS Serverless
-            TARGET_AUDIENCE: Podcast enthusiasts aged 35+
-            PRIMARY_COLOR: #eb4034
-            API_BASE_URL: https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1
+      - name: Get PR information
+        id: pr-info
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "pr-number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "pr-title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+            git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
+          else
+            # Extract PR number from issue comment
+            PR_URL="${{ github.event.issue.pull_request.url }}"
+            if [ ! -z "$PR_URL" ]; then
+              PR_NUMBER=$(basename "$PR_URL")
+              echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
+              echo "pr-title=${{ github.event.issue.title }}" >> $GITHUB_OUTPUT
+              gh pr diff $PR_NUMBER > pr_diff.txt
+            fi
+          fi
+
+          # Check if diff is too large (limit to 50KB for API efficiency)
+          DIFF_SIZE=$(wc -c < pr_diff.txt)
+          if [ $DIFF_SIZE -gt 51200 ]; then
+            echo "Diff too large ($DIFF_SIZE bytes), truncating..."
+            head -c 51200 pr_diff.txt > pr_diff_truncated.txt
+            mv pr_diff_truncated.txt pr_diff.txt
+            echo "...diff truncated for review" >> pr_diff.txt
+          fi
+          echo "diff-size=$DIFF_SIZE" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Claude Review
+        id: claude-review
+        if: steps.pr-info.outputs.diff-size > 0
+        run: |
+          # Read the diff content
+          DIFF_CONTENT=$(cat pr_diff.txt)
+
+          # Create the prompt
+          cat > claude_prompt.txt << 'EOF'
+          You are a senior software engineer reviewing a pull request for the Rewind podcast application.
+
+          **Project Context:**
+          - React Router v7 frontend with TypeScript and Tailwind CSS
+          - AWS serverless backend with Lambda functions  
+          - Mobile-first PWA targeting podcast enthusiasts aged 35+
+          - Primary color: #eb4034
+          - API: https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1
+
+          **Focus Areas:**
+          1. Security vulnerabilities and best practices
+          2. Performance implications and optimizations
+          3. TypeScript usage and type safety
+          4. React best practices and patterns
+          5. Mobile-first design considerations
+          6. Code quality and maintainability
+
+          Please provide a comprehensive but concise review with:
+          - Overall assessment
+          - Specific feedback on changes
+          - Security considerations
+          - Performance impact
+          - Recommendations for improvement
+
+          **Diff to Review:**
+          ```
+          EOF
+
+          # Add the diff content
+          echo "$DIFF_CONTENT" >> claude_prompt.txt
+          echo '```' >> claude_prompt.txt
+
+          # Call Claude API
+          RESPONSE=$(curl -s -X POST "https://api.anthropic.com/v1/messages" \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: ${{ secrets.ANTHROPIC_API_KEY }}" \
+            -H "anthropic-version: 2023-06-01" \
+            -d @- << EOF
+          {
+            "model": "claude-3-5-sonnet-20241022",
+            "max_tokens": 4000,
+            "messages": [
+              {
+                "role": "user", 
+                "content": $(cat claude_prompt.txt | jq -Rs .)
+              }
+            ]
+          }
+          EOF
+          )
+
+          # Extract review text and handle errors
+          if echo "$RESPONSE" | jq -e '.content[0].text' > /dev/null 2>&1; then
+            REVIEW_TEXT=$(echo "$RESPONSE" | jq -r '.content[0].text')
+            echo "review-success=true" >> $GITHUB_OUTPUT
+            
+            # Save review to file for next step
+            cat > claude_review.md << EOF
+          ## 🤖 Claude AI Code Review
+
+          $REVIEW_TEXT
+
+          ---
+          *This review was generated automatically by Claude AI. Human review is still recommended.*
+          EOF
+          else
+            echo "review-success=false" >> $GITHUB_OUTPUT
+            ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message // "Unknown API error"')
+            echo "❌ Claude API Error: $ERROR_MSG" > claude_review.md
+          fi
+
+      - name: Post Review Comment
+        if: steps.claude-review.outputs.review-success == 'true'
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            gh pr comment ${{ steps.pr-info.outputs.pr-number }} --body-file claude_review.md
+          else
+            gh issue comment ${{ github.event.issue.number }} --body-file claude_review.md
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Handle Review Failure
+        if: steps.claude-review.outputs.review-success == 'false'
+        run: |
+          echo "Claude review failed. Check API key and quota."
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            gh pr comment ${{ steps.pr-info.outputs.pr-number }} --body "❌ Claude review failed. Please check logs."
+          else  
+            gh issue comment ${{ github.event.issue.number }} --body "❌ Claude review failed. Please check logs."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

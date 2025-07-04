@@ -25,8 +25,8 @@ excluded_patterns = [
   "**/.next/**"
 ]
 
-# Maximum diff size to review (in characters)
-max_diff_size = 50000
+# Maximum diff size to review (in characters) - matches workflow limit
+max_diff_size = 51200
 
 [prompts]
 # Project context for Claude to understand the codebase
