@@ -31,7 +31,7 @@ jobs:
         uses: grll/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          timeout_minutes: "30"
+          timeout_minutes: '30'
           # Optional: add custom environment variables for the Rewind project context
           claude_env: |
             PROJECT_NAME: Rewind Podcast App
