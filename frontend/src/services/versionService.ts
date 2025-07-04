@@ -20,7 +20,7 @@ export class VersionService {
 
   private handleVersionChange(oldVersion: string, newVersion: string) {
     console.log(`App updated from ${oldVersion} to ${newVersion}`)
-    
+
     // Clear old caches on major version changes
     if (this.isMajorVersionChange(oldVersion, newVersion)) {
       this.clearOldCaches()
@@ -39,10 +39,8 @@ export class VersionService {
   private async clearOldCaches() {
     try {
       const cacheNames = await caches.keys()
-      const oldCaches = cacheNames.filter(name => 
-        name.includes('workbox-precache') || name.includes('runtime-cache')
-      )
-      
+      const oldCaches = cacheNames.filter(name => name.includes('workbox-precache') || name.includes('runtime-cache'))
+
       await Promise.all(oldCaches.map(name => caches.delete(name)))
       console.log('Old caches cleared')
     } catch (error) {

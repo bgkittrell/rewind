@@ -16,7 +16,7 @@ export class UpdateService {
   async initialize() {
     if ('serviceWorker' in navigator) {
       this.wb = new Workbox('/sw.js')
-      
+
       // Service worker installed for the first time
       this.wb.addEventListener('installed', (event: WorkboxEvent) => {
         console.log('Service Worker installed:', event)
@@ -39,16 +39,17 @@ export class UpdateService {
       })
 
       // Service worker update check
-      this.wb.addEventListener('externalwaiting', (event: WorkboxEvent) => {
+      this.wb.addEventListener('waiting', (event: WorkboxEvent) => {
         console.log('External service worker waiting:', event)
         this.updateAvailable = true
         this.showUpdatePrompt()
       })
 
       try {
-        this.registration = await this.wb.register()
+        const registration = await this.wb.register()
+        this.registration = registration || null
         console.log('Service Worker registered successfully')
-        
+
         // Check for updates every 60 seconds when app is active
         this.startUpdateCheck()
       } catch (error) {
@@ -66,9 +67,12 @@ export class UpdateService {
     })
 
     // Check for updates every 5 minutes
-    setInterval(() => {
-      this.checkForUpdates()
-    }, 5 * 60 * 1000)
+    setInterval(
+      () => {
+        this.checkForUpdates()
+      },
+      5 * 60 * 1000,
+    )
   }
 
   async checkForUpdates() {
@@ -86,7 +90,7 @@ export class UpdateService {
     if (this.wb && this.updateAvailable) {
       // Tell the waiting service worker to skip waiting
       this.wb.messageSkipWaiting()
-      
+
       // The 'controlling' event will be fired and trigger reload
       return true
     }

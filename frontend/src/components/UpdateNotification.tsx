@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { updateService } from '../services/updateService'
 
-export const UpdateNotification: React.FC = () => {
+export const UpdateNotification = () => {
   const [showUpdate, setShowUpdate] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
 
@@ -25,9 +25,12 @@ export const UpdateNotification: React.FC = () => {
   const handleDismiss = () => {
     setShowUpdate(false)
     // Show again in 1 hour
-    setTimeout(() => {
-      setShowUpdate(true)
-    }, 60 * 60 * 1000)
+    setTimeout(
+      () => {
+        setShowUpdate(true)
+      },
+      60 * 60 * 1000,
+    )
   }
 
   if (!showUpdate) return null
@@ -41,15 +44,11 @@ export const UpdateNotification: React.FC = () => {
             A new version of Rewind is available with improvements and bug fixes.
           </p>
         </div>
-        <button
-          onClick={handleDismiss}
-          className="text-white opacity-75 hover:opacity-100 ml-2"
-          aria-label="Dismiss"
-        >
+        <button onClick={handleDismiss} className="text-white opacity-75 hover:opacity-100 ml-2" aria-label="Dismiss">
           ×
         </button>
       </div>
-      
+
       <div className="flex gap-2 mt-3">
         <button
           onClick={handleUpdate}
@@ -58,10 +57,7 @@ export const UpdateNotification: React.FC = () => {
         >
           {isUpdating ? 'Updating...' : 'Update Now'}
         </button>
-        <button
-          onClick={handleDismiss}
-          className="text-white opacity-75 hover:opacity-100 px-3 py-1 text-sm"
-        >
+        <button onClick={handleDismiss} className="text-white opacity-75 hover:opacity-100 px-3 py-1 text-sm">
           Later
         </button>
       </div>
