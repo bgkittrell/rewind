@@ -12,6 +12,7 @@ import Home from './routes/home'
 import Library from './routes/library'
 import Search from './routes/search'
 import ErrorPage from './routes/error-page'
+import PodcastDetail from './routes/podcast-detail'
 
 const router = createBrowserRouter([
   {
@@ -29,7 +30,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'library/:podcastId',
-        element: <div>Podcast Episodes</div>, // TODO: Create PodcastEpisodes component
+        element: <PodcastDetail />,
       },
       {
         path: 'search',
