@@ -5,8 +5,6 @@ on:
     types: [created]
   pull_request_review_comment:
     types: [created]
-  pull_request:
-    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -15,25 +13,52 @@ permissions:
 
 jobs:
   claude-review:
-    # Only run on PRs or when @claude is mentioned
-    if: |
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
-    
+    if: contains(github.event.comment.body, '@claude')
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Claude Code Review
-        uses: anthropics/claude-code-action@v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          trigger_phrase: "@claude"
-          timeout_minutes: "10"
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          max_turns: 3
+          node-version: '18'
+
+      - name: Call Claude API
+        run: |
+          # Get the comment body and PR context
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          
+          # Read CLAUDE.md if it exists
+          PROJECT_CONTEXT=""
+          if [ -f "CLAUDE.md" ]; then
+            PROJECT_CONTEXT=$(cat CLAUDE.md)
+          fi
+          
+          # Create the prompt
+          PROMPT="You are reviewing a pull request. Here are the project guidelines:\n\n$PROJECT_CONTEXT\n\nUser request: $COMMENT_BODY\n\nPlease provide a helpful code review response based on the comment and project context."
+          
+          # Call Claude API
+          RESPONSE=$(curl -s -X POST https://api.anthropic.com/v1/messages \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: ${{ secrets.ANTHROPIC_API_KEY }}" \
+            -H "anthropic-version: 2023-06-01" \
+            --data-raw "{
+              \"model\": \"claude-3-5-sonnet-20241022\",
+              \"max_tokens\": 2000,
+              \"messages\": [{
+                \"role\": \"user\",
+                \"content\": \"$PROMPT\"
+              }]
+            }")
+          
+          # Extract the response text
+          REVIEW_TEXT=$(echo "$RESPONSE" | jq -r '.content[0].text // "Sorry, I encountered an error processing your request."')
+          
+          # Post the review as a comment
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
+            -d "{\"body\": \"$REVIEW_TEXT\"}"
