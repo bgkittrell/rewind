@@ -90,6 +90,17 @@ export class EpisodeService {
     }
   }
 
+  async getEpisodeByIdWithPodcast(podcastId: string, episodeId: string): Promise<Episode> {
+    try {
+      // Use a more specific endpoint that includes podcastId for better performance
+      const response = await apiClient.get<Episode>(`/episodes/${podcastId}/${episodeId}`)
+      return response
+    } catch (error) {
+      console.error('Error fetching episode with podcastId:', error)
+      throw new Error('Failed to fetch episode')
+    }
+  }
+
   async syncEpisodes(podcastId: string): Promise<EpisodeSyncResponse> {
     try {
       const response = await apiClient.post<EpisodeSyncResponse>(`/episodes/${podcastId}/sync`)

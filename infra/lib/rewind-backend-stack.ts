@@ -260,6 +260,13 @@ export class RewindBackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
+    // GET /episodes/{podcastId}/{episodeId} - Get specific episode by podcast and episode ID
+    const episodeByPodcastAndId = episodesByPodcast.addResource('{episodeId}')
+    episodeByPodcastAndId.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
     // Episode progress routes
     const episodeById = episodes.addResource('{episodeId}')
 

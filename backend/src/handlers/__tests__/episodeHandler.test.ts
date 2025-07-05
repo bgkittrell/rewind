@@ -354,4 +354,200 @@ describe('EpisodeHandler', () => {
       expect(result.statusCode).toBe(405)
     })
   })
+
+  describe('GET /episodes/{episodeId} - Individual episode', () => {
+    it('should find episode by searching through all user podcasts', async () => {
+      const mockPodcasts = [
+        {
+          podcastId: 'podcast1',
+          userId: 'test-user-id',
+          title: 'Test Podcast 1',
+          description: 'Test podcast description',
+          rssUrl: 'https://example.com/feed1.xml',
+          imageUrl: 'https://example.com/image1.jpg',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastUpdated: '2024-01-01T00:00:00Z',
+          episodeCount: 5,
+        },
+        {
+          podcastId: 'podcast2',
+          userId: 'test-user-id',
+          title: 'Test Podcast 2',
+          description: 'Another podcast description',
+          rssUrl: 'https://example.com/feed2.xml',
+          imageUrl: 'https://example.com/image2.jpg',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastUpdated: '2024-01-01T00:00:00Z',
+          episodeCount: 3,
+        },
+      ]
+
+      const mockEpisode = {
+        episodeId: 'episode123',
+        podcastId: 'podcast2',
+        title: 'Test Episode',
+        description: 'Test Description',
+        audioUrl: 'http://example.com/audio.mp3',
+        duration: '30:00',
+        releaseDate: '2024-01-01',
+        createdAt: '2024-01-01T00:00:00Z',
+        naturalKey: 'test-natural-key',
+      }
+
+      mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
+      // First podcast returns null, second podcast returns the episode
+      mockDynamoService.getEpisodeById.mockResolvedValueOnce(null).mockResolvedValueOnce(mockEpisode)
+
+      const event = createMockEvent('GET', '/episodes/episode123', { episodeId: 'episode123' })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(200)
+      const body = JSON.parse(result.body)
+      expect(body.data).toEqual(mockEpisode)
+      expect(mockDynamoService.getPodcastsByUser).toHaveBeenCalledWith('test-user-id')
+      expect(mockDynamoService.getEpisodeById).toHaveBeenCalledTimes(2)
+      expect(mockDynamoService.getEpisodeById).toHaveBeenCalledWith('podcast1', 'episode123')
+      expect(mockDynamoService.getEpisodeById).toHaveBeenCalledWith('podcast2', 'episode123')
+    })
+
+    it('should return 404 when episode not found in any podcast', async () => {
+      const mockPodcasts = [
+        {
+          podcastId: 'podcast1',
+          userId: 'test-user-id',
+          title: 'Test Podcast',
+          description: 'Test podcast description',
+          rssUrl: 'https://example.com/feed.xml',
+          imageUrl: 'https://example.com/image.jpg',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastUpdated: '2024-01-01T00:00:00Z',
+          episodeCount: 5,
+        },
+      ]
+
+      mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
+      mockDynamoService.getEpisodeById.mockResolvedValue(null)
+
+      const event = createMockEvent('GET', '/episodes/episode123', { episodeId: 'episode123' })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(404)
+      const body = JSON.parse(result.body)
+      expect(body.error.message).toBe('Episode not found or access denied')
+    })
+  })
+
+  describe('GET /episodes/{podcastId}/{episodeId} - Direct episode lookup', () => {
+    it('should get episode by podcast and episode ID when user owns podcast', async () => {
+      const mockPodcasts = [
+        {
+          podcastId: 'podcast1',
+          userId: 'test-user-id',
+          title: 'Test Podcast',
+          description: 'Test podcast description',
+          rssUrl: 'https://example.com/feed1.xml',
+          imageUrl: 'https://example.com/image1.jpg',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastUpdated: '2024-01-01T00:00:00Z',
+          episodeCount: 5,
+        },
+        {
+          podcastId: 'podcast2',
+          userId: 'test-user-id',
+          title: 'Another Podcast',
+          description: 'Another podcast description',
+          rssUrl: 'https://example.com/feed2.xml',
+          imageUrl: 'https://example.com/image2.jpg',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastUpdated: '2024-01-01T00:00:00Z',
+          episodeCount: 3,
+        },
+      ]
+
+      const mockEpisode = {
+        episodeId: 'episode123',
+        podcastId: 'podcast1',
+        title: 'Test Episode',
+        description: 'Test Description',
+        audioUrl: 'http://example.com/audio.mp3',
+        duration: '30:00',
+        releaseDate: '2024-01-01',
+        createdAt: '2024-01-01T00:00:00Z',
+        naturalKey: 'test-natural-key',
+      }
+
+      mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
+      mockDynamoService.getEpisodeById.mockResolvedValue(mockEpisode)
+
+      const event = createMockEvent('GET', '/episodes/podcast1/episode123', {
+        podcastId: 'podcast1',
+        episodeId: 'episode123',
+      })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(200)
+      const body = JSON.parse(result.body)
+      expect(body.data).toEqual(mockEpisode)
+      expect(mockDynamoService.getPodcastsByUser).toHaveBeenCalledWith('test-user-id')
+      expect(mockDynamoService.getEpisodeById).toHaveBeenCalledWith('podcast1', 'episode123')
+    })
+
+    it('should return 404 when user does not own the podcast', async () => {
+      const mockPodcasts = [
+        {
+          podcastId: 'podcast2',
+          userId: 'test-user-id',
+          title: 'Another Podcast',
+          description: 'Another podcast description',
+          rssUrl: 'https://example.com/feed2.xml',
+          imageUrl: 'https://example.com/image2.jpg',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastUpdated: '2024-01-01T00:00:00Z',
+          episodeCount: 3,
+        },
+      ]
+
+      mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
+
+      const event = createMockEvent('GET', '/episodes/podcast1/episode123', {
+        podcastId: 'podcast1',
+        episodeId: 'episode123',
+      })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(404)
+      const body = JSON.parse(result.body)
+      expect(body.error.message).toBe('Podcast not found or access denied')
+      expect(mockDynamoService.getEpisodeById).not.toHaveBeenCalled()
+    })
+
+    it('should return 404 when episode not found in podcast', async () => {
+      const mockPodcasts = [
+        {
+          podcastId: 'podcast1',
+          userId: 'test-user-id',
+          title: 'Test Podcast',
+          description: 'Test podcast description',
+          rssUrl: 'https://example.com/feed1.xml',
+          imageUrl: 'https://example.com/image1.jpg',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastUpdated: '2024-01-01T00:00:00Z',
+          episodeCount: 5,
+        },
+      ]
+
+      mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
+      mockDynamoService.getEpisodeById.mockResolvedValue(null)
+
+      const event = createMockEvent('GET', '/episodes/podcast1/episode123', {
+        podcastId: 'podcast1',
+        episodeId: 'episode123',
+      })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(404)
+      const body = JSON.parse(result.body)
+      expect(body.error.message).toBe('Episode not found or access denied')
+    })
+  })
 })
