@@ -79,7 +79,19 @@ export class RSSService {
       return feed.image.link
     }
     if (feed.itunes?.image) {
-      return feed.itunes.image
+      // Handle various image object formats
+      if (typeof feed.itunes.image === 'string') {
+        return feed.itunes.image
+      }
+      if (feed.itunes.image.href) {
+        return feed.itunes.image.href
+      }
+      if (feed.itunes.image.url) {
+        return feed.itunes.image.url
+      }
+      if (feed.itunes.image.$ && feed.itunes.image.$.href) {
+        return feed.itunes.image.$.href
+      }
     }
     if (feed['itunes:image']?.href) {
       return feed['itunes:image'].href
@@ -222,7 +234,19 @@ export class RSSService {
       return item['itunes:image'].href
     }
     if (item.image) {
-      return item.image
+      // Handle various image object formats
+      if (typeof item.image === 'string') {
+        return item.image
+      }
+      if (item.image.href) {
+        return item.image.href
+      }
+      if (item.image.url) {
+        return item.image.url
+      }
+      if (item.image.$ && item.image.$.href) {
+        return item.image.$.href
+      }
     }
     return undefined
   }
