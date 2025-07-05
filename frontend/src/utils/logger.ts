@@ -47,12 +47,12 @@ class RewindLogger {
         url: window.location.href,
         userAgent: navigator.userAgent,
         sessionId: this.getSessionId(),
-        userId: this.getUserId()
-      }
+        userId: this.getUserId(),
+      },
     }
 
     let lastError: Error | null = null
-    
+
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
         const response = await fetch(`${this.apiBaseUrl}/logs`, {
@@ -60,7 +60,7 @@ class RewindLogger {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(logRequest)
+          body: JSON.stringify(logRequest),
         })
 
         if (response.ok) {
@@ -72,7 +72,7 @@ class RewindLogger {
       } catch (error) {
         lastError = error as Error
         console.warn(`[RewindLogger] Log attempt ${attempt} failed:`, error)
-        
+
         if (attempt < this.maxRetries) {
           await this.sleep(this.retryDelay * attempt)
         }
@@ -136,9 +136,9 @@ class RewindLogger {
       endpoint,
       error: error.message || String(error),
       status: error.status || error.statusCode,
-      headers: error.headers
+      headers: error.headers,
     }
-    
+
     console.error(`[Rewind Auth] Error at ${endpoint}:`, error)
     this.sendLog('AUTH_ERROR', 'Authentication failed', errorMetadata).catch(() => {
       // Silently fail
@@ -155,9 +155,9 @@ class RewindLogger {
       method,
       status,
       responseTime,
-      success: status >= 200 && status < 300
+      success: status >= 200 && status < 300,
     }
-    
+
     console.debug(`[Rewind API] ${method} ${endpoint} - ${status} (${responseTime}ms)`)
     this.sendLog('API_CALL', `${method} ${endpoint}`, callMetadata).catch(() => {
       // Silently fail
@@ -175,9 +175,9 @@ class RewindLogger {
       error: error.message || String(error),
       status: error.status || error.statusCode,
       responseTime,
-      headers: error.headers
+      headers: error.headers,
     }
-    
+
     console.error(`[Rewind API] ${method} ${endpoint} failed:`, error)
     this.sendLog('API_ERROR', `API call failed: ${method} ${endpoint}`, errorMetadata).catch(() => {
       // Silently fail
@@ -233,9 +233,9 @@ class RewindLogger {
     const perfMetadata: LogMetadata = {
       ...metadata,
       metricValue: value,
-      metricName: metric
+      metricName: metric,
     }
-    
+
     console.debug(`[Rewind Perf] ${metric}: ${value}`, metadata)
     this.sendLog('PERFORMANCE', `Performance metric: ${metric}`, perfMetadata).catch(() => {
       // Silently fail

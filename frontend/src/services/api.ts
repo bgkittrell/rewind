@@ -42,11 +42,11 @@ class APIClient {
     console.log('API Client: Setting auth token', token.substring(0, 20) + '...')
     this.defaultHeaders['Authorization'] = `Bearer ${token}`
     console.log('API Client: Default headers now:', this.defaultHeaders)
-    
+
     // Log authentication event
     RewindLogger.info('Authentication token set', {
       tokenLength: token.length,
-      tokenPrefix: token.substring(0, 20)
+      tokenPrefix: token.substring(0, 20),
     })
   }
 
@@ -54,7 +54,7 @@ class APIClient {
     console.log('API Client: Clearing auth token')
     delete this.defaultHeaders['Authorization']
     console.log('API Client: Default headers now:', this.defaultHeaders)
-    
+
     // Log authentication event
     RewindLogger.info('Authentication token cleared')
   }
@@ -81,10 +81,10 @@ class APIClient {
     try {
       const response = await fetch(url, config)
       const responseTime = Date.now() - startTime
-      
+
       // Log successful API calls
       RewindLogger.apiCall(normalizedEndpoint, method, response.status, responseTime)
-      
+
       const data: APIResponse<T> = await response.json()
 
       if (!response.ok) {
@@ -95,7 +95,7 @@ class APIClient {
             statusText: response.statusText,
             message: data.error?.message || 'Authentication failed',
             code: data.error?.code,
-            details: data.error?.details
+            details: data.error?.details,
           })
         } else {
           // Log other API errors
@@ -104,7 +104,7 @@ class APIClient {
             statusText: response.statusText,
             message: data.error?.message || 'Request failed',
             code: data.error?.code,
-            details: data.error?.details
+            details: data.error?.details,
           }, responseTime)
         }
 
@@ -119,7 +119,7 @@ class APIClient {
       return data.data as T
     } catch (error) {
       const responseTime = Date.now() - startTime
-      
+
       if (error instanceof APIError) {
         // APIError already logged above
         throw error
@@ -129,7 +129,7 @@ class APIClient {
       RewindLogger.apiError(normalizedEndpoint, method, {
         message: (error as Error).message || 'Network error occurred',
         type: 'NETWORK_ERROR',
-        originalError: error
+        originalError: error,
       }, responseTime)
 
       // Handle network errors
@@ -139,7 +139,7 @@ class APIClient {
 
   async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
     let finalEndpoint = endpoint
-    
+
     if (params) {
       const urlParams = new URLSearchParams()
       Object.entries(params).forEach(([key, value]) => {
