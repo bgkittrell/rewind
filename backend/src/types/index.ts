@@ -39,6 +39,12 @@ export interface Episode {
   guests?: string[]
   tags?: string[]
   createdAt: string
+  // AI Guest Extraction Fields
+  extractedGuests?: string[]
+  guestExtractionStatus?: 'pending' | 'completed' | 'failed'
+  guestExtractionDate?: string
+  guestExtractionConfidence?: number
+  rawGuestData?: string
 }
 
 // Re-export EpisodeData from RSS service to avoid duplication
@@ -80,6 +86,40 @@ export interface ShareLink {
   createdAt: string
 }
 
+export interface UserFavorites {
+  userId: string
+  itemId: string
+  itemType: 'episode' | 'podcast'
+  isFavorite: boolean
+  rating?: number
+  tags?: string[]
+  favoritedAt: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface GuestAnalytics {
+  userId: string
+  guestName: string
+  episodeIds: string[]
+  listenCount: number
+  favoriteCount: number
+  lastListenDate: string
+  averageRating: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UserFeedback {
+  userId: string
+  episodeId: string
+  feedbackId: string
+  type: 'like' | 'dislike' | 'favorite'
+  rating?: number
+  comment?: string
+  createdAt: string
+}
+
 export interface APIResponse<T = any> {
   data?: T
   error?: {
@@ -95,4 +135,39 @@ export interface APIGatewayAuthorizerEvent {
   userId: string
   email: string
   name: string
+}
+
+// Recommendation Engine Types
+export interface RecommendationScore {
+  episodeId: string
+  episode: Episode
+  score: number
+  reasons: string[]
+  factors: {
+    recentShowListening: number
+    newEpisodeBonus: number
+    rediscoveryBonus: number
+    guestMatchBonus: number
+    favoriteBonus: number
+  }
+}
+
+export interface GuestExtractionRequest {
+  episodeId: string
+  title: string
+  description: string
+}
+
+export interface GuestExtractionResult {
+  guests: string[]
+  confidence: number
+  reasoning: string
+  rawResponse: string
+}
+
+export interface RecommendationFilters {
+  not_recent?: boolean
+  favorites?: boolean
+  guests?: boolean
+  new?: boolean
 }

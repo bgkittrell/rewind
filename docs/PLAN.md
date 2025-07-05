@@ -118,13 +118,33 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 - [x] Episode backend integration: Connect UI to episode APIs (Frontend integration complete)
 - [x] Progress tracking: Save playback position (Backend + Frontend sync complete)
 
-#### Week 6: Recommendation Engine 📋 PLANNED
+#### Week 6: Recommendation Engine � IN PROGRESS
 
-- [ ] Basic recommendations: Simple algorithm without ML
-- [ ] User behavior tracking: Listening patterns, preferences
-- [ ] AWS Personalize setup: Dataset and model training
-- [ ] Advanced recommendations: ML-powered suggestions
-- [ ] Feedback system: Thumbs up/down for episodes
+**�📋 Detailed Implementation Plan**: `docs/RECOMMENDATION_ENGINE_IMPLEMENTATION_PLAN.md`
+
+**Core Features**:
+
+- [ ] AWS Bedrock guest extraction from episode titles and descriptions
+- [ ] Multi-factor recommendation scoring system (5 factors)
+- [ ] Guest analytics and preference tracking
+- [ ] Database schema enhancements for recommendations
+- [ ] Recommendation API endpoints with filtering
+
+**Ranking Factors**:
+
+1. Recent show listening patterns (shows listened to recently)
+2. New episode discovery (episodes not yet heard)
+3. Episode rediscovery (episodes not heard in a while)
+4. Guest matching (guests from liked episodes)
+5. Favorite episodes (user-marked favorites)
+
+**Implementation Timeline**:
+
+- Week 1: Database schema enhancement (Episodes, GuestAnalytics, UserFavorites)
+- Week 2: AWS Bedrock integration for guest extraction
+- Week 3: Multi-factor recommendation algorithm
+- Week 4: API integration and recommendation endpoints
+- Week 5: Frontend integration and recommendation display
 
 #### Week 7: Library Sharing & PWA 📋 PLANNED
 
@@ -186,7 +206,10 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 
 **🚧 Current Focus (Week 2 of Phase 3)**
 
-- **Recommendations**: Basic episode suggestion algorithm without ML
+- **Recommendation Engine**: AWS Bedrock-powered guest extraction and multi-factor ranking system
+  - Database schema enhancements for guest analytics
+  - 5-factor recommendation scoring (recent listening, new episodes, rediscovery, guest matching, favorites)
+  - AWS Bedrock integration for AI-powered guest name extraction
 - **PWA Features**: Service worker and offline capabilities
 - **Library Sharing**: Export/import podcast libraries
 
@@ -275,7 +298,8 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 - [DATABASE.md](#database): Database schema and queries.
 - [INFRASTRUCTURE.md](#infrastructure): AWS services and deployment.
 - [AWS_CONFIG.md](#aws-config): AWS CDK and service settings.
-- [RECOMMENDATION_ENGINE.md](#recommendation-engine): Recommendation logic.
+- [RECOMMENDATION_ENGINE.md](#recommendation-engine): Recommendation logic overview.
+- [RECOMMENDATION_ENGINE_IMPLEMENTATION_PLAN.md](#recommendation-implementation): Detailed implementation plan with AWS Bedrock integration.
 - [PWA_FEATURES.md](#pwa-features): PWA and offline functionality.
 - [LIBRARY_SHARING.md](#library-sharing): Library sharing feature.
 - [ERROR_HANDLING.md](#error-handling): Error management.
