@@ -13,6 +13,7 @@ import Library from './routes/library'
 import Search from './routes/search'
 import ErrorPage from './routes/error-page'
 import PodcastDetail from './routes/podcast-detail'
+import Auth from './routes/auth'
 
 // Import PWA service
 import { pwaService } from './services/pwaService'
@@ -48,6 +49,14 @@ const router = createBrowserRouter([
         element: <div>Share Library</div>, // TODO: Create ShareLibrary component
       },
     ],
+  },
+  {
+    path: '/login',
+    element: <Auth />,
+  },
+  {
+    path: '/signup',
+    element: <Auth />,
   },
 ])
 

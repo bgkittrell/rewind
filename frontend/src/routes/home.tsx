@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { EpisodeCard } from '../components/EpisodeCard'
 import { useMediaPlayer } from '../context/MediaPlayerContext'
+import { useAuth } from '../context/AuthContext'
 import { recommendationService, RecommendationScore, RecommendationFilters } from '../services/recommendationService'
 
 // Loading skeleton component
@@ -65,6 +66,32 @@ const EmptyState = () => (
   </div>
 )
 
+// Login prompt component
+const LoginPrompt = () => (
+  <div className="bg-white rounded-lg p-8 text-center">
+    <div className="text-gray-400 mb-4">
+      <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+    </div>
+    <h3 className="text-lg font-semibold text-gray-900 mb-2">Sign in to get recommendations</h3>
+    <p className="text-gray-600 mb-4">
+      Sign in to your account to see personalized podcast episode recommendations.
+    </p>
+    <button
+      onClick={() => window.location.href = '/login'}
+      className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+    >
+      Sign In
+    </button>
+  </div>
+)
+
 type FilterType = 'not_recent' | 'comedy' | 'favorites' | 'guests' | 'new'
 
 interface FilterOption {
@@ -83,6 +110,7 @@ const filterOptions: FilterOption[] = [
 
 export default function Home() {
   const { playEpisode } = useMediaPlayer()
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
   const [recommendations, setRecommendations] = useState<RecommendationScore[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -90,6 +118,11 @@ export default function Home() {
   const [userFeedback, setUserFeedback] = useState<Record<string, 'up' | 'down'>>({})
 
   const loadRecommendations = async (filter: FilterType = activeFilter) => {
+    if (!isAuthenticated) {
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
@@ -113,8 +146,10 @@ export default function Home() {
   }
 
   useEffect(() => {
-    loadRecommendations()
-  }, [])
+    if (!authLoading) {
+      loadRecommendations()
+    }
+  }, [isAuthenticated, authLoading])
 
   const handleFilterChange = (filter: FilterType) => {
     setActiveFilter(filter)
@@ -187,6 +222,36 @@ export default function Home() {
         return newState
       })
     }
+  }
+
+  // Show loading while auth is being checked
+  if (authLoading) {
+    return (
+      <div className="bg-gray-50 min-h-screen pb-32">
+        <div className="bg-white px-4 py-6 border-b border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Recommended Episodes</h1>
+          <p className="text-gray-600">Rediscover older episodes from your favorite podcasts</p>
+        </div>
+        <div className="mt-4">
+          <LoadingSkeleton />
+        </div>
+      </div>
+    )
+  }
+
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="bg-gray-50 min-h-screen pb-32">
+        <div className="bg-white px-4 py-6 border-b border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Recommended Episodes</h1>
+          <p className="text-gray-600">Rediscover older episodes from your favorite podcasts</p>
+        </div>
+        <div className="mt-4">
+          <LoginPrompt />
+        </div>
+      </div>
+    )
   }
 
   return (
