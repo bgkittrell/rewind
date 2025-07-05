@@ -111,15 +111,12 @@ export class RewindBackendStack extends cdk.Stack {
     recommendationFunction.addToRolePolicy(
       new cdk.aws_iam.PolicyStatement({
         effect: cdk.aws_iam.Effect.ALLOW,
-        actions: [
-          'bedrock:InvokeModel',
-          'bedrock:InvokeModelWithResponseStream'
-        ],
+        actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
         resources: [
           `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0`,
           `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0`,
         ],
-      })
+      }),
     )
 
     // Grant DynamoDB permissions to the Lambda functions
@@ -268,7 +265,7 @@ export class RewindBackendStack extends cdk.Stack {
 
     // Add recommendation routes
     const recommendations = api.root.addResource('recommendations')
-    
+
     // GET /recommendations - Get personalized recommendations
     recommendations.addMethod('GET', new apigateway.LambdaIntegration(recommendationFunction), {
       authorizer: cognitoAuthorizer,
