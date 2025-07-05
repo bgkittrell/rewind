@@ -69,5 +69,8 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       exclude: ['node_modules/', 'src/setupTests.ts', '**/*.stories.{ts,tsx}', '**/*.test.{ts,tsx}'],
     },
+    silent: false,
+    reporters: ['basic'],
+    dangerouslyIgnoreUnhandledErrors: true,
   },
 })
