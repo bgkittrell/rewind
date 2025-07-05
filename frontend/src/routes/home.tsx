@@ -84,7 +84,7 @@ export default function Home() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-24">
+    <div className="bg-gray-50 min-h-screen pb-32">
       {/* Header Section */}
       <div className="bg-white px-4 py-6 border-b border-gray-200">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Recommended Episodes</h1>
@@ -107,7 +107,7 @@ export default function Home() {
       </div>
 
       {/* Episode Cards */}
-      <div className="bg-white mx-4 mt-4 rounded-lg divide-y divide-gray-100">
+      <div className="bg-white mt-4 rounded-lg divide-y divide-gray-100">
         {sampleEpisodes.map(episode => (
           <EpisodeCard
             key={episode.id}
