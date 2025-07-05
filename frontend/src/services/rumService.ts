@@ -49,7 +49,7 @@ export class RumService {
 
     try {
       this.awsRum.recordError(error)
-      
+
       if (additionalDetails) {
         this.awsRum.recordEvent('error_details', additionalDetails)
       }
@@ -66,7 +66,7 @@ export class RumService {
 
     try {
       this.awsRum.recordPageView(pageId)
-      
+
       if (additionalDetails) {
         this.awsRum.recordEvent('page_view_details', {
           pageId,
