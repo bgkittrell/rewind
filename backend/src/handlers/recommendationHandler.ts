@@ -2,6 +2,21 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { APIResponse, APIGatewayAuthorizerEvent, RecommendationFilters, GuestExtractionRequest } from '../types'
 import { recommendationService } from '../services/recommendationService'
 import { bedrockService } from '../services/bedrockService'
+import { rateLimitService } from '../services/rateLimitService'
+import {
+  validateQueryParams,
+  validateRequestBody,
+  guestExtractionRequestSchema,
+  batchGuestExtractionRequestSchema,
+  guestAnalyticsUpdateSchema,
+  validateUserId,
+  validateContentForAI,
+} from '../validation/schemas'
+import {
+  createErrorResponse,
+  createRateLimitResponse,
+  createSafeLogMessage,
+} from '../utils/errorSanitizer'
 
 /**
  * Get personalized episode recommendations for a user

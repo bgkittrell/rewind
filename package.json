@@ -55,5 +55,8 @@
     "recommendation-engine"
   ],
   "author": "Your Name",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "zod": "^3.25.74"
+  }
 }

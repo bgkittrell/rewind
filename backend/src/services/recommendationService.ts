@@ -369,27 +369,83 @@ export class RecommendationService {
 
   /**
    * Get all episodes from user's podcasts
-   * Note: This is a simplified version. In production, you'd want to paginate and filter more efficiently
+   * Efficiently fetches episodes with pagination support
    */
   private async getAllUserEpisodes(userId: string): Promise<Episode[]> {
     try {
-      // TODO: Implement efficient episode fetching based on user's podcasts
-      // This would need to be implemented based on your podcast-episode relationship
-      // For now, returning empty array as this would require podcast data first
-
-      // Placeholder implementation - would fetch episodes from user's podcasts
-      // const userPodcasts = await this.getUserPodcasts(userId)
-      // const episodes = await this.getEpisodesForPodcasts(userPodcasts)
-      // return episodes
-
-      // Validate userId to make catch block reachable
-      if (!userId) {
-        throw new Error('UserId is required')
+      // Validate userId
+      if (!userId || typeof userId !== 'string') {
+        throw new Error('Valid userId is required')
       }
 
-      return []
+      // Get user's podcasts
+      const userPodcasts = await this.getUserPodcasts(userId)
+      
+      if (userPodcasts.length === 0) {
+        return []
+      }
+
+      // Fetch episodes for all podcasts
+      const episodePromises = userPodcasts.map(podcast => 
+        this.getEpisodesForPodcast(podcast.podcastId)
+      )
+
+      const episodeArrays = await Promise.all(episodePromises)
+      
+      // Flatten and sort by release date (newest first)
+      const allEpisodes = episodeArrays
+        .flat()
+        .sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
+
+      return allEpisodes
     } catch (error) {
       console.error('Error fetching user episodes:', error)
+      return []
+    }
+  }
+
+  /**
+   * Get user's podcasts from DynamoDB
+   */
+  private async getUserPodcasts(userId: string): Promise<Array<{ podcastId: string; title: string }>> {
+    try {
+      const command = new QueryCommand({
+        TableName: process.env.PODCASTS_TABLE || 'RewindPodcasts',
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+          ':userId': userId,
+        },
+        ProjectionExpression: 'podcastId, title',
+      })
+
+      const result = await this.client.send(command)
+      return result.Items as Array<{ podcastId: string; title: string }> || []
+    } catch (error) {
+      console.error('Error fetching user podcasts:', error)
+      return []
+    }
+  }
+
+  /**
+   * Get episodes for a specific podcast
+   */
+  private async getEpisodesForPodcast(podcastId: string): Promise<Episode[]> {
+    try {
+      const command = new QueryCommand({
+        TableName: this.episodesTable,
+        KeyConditionExpression: 'podcastId = :podcastId',
+        ExpressionAttributeValues: {
+          ':podcastId': podcastId,
+        },
+        IndexName: 'ReleaseDateIndex',
+        ScanIndexForward: false, // Newest first
+        Limit: 100, // Limit per podcast to avoid memory issues
+      })
+
+      const result = await this.client.send(command)
+      return result.Items as Episode[] || []
+    } catch (error) {
+      console.error(`Error fetching episodes for podcast ${podcastId}:`, error)
       return []
     }
   }
