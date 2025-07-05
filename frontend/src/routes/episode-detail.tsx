@@ -5,7 +5,6 @@ import { podcastService, Podcast } from '../services/podcastService'
 import { APIError } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useMediaPlayer } from '../context/MediaPlayerContext'
-import { stripAndTruncate } from '../utils/textUtils'
 
 // Import the Episode type from MediaPlayerContext to avoid confusion
 type MediaPlayerEpisode = {
