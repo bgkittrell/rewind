@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import AddPodcastModal from '../components/AddPodcastModal'
 import { podcastService, Podcast } from '../services/podcastService'
-import { episodeService } from '../services/episodeService'
 import { APIError } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { stripAndTruncate } from '../utils/textUtils'
@@ -16,8 +15,6 @@ export default function Library() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [deletingPodcastId, setDeletingPodcastId] = useState<string | null>(null)
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
-
-  const [syncingEpisodes, setSyncingEpisodes] = useState<Set<string>>(new Set())
 
   // Load podcasts only after authentication is complete
   useEffect(() => {
@@ -80,30 +77,7 @@ export default function Library() {
     }
   }
 
-  const syncEpisodes = async (podcastId: string) => {
-    try {
-      setSyncingEpisodes((prev: Set<string>) => new Set([...prev, podcastId]))
-      const response = await episodeService.syncEpisodes(podcastId)
 
-      if (response.episodeCount > 0) {
-        // Episodes synced successfully - user will see them when navigating to podcast detail
-        console.log(`Successfully synced ${response.episodeCount} episodes`)
-      }
-    } catch (err) {
-      console.error('Failed to sync episodes:', err)
-      if (err instanceof APIError) {
-        setError(`Failed to sync episodes: ${err.message}`)
-      } else {
-        setError('Failed to sync episodes')
-      }
-    } finally {
-      setSyncingEpisodes((prev: Set<string>) => {
-        const newSet = new Set(prev)
-        newSet.delete(podcastId)
-        return newSet
-      })
-    }
-  }
 
   const handleImageError = (podcastId: string) => {
     setImageErrors((prev: Set<string>) => new Set([...prev, podcastId]))
@@ -168,10 +142,7 @@ export default function Library() {
       {/* Podcast List */}
       {!authLoading && !isLoading && isAuthenticated && podcasts.length > 0 && (
         <div className="bg-white mx-4 mt-4 rounded-lg divide-y divide-gray-100">
-          {podcasts.map(podcast => {
-            const isSyncing = syncingEpisodes.has(podcast.podcastId)
-
-            return (
+          {podcasts.map(podcast => (
               <div key={podcast.podcastId}>
                 {/* Enhanced Podcast Card */}
                 <div className="px-4 py-4">
@@ -217,55 +188,11 @@ export default function Library() {
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center space-x-2">
-                      {/* Sync Episodes Button */}
-                      <button
-                        onClick={() => syncEpisodes(podcast.podcastId)}
-                        disabled={isSyncing}
-                        className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
-                        title="Sync episodes"
-                      >
-                        {isSyncing ? (
-                          <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full" />
-                        ) : (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                            />
-                          </svg>
-                        )}
-                      </button>
 
-                      {/* Delete Button */}
-                      <button
-                        onClick={() => handleDeletePodcast(podcast.podcastId)}
-                        disabled={deletingPodcastId === podcast.podcastId}
-                        className="p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-gray-100 transition-colors"
-                        title="Delete podcast"
-                      >
-                        {deletingPodcastId === podcast.podcastId ? (
-                          <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full" />
-                        ) : (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
-            )
-          })}
+            ))}
         </div>
       )}
 
