@@ -56,11 +56,14 @@ export default function EpisodeDetail() {
 
       // Get the episode
       const episodeData = await episodeService.getEpisodeById(episodeId)
+      console.log('Episode data received:', episodeData)
       setEpisode(episodeData)
 
       // Get the podcast details
       const podcastsResponse = await podcastService.getPodcasts()
+      console.log('Podcasts response:', podcastsResponse)
       const podcastData = podcastsResponse.podcasts.find(p => p.podcastId === episodeData.podcastId)
+      console.log('Podcast data found:', podcastData)
       setPodcast(podcastData || null)
 
       // Get playback progress
@@ -116,13 +119,24 @@ export default function EpisodeDetail() {
     console.log('AI explanation for:', episode?.title)
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    })
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString || dateString.trim() === '') {
+      return 'Date Unknown'
+    }
+
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date'
+      }
+      return date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    } catch (error) {
+      return 'Date Unknown'
+    }
   }
 
   const formatLastListened = (dateString: string) => {
@@ -174,7 +188,9 @@ export default function EpisodeDetail() {
     return (
       <div className="px-4 py-6">
         <div className="mb-4 py-4 px-4 bg-red-50 border-l-4 border-red-500">
-          <p className="text-sm text-red-800">{error || 'Episode not found'}</p>
+          <p className="text-sm text-red-800">
+            {error || 'Episode not found. It may have been deleted or you may not have access to it.'}
+          </p>
           <div className="mt-2 space-x-2">
             <button onClick={() => navigate('/library')} className="text-sm text-red-600 hover:text-red-800">
               Back to Library
@@ -235,7 +251,7 @@ export default function EpisodeDetail() {
                 <div className="flex items-center space-x-3 text-sm text-gray-500 mb-4">
                   <span>{formatDate(episode.releaseDate)}</span>
                   <span>•</span>
-                  <span>{episode.duration}</span>
+                  <span>{episode.duration || 'Unknown duration'}</span>
                   {episode.guests && episode.guests.length > 0 && (
                     <>
                       <span>•</span>
@@ -334,7 +350,9 @@ export default function EpisodeDetail() {
       <div className="bg-white px-4 py-6 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Description</h2>
         <div className="prose max-w-none">
-          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{episode.description}</p>
+          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+            {episode.description || 'No description available.'}
+          </p>
         </div>
       </div>
 

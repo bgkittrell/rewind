@@ -361,23 +361,31 @@ async function fixEpisodeImages(
 }
 
 async function getEpisodeById(episodeId: string, userId: string, path: string): Promise<APIGatewayProxyResult> {
+  console.log(`Getting episode ${episodeId} for user ${userId}`)
+
   try {
     // First, get all user podcasts to find which podcast this episode belongs to
     const userPodcasts = await dynamoService.getPodcastsByUser(userId)
+    console.log(`Found ${userPodcasts.length} podcasts for user`)
 
     // Try to find the episode in each podcast
     for (const podcast of userPodcasts) {
+      console.log(`Checking podcast ${podcast.podcastId} for episode ${episodeId}`)
       try {
         const episode = await dynamoService.getEpisodeById(podcast.podcastId, episodeId)
         if (episode) {
+          console.log(`Found episode ${episodeId} in podcast ${podcast.podcastId}`)
+          console.log('Episode data:', JSON.stringify(episode, null, 2))
           return createSuccessResponse(episode, 200, path)
         }
       } catch (error) {
+        console.log(`Episode ${episodeId} not found in podcast ${podcast.podcastId}:`, error)
         // Continue to next podcast if episode not found in this one
         continue
       }
     }
 
+    console.log(`Episode ${episodeId} not found in any user podcast`)
     return createErrorResponse('Episode not found or access denied', 'NOT_FOUND', 404, path)
   } catch (error) {
     console.error('Error getting episode:', error)
