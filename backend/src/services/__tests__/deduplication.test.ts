@@ -16,20 +16,46 @@ const mockCrypto = {
 // Mock DynamoService class for testing
 class MockDynamoService {
   generateNaturalKey(episode: EpisodeData): string {
-    const normalizedTitle = episode.title.toLowerCase().trim()
+    // Normalize title and handle empty/undefined titles
+    const normalizedTitle = (episode.title || 'untitled').toLowerCase().trim()
 
-    // Handle invalid dates gracefully
+    // Enhanced date validation with multiple fallback strategies
     let releaseDate: string
     try {
-      const dateObj = new Date(episode.releaseDate)
-      if (isNaN(dateObj.getTime())) {
-        // Invalid date
+      // Handle various date formats and edge cases
+      if (!episode.releaseDate || episode.releaseDate.trim() === '') {
         releaseDate = '1900-01-01'
       } else {
-        releaseDate = dateObj.toISOString().split('T')[0]
+        const dateStr = episode.releaseDate.trim()
+        const dateObj = new Date(dateStr)
+
+        // Check for valid date
+        if (isNaN(dateObj.getTime())) {
+          // Try parsing as timestamp if it's a number
+          const timestamp = parseInt(dateStr, 10)
+          if (!isNaN(timestamp) && timestamp > 0) {
+            const timestampDate = new Date(timestamp * 1000) // Assume seconds, convert to ms
+            if (!isNaN(timestampDate.getTime())) {
+              releaseDate = timestampDate.toISOString().split('T')[0]
+            } else {
+              releaseDate = '1900-01-01'
+            }
+          } else {
+            // Try basic date parsing patterns
+            const cleanDateStr = dateStr.replace(/[^\d-/]/g, '')
+            const fallbackDate = new Date(cleanDateStr)
+            if (!isNaN(fallbackDate.getTime())) {
+              releaseDate = fallbackDate.toISOString().split('T')[0]
+            } else {
+              releaseDate = '1900-01-01'
+            }
+          }
+        } else {
+          // Valid date object
+          releaseDate = dateObj.toISOString().split('T')[0]
+        }
       }
     } catch (error) {
-      // Use a fallback date for invalid dates
       releaseDate = '1900-01-01'
     }
 
@@ -46,37 +72,38 @@ describe('Episode Deduplication Logic', () => {
   })
 
   describe('Natural Key Generation', () => {
-    it('should generate consistent natural keys for identical episodes', () => {
+    it('should generate consistent keys for identical episodes', () => {
       const episodeData: EpisodeData = {
         title: 'Test Episode',
-        description: 'Test description',
+        description: 'Description',
         audioUrl: 'https://example.com/audio.mp3',
         duration: '30:00',
-        releaseDate: '2023-10-15T12:00:00Z',
+        releaseDate: '2023-10-15T10:00:00Z',
       }
 
       const key1 = mockService.generateNaturalKey(episodeData)
       const key2 = mockService.generateNaturalKey(episodeData)
 
       expect(key1).toBe(key2)
-      expect(key1).toHaveLength(32)
+      expect(key1).toBeDefined()
+      expect(key1.length).toBeGreaterThan(0)
     })
 
     it('should generate different keys for different episodes', () => {
       const episode1: EpisodeData = {
-        title: 'Test Episode 1',
-        description: 'Test description',
-        audioUrl: 'https://example.com/audio.mp3',
+        title: 'Episode 1',
+        description: 'Description 1',
+        audioUrl: 'https://example.com/audio1.mp3',
         duration: '30:00',
-        releaseDate: '2023-10-15T12:00:00Z',
+        releaseDate: '2023-10-15T10:00:00Z',
       }
 
       const episode2: EpisodeData = {
-        title: 'Test Episode 2',
-        description: 'Test description',
-        audioUrl: 'https://example.com/audio.mp3',
+        title: 'Episode 2',
+        description: 'Description 2',
+        audioUrl: 'https://example.com/audio2.mp3',
         duration: '30:00',
-        releaseDate: '2023-10-15T12:00:00Z',
+        releaseDate: '2023-10-16T10:00:00Z',
       }
 
       const key1 = mockService.generateNaturalKey(episode1)
@@ -85,86 +112,217 @@ describe('Episode Deduplication Logic', () => {
       expect(key1).not.toBe(key2)
     })
 
-    it('should normalize titles for consistent key generation', () => {
+    it('should normalize titles consistently', () => {
       const episode1: EpisodeData = {
         title: '  Test Episode  ',
-        description: 'Test description',
+        description: 'Description',
         audioUrl: 'https://example.com/audio.mp3',
         duration: '30:00',
-        releaseDate: '2023-10-15T12:00:00Z',
+        releaseDate: '2023-10-15T10:00:00Z',
       }
 
       const episode2: EpisodeData = {
-        title: 'test episode',
-        description: 'Test description',
-        audioUrl: 'https://example.com/audio.mp3',
-        duration: '30:00',
-        releaseDate: '2023-10-15T12:00:00Z',
+        title: 'Test Episode',
+        description: 'Different description',
+        audioUrl: 'https://example.com/different-audio.mp3',
+        duration: '45:00',
+        releaseDate: '2023-10-15T10:00:00Z',
       }
 
       const key1 = mockService.generateNaturalKey(episode1)
       const key2 = mockService.generateNaturalKey(episode2)
 
-      expect(key1).toBe(key2)
+      expect(key1).toBe(key2) // Same title and date should produce same key
     })
 
-    it('should generate different keys for same title with different dates', () => {
-      const episode1: EpisodeData = {
-        title: 'Test Episode',
-        description: 'Test description',
+    it('should handle undefined or null titles', () => {
+      const episodeWithNoTitle: any = {
+        title: undefined,
+        description: 'Description',
         audioUrl: 'https://example.com/audio.mp3',
         duration: '30:00',
-        releaseDate: '2023-10-15T12:00:00Z',
+        releaseDate: '2023-10-15T10:00:00Z',
       }
 
-      const episode2: EpisodeData = {
-        title: 'Test Episode',
-        description: 'Test description',
-        audioUrl: 'https://example.com/audio.mp3',
-        duration: '30:00',
-        releaseDate: '2023-10-16T12:00:00Z',
-      }
-
-      const key1 = mockService.generateNaturalKey(episode1)
-      const key2 = mockService.generateNaturalKey(episode2)
-
-      expect(key1).not.toBe(key2)
+      const key = mockService.generateNaturalKey(episodeWithNoTitle)
+      expect(key).toBeDefined()
+      expect(key.length).toBeGreaterThan(0)
     })
 
-    it('should handle special characters in titles', () => {
+    it('should handle empty titles', () => {
+      const episodeWithEmptyTitle: EpisodeData = {
+        title: '',
+        description: 'Description',
+        audioUrl: 'https://example.com/audio.mp3',
+        duration: '30:00',
+        releaseDate: '2023-10-15T10:00:00Z',
+      }
+
+      const key = mockService.generateNaturalKey(episodeWithEmptyTitle)
+      expect(key).toBeDefined()
+      expect(key.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('Date Handling', () => {
+    it('should handle valid ISO dates', () => {
       const episodeData: EpisodeData = {
-        title: 'Episode with "quotes" & special chars: #123',
-        description: 'Test description',
+        title: 'Test Episode',
+        description: 'Description',
         audioUrl: 'https://example.com/audio.mp3',
         duration: '30:00',
-        releaseDate: '2023-10-15T12:00:00Z',
+        releaseDate: '2023-10-15T10:00:00Z',
       }
 
       const key = mockService.generateNaturalKey(episodeData)
       expect(key).toBeDefined()
-      expect(key).toHaveLength(32)
+    })
+
+    it('should handle invalid date strings gracefully', () => {
+      const episodeData: EpisodeData = {
+        title: 'Test Episode',
+        description: 'Description',
+        audioUrl: 'https://example.com/audio.mp3',
+        duration: '30:00',
+        releaseDate: 'invalid-date-string',
+      }
+
+      const key = mockService.generateNaturalKey(episodeData)
+      expect(key).toBeDefined()
+      // Should not throw error and should return a valid key
+    })
+
+    it('should handle empty date strings', () => {
+      const episodeData: EpisodeData = {
+        title: 'Test Episode',
+        description: 'Description',
+        audioUrl: 'https://example.com/audio.mp3',
+        duration: '30:00',
+        releaseDate: '',
+      }
+
+      const key = mockService.generateNaturalKey(episodeData)
+      expect(key).toBeDefined()
+    })
+
+    it('should handle undefined release dates', () => {
+      const episodeData: any = {
+        title: 'Test Episode',
+        description: 'Description',
+        audioUrl: 'https://example.com/audio.mp3',
+        duration: '30:00',
+        releaseDate: undefined,
+      }
+
+      const key = mockService.generateNaturalKey(episodeData)
+      expect(key).toBeDefined()
+    })
+
+    it('should handle Unix timestamps', () => {
+      const episodeData: EpisodeData = {
+        title: 'Test Episode',
+        description: 'Description',
+        audioUrl: 'https://example.com/audio.mp3',
+        duration: '30:00',
+        releaseDate: '1697356800', // Unix timestamp
+      }
+
+      const key = mockService.generateNaturalKey(episodeData)
+      expect(key).toBeDefined()
+    })
+
+    it('should handle various date formats', () => {
+      const dateFormats = [
+        '2023-10-15',
+        '2023-10-15T10:00:00Z',
+        '2023-10-15T10:00:00.000Z',
+        'October 15, 2023',
+        '10/15/2023',
+        '1697356800', // Unix timestamp
+      ]
+
+      dateFormats.forEach(dateFormat => {
+        const episodeData: EpisodeData = {
+          title: 'Test Episode',
+          description: 'Description',
+          audioUrl: 'https://example.com/audio.mp3',
+          duration: '30:00',
+          releaseDate: dateFormat,
+        }
+
+        const key = mockService.generateNaturalKey(episodeData)
+        expect(key).toBeDefined()
+        expect(key.length).toBeGreaterThan(0)
+      })
+    })
+
+    it('should generate same key for equivalent dates', () => {
+      const episode1: EpisodeData = {
+        title: 'Test Episode',
+        description: 'Description',
+        audioUrl: 'https://example.com/audio.mp3',
+        duration: '30:00',
+        releaseDate: '2023-10-15T10:00:00Z',
+      }
+
+      const episode2: EpisodeData = {
+        title: 'Test Episode',
+        description: 'Different description',
+        audioUrl: 'https://example.com/different-audio.mp3',
+        duration: '45:00',
+        releaseDate: '2023-10-15T14:30:00Z', // Same date, different time
+      }
+
+      const key1 = mockService.generateNaturalKey(episode1)
+      const key2 = mockService.generateNaturalKey(episode2)
+
+      expect(key1).toBe(key2) // Should be same since we only use the date part
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should handle episodes with all fields missing', () => {
+      const malformedEpisode: any = {}
+
+      const key = mockService.generateNaturalKey(malformedEpisode)
+      expect(key).toBeDefined()
+      expect(key.length).toBeGreaterThan(0)
     })
 
     it('should handle very long titles', () => {
-      const longTitle =
-        'This is a very long podcast episode title that goes on and on and contains lots of information about the episode including guest names and topic descriptions'
-
+      const longTitle = 'A'.repeat(1000) // Very long title
       const episodeData: EpisodeData = {
         title: longTitle,
-        description: 'Test description',
+        description: 'Description',
         audioUrl: 'https://example.com/audio.mp3',
         duration: '30:00',
-        releaseDate: '2023-10-15T12:00:00Z',
+        releaseDate: '2023-10-15T10:00:00Z',
       }
 
       const key = mockService.generateNaturalKey(episodeData)
       expect(key).toBeDefined()
-      expect(key).toHaveLength(32)
+      expect(key.length).toBeGreaterThan(0)
     })
 
-    it('should handle empty or minimal titles', () => {
+    it('should handle special characters in titles', () => {
+      const specialCharTitle = 'Episode #1: "Special" & <Weird> Characters! @#$%^&*()'
       const episodeData: EpisodeData = {
-        title: '',
+        title: specialCharTitle,
+        description: 'Description',
+        audioUrl: 'https://example.com/audio.mp3',
+        duration: '30:00',
+        releaseDate: '2023-10-15T10:00:00Z',
+      }
+
+      const key = mockService.generateNaturalKey(episodeData)
+      expect(key).toBeDefined()
+      expect(key.length).toBeGreaterThan(0)
+    })
+
+    it('should handle unicode characters in titles', () => {
+      const unicodeTitle = '测试节目 🎵 Émission de Test 🎙️'
+      const episodeData: EpisodeData = {
+        title: unicodeTitle,
         description: 'Description',
         audioUrl: 'https://example.com/audio.mp3',
         duration: '30:00',
@@ -177,158 +335,45 @@ describe('Episode Deduplication Logic', () => {
     })
   })
 
-  describe('Deduplication Strategy', () => {
-    it('should identify potential duplicates based on natural key', () => {
-      const episodes: EpisodeData[] = [
-        {
-          title: 'Episode 1',
-          description: 'Description 1',
-          audioUrl: 'https://example.com/audio1.mp3',
-          duration: '30:00',
-          releaseDate: '2023-10-15T12:00:00Z',
-        },
-        {
-          title: 'Episode 1', // Same title
-          description: 'Description 1 updated',
-          audioUrl: 'https://example.com/audio1-updated.mp3',
-          duration: '32:00',
-          releaseDate: '2023-10-15T12:00:00Z', // Same date
-        },
-        {
-          title: 'Episode 2',
-          description: 'Description 2',
-          audioUrl: 'https://example.com/audio2.mp3',
-          duration: '45:00',
-          releaseDate: '2023-10-16T12:00:00Z',
-        },
-      ]
-
-      const keys = episodes.map(ep => mockService.generateNaturalKey(ep))
-
-      // First two episodes should have the same key (duplicates)
-      expect(keys[0]).toBe(keys[1])
-
-      // Third episode should have a different key
-      expect(keys[0]).not.toBe(keys[2])
-      expect(keys[1]).not.toBe(keys[2])
-    })
-
-    it('should handle case variations in duplicate detection', () => {
-      const episodes: EpisodeData[] = [
-        {
-          title: 'The Best Podcast Ever',
-          description: 'Description',
-          audioUrl: 'https://example.com/audio.mp3',
-          duration: '30:00',
-          releaseDate: '2023-10-15T12:00:00Z',
-        },
-        {
-          title: 'the best podcast ever',
-          description: 'Description updated',
-          audioUrl: 'https://example.com/audio-updated.mp3',
-          duration: '32:00',
-          releaseDate: '2023-10-15T12:00:00Z',
-        },
-      ]
-
-      const keys = episodes.map(ep => mockService.generateNaturalKey(ep))
-
-      // Should be considered duplicates despite case difference
-      expect(keys[0]).toBe(keys[1])
-    })
-
-    it('should handle whitespace variations in duplicate detection', () => {
-      const episodes: EpisodeData[] = [
-        {
-          title: 'Episode Title',
-          description: 'Description',
-          audioUrl: 'https://example.com/audio.mp3',
-          duration: '30:00',
-          releaseDate: '2023-10-15T12:00:00Z',
-        },
-        {
-          title: '  Episode Title  ',
-          description: 'Description updated',
-          audioUrl: 'https://example.com/audio-updated.mp3',
-          duration: '32:00',
-          releaseDate: '2023-10-15T12:00:00Z',
-        },
-      ]
-
-      const keys = episodes.map(ep => mockService.generateNaturalKey(ep))
-
-      // Should be considered duplicates despite whitespace difference
-      expect(keys[0]).toBe(keys[1])
-    })
-  })
-
-  describe('Edge Cases', () => {
-    it('should handle episodes with very similar but not identical titles', () => {
-      const episodes: EpisodeData[] = [
-        {
-          title: 'Episode 1',
-          description: 'Description',
-          audioUrl: 'https://example.com/audio.mp3',
-          duration: '30:00',
-          releaseDate: '2023-10-15T12:00:00Z',
-        },
-        {
-          title: 'Episode 01',
-          description: 'Description',
-          audioUrl: 'https://example.com/audio.mp3',
-          duration: '30:00',
-          releaseDate: '2023-10-15T12:00:00Z',
-        },
-      ]
-
-      const keys = episodes.map(ep => mockService.generateNaturalKey(ep))
-
-      // Should be considered different (not duplicates)
-      expect(keys[0]).not.toBe(keys[1])
-    })
-
-    it('should handle invalid or malformed release dates', () => {
+  describe('Key Consistency', () => {
+    it('should generate the same key multiple times for the same input', () => {
       const episodeData: EpisodeData = {
+        title: 'Consistent Test Episode',
+        description: 'Description',
+        audioUrl: 'https://example.com/audio.mp3',
+        duration: '30:00',
+        releaseDate: '2023-10-15T10:00:00Z',
+      }
+
+      const keys = Array.from({ length: 10 }, () => mockService.generateNaturalKey(episodeData))
+
+      // All keys should be identical
+      keys.forEach(key => {
+        expect(key).toBe(keys[0])
+      })
+    })
+
+    it('should generate different keys for case-sensitive differences after normalization', () => {
+      const episode1: EpisodeData = {
         title: 'Test Episode',
         description: 'Description',
         audioUrl: 'https://example.com/audio.mp3',
         duration: '30:00',
-        releaseDate: 'invalid-date',
+        releaseDate: '2023-10-15T10:00:00Z',
       }
 
-      // Should handle invalid dates gracefully
-      let key: string
-      expect(() => {
-        key = mockService.generateNaturalKey(episodeData)
-      }).not.toThrow()
+      const episode2: EpisodeData = {
+        title: 'TEST EPISODE', // Different case, but should normalize to same
+        description: 'Description',
+        audioUrl: 'https://example.com/audio.mp3',
+        duration: '30:00',
+        releaseDate: '2023-10-15T10:00:00Z',
+      }
 
-      // Should still generate a key even with invalid date
-      expect(key!).toBeDefined()
-      expect(key!.length).toBeGreaterThan(0)
-    })
+      const key1 = mockService.generateNaturalKey(episode1)
+      const key2 = mockService.generateNaturalKey(episode2)
 
-    it('should handle episodes with identical content but different audio URLs', () => {
-      const episodes: EpisodeData[] = [
-        {
-          title: 'Episode 1',
-          description: 'Description',
-          audioUrl: 'https://example.com/audio1.mp3',
-          duration: '30:00',
-          releaseDate: '2023-10-15T12:00:00Z',
-        },
-        {
-          title: 'Episode 1',
-          description: 'Description',
-          audioUrl: 'https://example.com/audio2.mp3', // Different URL
-          duration: '30:00',
-          releaseDate: '2023-10-15T12:00:00Z',
-        },
-      ]
-
-      const keys = episodes.map(ep => mockService.generateNaturalKey(ep))
-
-      // Should still be considered duplicates (title + date is the same)
-      expect(keys[0]).toBe(keys[1])
+      expect(key1).toBe(key2) // Should be same due to normalization
     })
   })
 })

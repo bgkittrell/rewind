@@ -5,6 +5,9 @@ import {
   DeleteItemCommand,
   BatchWriteItemCommand,
   UpdateItemCommand,
+  ScanCommand,
+  GetItemCommand,
+  ReturnValue,
 } from '@aws-sdk/client-dynamodb'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { Podcast, Episode, EpisodeData, ListeningHistoryItem } from '../types'
@@ -121,19 +124,44 @@ export class DynamoService {
     for (let i = 0; i < episodes.length; i += batchSize) {
       const batch = episodes.slice(i, i + batchSize)
 
-      // Process each episode in the batch for deduplication
       for (const episodeData of batch) {
         try {
-          const naturalKey = this.generateNaturalKey(episodeData)
+          // Skip completely null/undefined or invalid episodes
+          if (!episodeData || typeof episodeData !== 'object') {
+            console.warn('Skipping invalid episode data:', episodeData)
+            continue
+          }
+
+          // Ensure required fields have defaults
+          const sanitizedEpisodeData: EpisodeData = {
+            title: episodeData.title || 'Untitled Episode',
+            description: episodeData.description || '',
+            audioUrl: episodeData.audioUrl || '',
+            duration: episodeData.duration || '0:00',
+            releaseDate: episodeData.releaseDate || new Date().toISOString(),
+            imageUrl: episodeData.imageUrl,
+            guests: episodeData.guests,
+            tags: episodeData.tags,
+          }
+
+          // Generate natural key for deduplication
+          const naturalKey = this.generateNaturalKey(sanitizedEpisodeData)
+
+          // Check if episode already exists using the natural key index
           const existingEpisode = await this.findExistingEpisode(podcastId, naturalKey)
 
           if (existingEpisode) {
-            // Update existing episode
-            const updatedEpisode = await this.updateEpisode(existingEpisode.episodeId, episodeData, naturalKey)
+            // Update existing episode with latest data
+            const updatedEpisode = await this.updateEpisodeDirectly(
+              existingEpisode.podcastId,
+              existingEpisode.episodeId,
+              sanitizedEpisodeData,
+              naturalKey,
+            )
             savedEpisodes.push(updatedEpisode)
           } else {
             // Create new episode
-            const newEpisode = await this.createEpisode(podcastId, episodeData, naturalKey)
+            const newEpisode = await this.createEpisode(podcastId, sanitizedEpisodeData, naturalKey)
             savedEpisodes.push(newEpisode)
           }
         } catch (error) {
@@ -146,23 +174,49 @@ export class DynamoService {
     return savedEpisodes
   }
 
-  // Generate consistent natural key for episodes
+  // Generate consistent natural key for episodes with enhanced date validation
   private generateNaturalKey(episode: EpisodeData): string {
-    // Normalize title and use release date for key generation
-    const normalizedTitle = episode.title.toLowerCase().trim()
+    // Normalize title and handle empty/undefined titles
+    const normalizedTitle = (episode?.title || 'untitled').toLowerCase().trim()
 
-    // Handle invalid dates gracefully
+    // Enhanced date validation with multiple fallback strategies
     let releaseDate: string
     try {
-      const dateObj = new Date(episode.releaseDate)
-      if (isNaN(dateObj.getTime())) {
-        // Invalid date - use epoch date as fallback
+      // Handle various date formats and edge cases
+      if (!episode?.releaseDate || episode.releaseDate.trim() === '') {
         releaseDate = '1900-01-01'
       } else {
-        releaseDate = dateObj.toISOString().split('T')[0]
+        const dateStr = episode.releaseDate.trim()
+        const dateObj = new Date(dateStr)
+
+        // Check for valid date
+        if (isNaN(dateObj.getTime())) {
+          // Try parsing as timestamp if it's a number
+          const timestamp = parseInt(dateStr, 10)
+          if (!isNaN(timestamp) && timestamp > 0) {
+            const timestampDate = new Date(timestamp * 1000) // Assume seconds, convert to ms
+            if (!isNaN(timestampDate.getTime())) {
+              releaseDate = timestampDate.toISOString().split('T')[0]
+            } else {
+              releaseDate = '1900-01-01'
+            }
+          } else {
+            // Try basic date parsing patterns
+            const cleanDateStr = dateStr.replace(/[^\d-/]/g, '')
+            const fallbackDate = new Date(cleanDateStr)
+            if (!isNaN(fallbackDate.getTime())) {
+              releaseDate = fallbackDate.toISOString().split('T')[0]
+            } else {
+              releaseDate = '1900-01-01'
+            }
+          }
+        } else {
+          // Valid date object
+          releaseDate = dateObj.toISOString().split('T')[0]
+        }
       }
     } catch (error) {
-      // Use a fallback date for invalid dates
+      console.warn('Error parsing release date:', episode?.releaseDate, error)
       releaseDate = '1900-01-01'
     }
 
@@ -189,7 +243,7 @@ export class DynamoService {
     try {
       const result = await this.dynamoClient.send(new QueryCommand(params))
 
-      if (!result.Items || result.Items.length === 0) {
+      if (!result?.Items || result.Items.length === 0) {
         return null
       }
 
@@ -200,59 +254,64 @@ export class DynamoService {
     }
   }
 
-  // Update existing episode
-  private async updateEpisode(episodeId: string, episodeData: EpisodeData, naturalKey: string): Promise<Episode> {
+  // Update existing episode directly (no table scan needed)
+  private async updateEpisodeDirectly(
+    podcastId: string,
+    episodeId: string,
+    episodeData: EpisodeData,
+    naturalKey: string,
+  ): Promise<Episode> {
     const now = new Date().toISOString()
 
-    // Get the podcast ID from the existing episode
-    const existingEpisode = await this.getExistingEpisodeById(episodeId)
-    if (!existingEpisode) {
-      throw new Error('Episode not found for update')
+    // Build update expression dynamically based on available data
+    const updateExpressions: string[] = []
+    const expressionAttributeValues: any = {
+      ':title': episodeData.title,
+      ':description': episodeData.description,
+      ':audioUrl': episodeData.audioUrl,
+      ':duration': episodeData.duration,
+      ':releaseDate': episodeData.releaseDate,
+      ':naturalKey': naturalKey,
+      ':updatedAt': now,
+    }
+
+    updateExpressions.push(
+      'title = :title',
+      'description = :description',
+      'audioUrl = :audioUrl',
+      'duration = :duration',
+      'releaseDate = :releaseDate',
+      'naturalKey = :naturalKey',
+      'updatedAt = :updatedAt',
+    )
+
+    // Add optional fields only if they exist and are not undefined
+    if (episodeData.imageUrl !== undefined && episodeData.imageUrl !== null) {
+      updateExpressions.push('imageUrl = :imageUrl')
+      expressionAttributeValues[':imageUrl'] = episodeData.imageUrl
+    }
+
+    if (episodeData.guests && episodeData.guests.length > 0) {
+      updateExpressions.push('guests = :guests')
+      expressionAttributeValues[':guests'] = episodeData.guests
+    }
+
+    if (episodeData.tags && episodeData.tags.length > 0) {
+      updateExpressions.push('tags = :tags')
+      expressionAttributeValues[':tags'] = episodeData.tags
     }
 
     const params = {
       TableName: EPISODES_TABLE,
       Key: marshall({
-        podcastId: existingEpisode.podcastId,
+        podcastId: podcastId,
         episodeId: episodeId,
       }),
-      UpdateExpression:
-        'SET title = :title, description = :description, audioUrl = :audioUrl, duration = :duration, releaseDate = :releaseDate, naturalKey = :naturalKey, updatedAt = :updatedAt',
-      ExpressionAttributeValues: marshall({
-        ':title': episodeData.title,
-        ':description': episodeData.description,
-        ':audioUrl': episodeData.audioUrl,
-        ':duration': episodeData.duration,
-        ':releaseDate': episodeData.releaseDate,
-        ':naturalKey': naturalKey,
-        ':updatedAt': now,
+      UpdateExpression: `SET ${updateExpressions.join(', ')}`,
+      ExpressionAttributeValues: marshall(expressionAttributeValues, {
+        removeUndefinedValues: true,
       }),
-      ReturnValues: 'ALL_NEW',
-    }
-
-    // Add optional fields if they exist
-    if (episodeData.imageUrl) {
-      params.UpdateExpression += ', imageUrl = :imageUrl'
-      params.ExpressionAttributeValues = marshall({
-        ...unmarshall(params.ExpressionAttributeValues),
-        ':imageUrl': episodeData.imageUrl,
-      })
-    }
-
-    if (episodeData.guests && episodeData.guests.length > 0) {
-      params.UpdateExpression += ', guests = :guests'
-      params.ExpressionAttributeValues = marshall({
-        ...unmarshall(params.ExpressionAttributeValues),
-        ':guests': episodeData.guests,
-      })
-    }
-
-    if (episodeData.tags && episodeData.tags.length > 0) {
-      params.UpdateExpression += ', tags = :tags'
-      params.ExpressionAttributeValues = marshall({
-        ...unmarshall(params.ExpressionAttributeValues),
-        ':tags': episodeData.tags,
-      })
+      ReturnValues: ReturnValue.ALL_NEW,
     }
 
     try {
@@ -269,47 +328,41 @@ export class DynamoService {
     }
   }
 
-  // Helper method to get existing episode by ID
-  private async getExistingEpisodeById(episodeId: string): Promise<Episode | null> {
-    // We need to scan the table to find the episode by episodeId since we don't have podcastId
-    const params = {
-      TableName: EPISODES_TABLE,
-      FilterExpression: 'episodeId = :episodeId',
-      ExpressionAttributeValues: marshall({
-        ':episodeId': episodeId,
-      }),
-      Limit: 1,
-    }
-
-    try {
-      const result = await this.dynamoClient.send(new QueryCommand(params))
-
-      if (!result.Items || result.Items.length === 0) {
-        return null
-      }
-
-      return unmarshall(result.Items[0]) as Episode
-    } catch (error) {
-      console.error('Error getting existing episode by ID:', error)
-      return null
-    }
-  }
-
   // Create new episode
   private async createEpisode(podcastId: string, episodeData: EpisodeData, naturalKey: string): Promise<Episode> {
     const now = new Date().toISOString()
 
+    // Create clean episode object without undefined values
     const episode: Episode = {
       episodeId: uuidv4(),
       podcastId,
-      ...episodeData,
+      title: episodeData.title,
+      description: episodeData.description,
+      audioUrl: episodeData.audioUrl,
+      duration: episodeData.duration,
+      releaseDate: episodeData.releaseDate,
       naturalKey,
       createdAt: now,
     }
 
+    // Add optional fields only if they exist
+    if (episodeData.imageUrl !== undefined && episodeData.imageUrl !== null) {
+      episode.imageUrl = episodeData.imageUrl
+    }
+
+    if (episodeData.guests && episodeData.guests.length > 0) {
+      episode.guests = episodeData.guests
+    }
+
+    if (episodeData.tags && episodeData.tags.length > 0) {
+      episode.tags = episodeData.tags
+    }
+
     const params = {
       TableName: EPISODES_TABLE,
-      Item: marshall(episode),
+      Item: marshall(episode, {
+        removeUndefinedValues: true,
+      }),
     }
 
     try {
@@ -406,13 +459,13 @@ export class DynamoService {
     }
 
     try {
-      const result = await this.dynamoClient.send(new QueryCommand(params))
+      const result = await this.dynamoClient.send(new GetItemCommand(params))
 
-      if (!result.Items || result.Items.length === 0) {
+      if (!result.Item) {
         return null
       }
 
-      return unmarshall(result.Items[0]) as Episode
+      return unmarshall(result.Item) as Episode
     } catch (error) {
       console.error('Error getting episode by ID:', error)
       throw new Error('Failed to get episode')
@@ -515,13 +568,13 @@ export class DynamoService {
     }
 
     try {
-      const result = await this.dynamoClient.send(new QueryCommand(params))
+      const result = await this.dynamoClient.send(new GetItemCommand(params))
 
-      if (!result.Items || result.Items.length === 0) {
+      if (!result.Item) {
         return null
       }
 
-      return unmarshall(result.Items[0]) as ListeningHistoryItem
+      return unmarshall(result.Item) as ListeningHistoryItem
     } catch (error) {
       console.error('Error getting listening history item:', error)
       return null
