@@ -46,7 +46,7 @@ class EpisodeDeduplicator {
 
       try {
         const result = await dynamoClient.send(new ScanCommand(params))
-        
+
         if (result.Items) {
           const batchEpisodes = result.Items.map(item => unmarshall(item) as Episode)
           episodes.push(...batchEpisodes)
@@ -68,14 +68,14 @@ class EpisodeDeduplicator {
 
   async deduplicateEpisodes(episodes: Episode[]): Promise<void> {
     console.log('Starting deduplication process...')
-    
+
     // Group episodes by podcast and natural key
     const episodeGroups = new Map<string, Episode[]>()
-    
+
     for (const episode of episodes) {
       const naturalKey = this.generateNaturalKey(episode)
       const groupKey = `${episode.podcastId}:${naturalKey}`
-      
+
       if (!episodeGroups.has(groupKey)) {
         episodeGroups.set(groupKey, [])
       }
@@ -86,9 +86,11 @@ class EpisodeDeduplicator {
     let processedGroups = 0
     for (const [groupKey, groupEpisodes] of episodeGroups) {
       processedGroups++
-      
+
       if (groupEpisodes.length > 1) {
-        console.log(`Processing duplicate group ${processedGroups}/${episodeGroups.size}: ${groupKey} (${groupEpisodes.length} duplicates)`)
+        console.log(
+          `Processing duplicate group ${processedGroups}/${episodeGroups.size}: ${groupKey} (${groupEpisodes.length} duplicates)`,
+        )
         await this.mergeDuplicateEpisodes(groupEpisodes)
         this.stats.duplicatesFound += groupEpisodes.length - 1
       } else {
@@ -98,33 +100,33 @@ class EpisodeDeduplicator {
           await this.addNaturalKeyToEpisode(episode)
         }
       }
-      
+
       if (processedGroups % 100 === 0) {
         console.log(`Processed ${processedGroups}/${episodeGroups.size} groups...`)
       }
     }
-    
+
     console.log('Deduplication complete!')
   }
 
   private async mergeDuplicateEpisodes(duplicates: Episode[]): Promise<void> {
     // Sort by creation date to keep the oldest one (preserve listening history)
     duplicates.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    
+
     const keepEpisode = duplicates[0]
     const removeEpisodes = duplicates.slice(1)
-    
+
     try {
       // Update the kept episode with natural key and latest information
       await this.updateEpisodeWithLatestInfo(keepEpisode, duplicates)
       this.stats.episodesUpdated++
-      
+
       // Remove duplicate episodes
       for (const episode of removeEpisodes) {
         await this.deleteEpisode(episode)
         this.stats.episodesRemoved++
       }
-      
+
       console.log(`  Merged ${duplicates.length} duplicates for: ${keepEpisode.title}`)
     } catch (error) {
       console.error('Error merging duplicates:', error)
@@ -134,20 +136,21 @@ class EpisodeDeduplicator {
 
   private async updateEpisodeWithLatestInfo(keepEpisode: Episode, allDuplicates: Episode[]): Promise<void> {
     // Find the most recent episode for latest information
-    const latestEpisode = allDuplicates.reduce((latest, current) => 
-      new Date(current.createdAt).getTime() > new Date(latest.createdAt).getTime() ? current : latest
+    const latestEpisode = allDuplicates.reduce((latest, current) =>
+      new Date(current.createdAt).getTime() > new Date(latest.createdAt).getTime() ? current : latest,
     )
-    
+
     const naturalKey = this.generateNaturalKey(keepEpisode)
     const now = new Date().toISOString()
-    
+
     const params = {
       TableName: EPISODES_TABLE,
       Key: marshall({
         podcastId: keepEpisode.podcastId,
         episodeId: keepEpisode.episodeId,
       }),
-      UpdateExpression: 'SET naturalKey = :naturalKey, title = :title, description = :description, audioUrl = :audioUrl, duration = :duration, updatedAt = :updatedAt',
+      UpdateExpression:
+        'SET naturalKey = :naturalKey, title = :title, description = :description, audioUrl = :audioUrl, duration = :duration, updatedAt = :updatedAt',
       ExpressionAttributeValues: marshall({
         ':naturalKey': naturalKey,
         ':title': latestEpisode.title,
@@ -188,7 +191,7 @@ class EpisodeDeduplicator {
 
   private async addNaturalKeyToEpisode(episode: Episode): Promise<void> {
     const naturalKey = this.generateNaturalKey(episode)
-    
+
     const params = {
       TableName: EPISODES_TABLE,
       Key: marshall({
@@ -229,14 +232,14 @@ class EpisodeDeduplicator {
 
 async function main() {
   console.log('🚀 Starting episode deduplication migration...')
-  
+
   if (!process.env.EPISODES_TABLE) {
     console.error('❌ EPISODES_TABLE environment variable is required')
     process.exit(1)
   }
 
   const deduplicator = new EpisodeDeduplicator()
-  
+
   try {
     const episodes = await deduplicator.getAllEpisodes()
     await deduplicator.deduplicateEpisodes(episodes)

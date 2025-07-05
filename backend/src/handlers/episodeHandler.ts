@@ -124,7 +124,7 @@ async function syncEpisodes(
     // Get existing episodes count before sync
     const existingEpisodesResponse = await dynamoService.getEpisodesByPodcast(podcastId, 1000)
     const existingEpisodesCount = existingEpisodesResponse.episodes.length
-    
+
     // Parse episodes from RSS feed
     const episodeData = await rssService.parseEpisodesFromFeed(podcast.rssUrl)
 
@@ -148,11 +148,11 @@ async function syncEpisodes(
 
     // Save/update episodes with deduplication
     const savedEpisodes = await dynamoService.saveEpisodes(podcastId, episodeData)
-    
+
     // Calculate statistics
     const newEpisodesResponse = await dynamoService.getEpisodesByPodcast(podcastId, 1000)
     const newEpisodesCount = newEpisodesResponse.episodes.length
-    
+
     const newEpisodes = Math.max(0, newEpisodesCount - existingEpisodesCount)
     const updatedEpisodes = Math.max(0, savedEpisodes.length - newEpisodes)
     const duplicatesFound = episodeData.length - savedEpisodes.length

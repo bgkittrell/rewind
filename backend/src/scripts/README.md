@@ -19,6 +19,7 @@ This script deduplicates existing episodes in the DynamoDB Episodes table by:
 ## Setup
 
 1. Install dependencies:
+
    ```bash
    npm install @aws-sdk/client-dynamodb @aws-sdk/util-dynamodb
    npm install --save-dev @types/node ts-node
@@ -33,6 +34,7 @@ This script deduplicates existing episodes in the DynamoDB Episodes table by:
 ## Running the Migration
 
 ### Dry Run (Recommended First)
+
 ```bash
 # Review the script before running
 cat backend/src/scripts/deduplicate-episodes.ts
@@ -42,6 +44,7 @@ npx ts-node backend/src/scripts/deduplicate-episodes.ts --dry-run
 ```
 
 ### Production Run
+
 ```bash
 # Backup your data first!
 aws dynamodb create-backup --table-name RewindEpisodes --backup-name "pre-deduplication-backup"
@@ -53,19 +56,23 @@ npx ts-node backend/src/scripts/deduplicate-episodes.ts
 ## What the Script Does
 
 ### 1. Natural Key Generation
+
 - Creates a unique key based on normalized title + release date
 - Example: "The Joe Rogan Experience #1234" + "2023-10-15" → MD5 hash
 
 ### 2. Duplicate Detection
+
 - Groups episodes by podcast ID + natural key
 - Identifies groups with multiple episodes (duplicates)
 
 ### 3. Duplicate Resolution
+
 - **Keeps the oldest episode** (preserves listening history and progress)
 - **Updates it with the latest information** from duplicates
 - **Removes duplicate episodes** from the database
 
 ### 4. Statistics Tracking
+
 - Total episodes processed
 - Duplicates found and removed
 - Episodes updated with natural keys

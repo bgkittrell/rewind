@@ -120,13 +120,13 @@ export class DynamoService {
     // Process episodes in batches to avoid DynamoDB limits
     for (let i = 0; i < episodes.length; i += batchSize) {
       const batch = episodes.slice(i, i + batchSize)
-      
+
       // Process each episode in the batch for deduplication
       for (const episodeData of batch) {
         try {
           const naturalKey = this.generateNaturalKey(episodeData)
           const existingEpisode = await this.findExistingEpisode(podcastId, naturalKey)
-          
+
           if (existingEpisode) {
             // Update existing episode
             const updatedEpisode = await this.updateEpisode(existingEpisode.episodeId, episodeData, naturalKey)
@@ -150,12 +150,26 @@ export class DynamoService {
   private generateNaturalKey(episode: EpisodeData): string {
     // Normalize title and use release date for key generation
     const normalizedTitle = episode.title.toLowerCase().trim()
-    const releaseDate = new Date(episode.releaseDate).toISOString().split('T')[0]
-    
+
+    // Handle invalid dates gracefully
+    let releaseDate: string
+    try {
+      const dateObj = new Date(episode.releaseDate)
+      if (isNaN(dateObj.getTime())) {
+        // Invalid date - use epoch date as fallback
+        releaseDate = '1900-01-01'
+      } else {
+        releaseDate = dateObj.toISOString().split('T')[0]
+      }
+    } catch (error) {
+      // Use a fallback date for invalid dates
+      releaseDate = '1900-01-01'
+    }
+
     // Use title + releaseDate as the natural key components
     const keyData = `${normalizedTitle}:${releaseDate}`
-    
-    // Generate MD5 hash for consistent key length
+
+    // Generate MD5 hash of the key data
     return crypto.createHash('md5').update(keyData).digest('hex')
   }
 
@@ -174,7 +188,7 @@ export class DynamoService {
 
     try {
       const result = await this.dynamoClient.send(new QueryCommand(params))
-      
+
       if (!result.Items || result.Items.length === 0) {
         return null
       }
@@ -189,20 +203,21 @@ export class DynamoService {
   // Update existing episode
   private async updateEpisode(episodeId: string, episodeData: EpisodeData, naturalKey: string): Promise<Episode> {
     const now = new Date().toISOString()
-    
+
     // Get the podcast ID from the existing episode
     const existingEpisode = await this.getExistingEpisodeById(episodeId)
     if (!existingEpisode) {
       throw new Error('Episode not found for update')
     }
-    
+
     const params = {
       TableName: EPISODES_TABLE,
       Key: marshall({
         podcastId: existingEpisode.podcastId,
         episodeId: episodeId,
       }),
-      UpdateExpression: 'SET title = :title, description = :description, audioUrl = :audioUrl, duration = :duration, releaseDate = :releaseDate, naturalKey = :naturalKey, updatedAt = :updatedAt',
+      UpdateExpression:
+        'SET title = :title, description = :description, audioUrl = :audioUrl, duration = :duration, releaseDate = :releaseDate, naturalKey = :naturalKey, updatedAt = :updatedAt',
       ExpressionAttributeValues: marshall({
         ':title': episodeData.title,
         ':description': episodeData.description,
@@ -242,7 +257,7 @@ export class DynamoService {
 
     try {
       const result = await this.dynamoClient.send(new UpdateItemCommand(params))
-      
+
       if (!result.Attributes) {
         throw new Error('No attributes returned from update')
       }
@@ -268,7 +283,7 @@ export class DynamoService {
 
     try {
       const result = await this.dynamoClient.send(new QueryCommand(params))
-      
+
       if (!result.Items || result.Items.length === 0) {
         return null
       }
@@ -283,7 +298,7 @@ export class DynamoService {
   // Create new episode
   private async createEpisode(podcastId: string, episodeData: EpisodeData, naturalKey: string): Promise<Episode> {
     const now = new Date().toISOString()
-    
+
     const episode: Episode = {
       episodeId: uuidv4(),
       podcastId,
