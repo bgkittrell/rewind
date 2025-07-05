@@ -60,6 +60,67 @@ USER_POOL_CLIENT_ID=49kf2uvsl9vg08ka6o67ts41jj
 
 ## 🚀 Currently Implemented & Deployed Endpoints
 
+### Search - READY FOR DEPLOYMENT 🚧
+
+- **Search Episodes**:
+  - URL: `/search`
+  - Method: `GET`
+  - Authorization: Required
+  - Query Parameters:
+    - `q`: Search query (required, min: 2 chars, max: 100 chars)
+    - `limit`: Number of results (optional, default: 20, max: 100)
+    - `offset`: Pagination offset (optional, default: 0)
+    - `podcastId`: Filter by specific podcast (optional)
+  - Response:
+    ```json
+    {
+      "data": {
+        "results": [
+          {
+            "episode": {
+              "episodeId": "ep123",
+              "podcastId": "pod456",
+              "title": "Episode Title",
+              "description": "Episode description",
+              "audioUrl": "http://example.com/episode.mp3",
+              "duration": "45:30",
+              "releaseDate": "2023-01-15T08:00:00Z",
+              "imageUrl": "http://example.com/image.jpg",
+              "extractedGuests": ["John Doe"]
+            },
+            "podcast": {
+              "podcastId": "pod456",
+              "title": "Podcast Title",
+              "imageUrl": "http://example.com/podcast.jpg"
+            },
+            "relevance": {
+              "score": 0.95,
+              "matchedFields": ["title", "description"],
+              "highlights": {
+                "title": "Episode <mark>Search Term</mark> Title",
+                "description": "Description with <mark>search term</mark> highlighted"
+              }
+            }
+          }
+        ],
+        "total": 42,
+        "hasMore": true,
+        "searchTime": 0.234
+      },
+      "timestamp": "2024-01-15T10:30:00Z",
+      "path": "/search"
+    }
+    ```
+  - Status Codes:
+    - `200`: Success
+    - `400`: Invalid search query or parameters
+    - `401`: Unauthorized
+  - Notes:
+    - Searches across episode titles, descriptions, guest names, and tags
+    - Results are sorted by relevance score
+    - Includes search term highlighting for UI display
+    - Uses in-memory caching for performance (5-minute TTL)
+
 ### Podcast Management - DEPLOYED ✅
 
 - **Add Podcast**:
