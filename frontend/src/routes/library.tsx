@@ -110,16 +110,17 @@ export default function Library() {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6 px-4">
+    <div className="bg-gray-50 min-h-screen pb-24">
+      {/* Header Section */}
+      <div className="bg-white px-4 py-6 border-b border-gray-200">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Your Library</h1>
         <p className="text-gray-600">Manage your podcast subscriptions</p>
       </div>
 
       {/* Add Podcast Button */}
       {!authLoading && isAuthenticated && (
-        <div className="mb-6 px-4">
-          <button onClick={() => setIsAddModalOpen(true)} className="btn-primary w-full">
+        <div className="bg-white px-4 py-4 border-b border-gray-200">
+          <button onClick={() => setIsAddModalOpen(true)} className="btn-primary w-full rounded-lg">
             Add Podcast
           </button>
         </div>
@@ -127,7 +128,7 @@ export default function Library() {
 
       {/* Error Message */}
       {error && (
-        <div className="mb-4 mx-4 p-4 bg-red-50 border border-red-200 rounded-md">
+        <div className="mx-4 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-sm text-red-800">{error}</p>
           <button onClick={() => setError(null)} className="text-sm text-red-600 hover:text-red-800 mt-1">
             Dismiss
@@ -147,7 +148,7 @@ export default function Library() {
 
       {/* Empty State */}
       {!authLoading && !isLoading && isAuthenticated && podcasts.length === 0 && !error && (
-        <div className="text-center py-8 px-4">
+        <div className="bg-white mx-4 mt-4 rounded-lg p-8 text-center">
           <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -158,7 +159,7 @@ export default function Library() {
           </svg>
           <h3 className="text-lg font-medium text-gray-900 mb-2">No podcasts yet</h3>
           <p className="text-gray-600 mb-4">Add your first podcast to get started</p>
-          <button onClick={() => setIsAddModalOpen(true)} className="btn-primary">
+          <button onClick={() => setIsAddModalOpen(true)} className="btn-primary rounded-lg">
             Add Your First Podcast
           </button>
         </div>
@@ -166,14 +167,14 @@ export default function Library() {
 
       {/* Podcast List */}
       {!authLoading && !isLoading && isAuthenticated && podcasts.length > 0 && (
-        <div className="space-y-4">
+        <div className="bg-white mx-4 mt-4 rounded-lg divide-y divide-gray-100">
           {podcasts.map(podcast => {
             const isSyncing = syncingEpisodes.has(podcast.podcastId)
 
             return (
-              <div key={podcast.podcastId} className="bg-white">
+              <div key={podcast.podcastId}>
                 {/* Enhanced Podcast Card */}
-                <div className="px-4 py-2">
+                <div className="px-4 py-4">
                   <div className="flex items-center justify-between">
                     <div
                       className="flex items-center space-x-4 flex-1 cursor-pointer hover:bg-gray-50 -m-2 p-2 rounded-lg transition-colors"
@@ -189,7 +190,7 @@ export default function Library() {
                             onError={() => handleImageError(podcast.podcastId)}
                           />
                         ) : (
-                          <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                          <div className="w-full h-full bg-gray-300 flex items-center justify-center rounded-lg">
                             <svg
                               className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400"
                               fill="currentColor"

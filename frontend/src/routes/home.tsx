@@ -84,29 +84,30 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-6">
+    <div className="bg-gray-50 min-h-screen pb-24">
+      {/* Header Section */}
+      <div className="bg-white px-4 py-6 border-b border-gray-200">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Recommended Episodes</h1>
         <p className="text-gray-600">Rediscover older episodes from your favorite podcasts</p>
       </div>
 
       {/* Filter Pills */}
-      <div className="mb-6">
+      <div className="bg-white px-4 py-4 border-b border-gray-200">
         <div className="flex gap-2 overflow-x-auto pb-2">
-          <span className="inline-block bg-primary text-white px-3 py-1 rounded-full text-sm whitespace-nowrap">
+          <span className="inline-block bg-primary text-white px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap">
             Not Recent
           </span>
-          <span className="inline-block bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm whitespace-nowrap">
+          <span className="inline-block bg-gray-200 text-gray-700 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-300 transition-colors">
             Comedy
           </span>
-          <span className="inline-block bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm whitespace-nowrap">
+          <span className="inline-block bg-gray-200 text-gray-700 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-300 transition-colors">
             Favorites
           </span>
         </div>
       </div>
 
       {/* Episode Cards */}
-      <div className="space-y-4">
+      <div className="bg-white mx-4 mt-4 rounded-lg divide-y divide-gray-100">
         {sampleEpisodes.map(episode => (
           <EpisodeCard
             key={episode.id}

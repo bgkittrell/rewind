@@ -43,7 +43,7 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
     <div className="bg-white px-4 py-4 hover:bg-gray-50 transition-colors" data-testid="episode-card">
       <div className="flex gap-3 sm:gap-4">
         {/* Episode/Podcast Thumbnail */}
-        <div className="w-16 h-16 sm:w-18 sm:h-18 bg-gray-300 flex-shrink-0 overflow-hidden">
+        <div className="w-16 h-16 sm:w-18 sm:h-18 bg-gray-300 flex-shrink-0 rounded-lg overflow-hidden">
           {(episode.imageUrl || podcastImageUrl) && !imageError ? (
             <img
               src={episode.imageUrl || podcastImageUrl}
@@ -52,7 +52,7 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+            <div className="w-full h-full bg-gray-300 flex items-center justify-center rounded-lg">
               <svg className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
               </svg>
@@ -71,7 +71,7 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
             <button
               onClick={handleAIExplanation}
               className={
-                'flex-shrink-0 w-8 h-8 bg-gray-100 flex items-center justify-center ' +
+                'flex-shrink-0 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center ' +
                 'hover:bg-gray-200 transition-colors active:bg-gray-300'
               }
               aria-label="Get AI explanation"
@@ -100,7 +100,7 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
             <button
               onClick={handlePlay}
               className={
-                'flex items-center gap-1 bg-primary text-white px-4 py-2 text-xs ' +
+                'flex items-center gap-1 bg-primary text-white px-4 py-2 text-xs rounded-lg ' +
                 'font-medium hover:bg-secondary transition-colors min-w-[60px] min-h-[32px] active:bg-red-700'
               }
               aria-label={`Play ${episode.title}`}
@@ -115,8 +115,8 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
           {/* Progress Indicator */}
           {hasProgress && (
             <div className="mt-3">
-              <div className="w-full bg-gray-200 h-1">
-                <div className="bg-primary h-1 transition-all" style={{ width: `${episode.playbackPosition!}%` }} />
+              <div className="w-full bg-gray-200 rounded-full h-1">
+                <div className="bg-primary h-1 rounded-full transition-all" style={{ width: `${episode.playbackPosition!}%` }} />
               </div>
               <p className="text-xs text-gray-500 mt-1">{Math.round(episode.playbackPosition!)}% complete</p>
             </div>
