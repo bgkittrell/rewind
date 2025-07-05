@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import { APIResponse, APIGatewayAuthorizerEvent, RecommendationFilters } from '../types'
+import { APIResponse, RecommendationFilters } from '../types'
 import { recommendationService } from '../services/recommendationService'
 import { bedrockService } from '../services/bedrockService'
 import { rateLimitService } from '../services/rateLimitService'
@@ -21,8 +21,7 @@ import { createErrorResponse, createRateLimitResponse, createSafeLogMessage } fr
 export const getRecommendations = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Extract and validate user from authorizer
-    const authorizer = event.requestContext.authorizer as APIGatewayAuthorizerEvent
-    const rawUserId = authorizer?.userId
+    const rawUserId = event.requestContext.authorizer?.claims?.sub
 
     if (!rawUserId) {
       return createErrorResponse(new Error('Unauthorized'), 401, event.path)
@@ -105,8 +104,7 @@ export const getRecommendations = async (event: APIGatewayProxyEvent): Promise<A
 export const extractGuests = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Extract and validate user from authorizer
-    const authorizer = event.requestContext.authorizer as APIGatewayAuthorizerEvent
-    const rawUserId = authorizer?.userId
+    const rawUserId = event.requestContext.authorizer?.claims?.sub
 
     if (!rawUserId) {
       return createErrorResponse(new Error('Unauthorized'), 401, event.path)
@@ -186,8 +184,7 @@ export const extractGuests = async (event: APIGatewayProxyEvent): Promise<APIGat
 export const batchExtractGuests = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Extract and validate user from authorizer
-    const authorizer = event.requestContext.authorizer as APIGatewayAuthorizerEvent
-    const rawUserId = authorizer?.userId
+    const rawUserId = event.requestContext.authorizer?.claims?.sub
 
     if (!rawUserId) {
       return createErrorResponse(new Error('Unauthorized'), 401, event.path)
@@ -269,8 +266,7 @@ export const batchExtractGuests = async (event: APIGatewayProxyEvent): Promise<A
 export const updateGuestAnalytics = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Extract and validate user from authorizer
-    const authorizer = event.requestContext.authorizer as APIGatewayAuthorizerEvent
-    const rawUserId = authorizer?.userId
+    const rawUserId = event.requestContext.authorizer?.claims?.sub
 
     if (!rawUserId) {
       return createErrorResponse(new Error('Unauthorized'), 401, event.path)
