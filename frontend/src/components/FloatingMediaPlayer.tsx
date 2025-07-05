@@ -53,21 +53,31 @@ export function FloatingMediaPlayer({
   useEffect(() => {
     if (!episode || !('mediaSession' in navigator)) return
 
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: episode.title,
-      artist: episode.podcastName,
-      album: 'Rewind',
-      artwork: episode.imageUrl
-        ? [
-            { src: episode.imageUrl, sizes: '96x96', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '128x128', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '192x192', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '256x256', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '384x384', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '512x512', type: 'image/png' },
-          ]
-        : undefined,
-    })
+    // Clear any existing metadata first
+    navigator.mediaSession.metadata = null
+
+    // Set new metadata with a slight delay to ensure iOS picks it up
+    const timeoutId = setTimeout(() => {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: episode.title,
+        artist: episode.podcastName,
+        album: 'Rewind Podcast Player', // Use unique album name
+        artwork: episode.imageUrl
+          ? [
+              { src: episode.imageUrl, sizes: '96x96', type: 'image/png' },
+              { src: episode.imageUrl, sizes: '128x128', type: 'image/png' },
+              { src: episode.imageUrl, sizes: '192x192', type: 'image/png' },
+              { src: episode.imageUrl, sizes: '256x256', type: 'image/png' },
+              { src: episode.imageUrl, sizes: '384x384', type: 'image/png' },
+              { src: episode.imageUrl, sizes: '512x512', type: 'image/png' },
+            ]
+          : [
+              // Fallback to app icons when no episode image
+              { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+              { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+            ],
+      })
+    }, 100)
 
     navigator.mediaSession.setActionHandler('play', onPlay)
     navigator.mediaSession.setActionHandler('pause', onPause)
@@ -85,6 +95,11 @@ export function FloatingMediaPlayer({
         onSeek(newTime)
       }
     })
+
+    // Cleanup function
+    return () => {
+      clearTimeout(timeoutId)
+    }
   }, [episode, onPlay, onPause, onSeek, duration])
 
   // Update audio element when episode changes
@@ -103,8 +118,16 @@ export function FloatingMediaPlayer({
 
     if (isPlaying) {
       audioRef.current.play()
+      // Explicitly set playback state for iOS
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing'
+      }
     } else {
       audioRef.current.pause()
+      // Explicitly set playback state for iOS
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused'
+      }
     }
   }, [isPlaying])
 
@@ -115,12 +138,39 @@ export function FloatingMediaPlayer({
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime)
       onSeek(audioRef.current.currentTime)
+      
+      // Update position state for iOS media session
+      if ('setPositionState' in navigator.mediaSession && duration > 0) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: duration,
+            playbackRate: audioRef.current.playbackRate,
+            position: audioRef.current.currentTime,
+          })
+        } catch (error) {
+          // Ignore errors as iOS support may be limited
+          console.debug('Failed to update position state:', error)
+        }
+      }
     }
   }
 
   const handleLoadedMetadata = () => {
     if (audioRef.current) {
       setDuration(audioRef.current.duration)
+      
+      // Set initial position state
+      if ('setPositionState' in navigator.mediaSession) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: audioRef.current.duration,
+            playbackRate: audioRef.current.playbackRate,
+            position: audioRef.current.currentTime || 0,
+          })
+        } catch (error) {
+          console.debug('Failed to set initial position state:', error)
+        }
+      }
     }
   }
 
