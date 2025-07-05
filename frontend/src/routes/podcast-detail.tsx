@@ -195,7 +195,7 @@ export default function PodcastDetail() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="py-6 px-2">
+      <div className="py-6">
         <div className="flex justify-center items-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <span className="ml-2 text-gray-600">Loading podcast...</span>
@@ -206,8 +206,8 @@ export default function PodcastDetail() {
 
   if (error || !podcast) {
     return (
-      <div className="py-6 px-2">
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+      <div className="py-6">
+        <div className="mb-4 py-4 bg-red-50 border border-red-200 rounded-md">
           <p className="text-sm text-red-800">{error || 'Podcast not found'}</p>
           <div className="mt-2 space-x-2">
             <button onClick={() => navigate('/library')} className="text-sm text-red-600 hover:text-red-800">
@@ -225,9 +225,9 @@ export default function PodcastDetail() {
   }
 
   return (
-    <div className="py-6 px-2">
+    <div className="py-6">
       {/* Back Button */}
-      <div className="mb-4 px-2">
+      <div className="mb-4">
         <button
           onClick={() => navigate('/library')}
           className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
@@ -241,7 +241,7 @@ export default function PodcastDetail() {
 
       {/* Podcast Details Header */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-4">
-        <div className="p-4">
+        <div className="py-4">
           <div className="flex items-start space-x-4">
             {/* Podcast Artwork */}
             <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
@@ -300,7 +300,7 @@ export default function PodcastDetail() {
 
       {/* Episodes Section */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div className="p-3 border-b border-gray-200">
+        <div className="py-3 border-b border-gray-200">
           <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
             Episodes
             {podcast && <span className="text-gray-500 ml-2">({podcast.episodeCount})</span>}
@@ -313,7 +313,7 @@ export default function PodcastDetail() {
             {episodes.map(episode => {
               const episodeCardData = transformEpisodeForCard(episode)
               return (
-                <div key={episode.episodeId} className="p-2">
+                <div key={episode.episodeId} className="py-2">
                   <EpisodeCard
                     episode={episodeCardData}
                     podcastImageUrl={podcast.imageUrl}
@@ -326,7 +326,7 @@ export default function PodcastDetail() {
 
             {/* Load More / Loading State */}
             {hasMore && (
-              <div className="p-4 text-center">
+              <div className="py-4 text-center">
                 {isLoadingEpisodes ? (
                   <div className="flex justify-center items-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
@@ -342,13 +342,13 @@ export default function PodcastDetail() {
 
             {/* End of Episodes */}
             {!hasMore && episodes.length > 0 && (
-              <div className="p-4 text-center text-gray-500">
+              <div className="py-4 text-center text-gray-500">
                 <p>You've reached the end of the episodes</p>
               </div>
             )}
           </div>
         ) : (
-          <div className="p-6 text-center text-gray-500">
+          <div className="py-6 text-center text-gray-500">
             <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
