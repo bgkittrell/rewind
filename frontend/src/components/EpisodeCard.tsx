@@ -40,13 +40,10 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
   const hasProgress = episode.playbackPosition && episode.playbackPosition > 0
 
   return (
-    <div
-      className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 sm:p-4 hover:shadow-md transition-shadow"
-      data-testid="episode-card"
-    >
+    <div className="bg-white px-4 py-4 hover:bg-gray-50 transition-colors" data-testid="episode-card">
       <div className="flex gap-3 sm:gap-4">
         {/* Episode/Podcast Thumbnail */}
-        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
+        <div className="w-16 h-16 sm:w-18 sm:h-18 bg-gray-300 flex-shrink-0 overflow-hidden">
           {(episode.imageUrl || podcastImageUrl) && !imageError ? (
             <img
               src={episode.imageUrl || podcastImageUrl}
@@ -65,8 +62,8 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
 
         {/* Episode Details */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight flex-1 line-clamp-2 break-words pr-1">
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <h3 className="font-semibold text-gray-900 text-sm leading-tight flex-1 line-clamp-2 break-words">
               {episode.title}
             </h3>
 
@@ -74,13 +71,13 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
             <button
               onClick={handleAIExplanation}
               className={
-                'flex-shrink-0 w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center ' +
-                'hover:bg-gray-200 transition-colors'
+                'flex-shrink-0 w-8 h-8 bg-gray-100 flex items-center justify-center ' +
+                'hover:bg-gray-200 transition-colors active:bg-gray-300'
               }
               aria-label="Get AI explanation"
               title="Get AI explanation"
             >
-              <svg className="w-3 h-3 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
                 <path
                   d={
                     'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2z' +
@@ -92,7 +89,7 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
             </button>
           </div>
 
-          <p className="text-sm text-gray-600 truncate mb-1">{episode.podcastName}</p>
+          <p className="text-sm text-gray-600 truncate mb-2">{episode.podcastName}</p>
 
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-500">
@@ -103,8 +100,8 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
             <button
               onClick={handlePlay}
               className={
-                'flex items-center gap-1 bg-primary text-white px-3 py-1.5 rounded-full text-xs ' +
-                'font-medium hover:bg-secondary transition-colors min-w-[48px] min-h-[32px]'
+                'flex items-center gap-1 bg-primary text-white px-4 py-2 text-xs ' +
+                'font-medium hover:bg-secondary transition-colors min-w-[60px] min-h-[32px] active:bg-red-700'
               }
               aria-label={`Play ${episode.title}`}
             >
@@ -117,12 +114,9 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
 
           {/* Progress Indicator */}
           {hasProgress && (
-            <div className="mt-2">
-              <div className="w-full bg-gray-200 rounded-full h-1">
-                <div
-                  className="bg-primary h-1 rounded-full transition-all"
-                  style={{ width: `${episode.playbackPosition!}%` }}
-                />
+            <div className="mt-3">
+              <div className="w-full bg-gray-200 h-1">
+                <div className="bg-primary h-1 transition-all" style={{ width: `${episode.playbackPosition!}%` }} />
               </div>
               <p className="text-xs text-gray-500 mt-1">{Math.round(episode.playbackPosition!)}% complete</p>
             </div>
