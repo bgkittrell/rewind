@@ -195,7 +195,7 @@ export default function PodcastDetail() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="py-6 px-2">
         <div className="flex justify-center items-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <span className="ml-2 text-gray-600">Loading podcast...</span>
@@ -206,7 +206,7 @@ export default function PodcastDetail() {
 
   if (error || !podcast) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="py-6 px-2">
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
           <p className="text-sm text-red-800">{error || 'Podcast not found'}</p>
           <div className="mt-2 space-x-2">
@@ -225,9 +225,9 @@ export default function PodcastDetail() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="py-6 px-2">
       {/* Back Button */}
-      <div className="mb-4">
+      <div className="mb-4 px-2">
         <button
           onClick={() => navigate('/library')}
           className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
@@ -240,11 +240,11 @@ export default function PodcastDetail() {
       </div>
 
       {/* Podcast Details Header */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
-        <div className="p-6">
-          <div className="flex items-start space-x-6">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-4">
+        <div className="p-4">
+          <div className="flex items-start space-x-4">
             {/* Podcast Artwork */}
-            <div className="w-32 h-32 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
               {podcast.imageUrl && !imageError ? (
                 <img
                   src={podcast.imageUrl}
@@ -254,7 +254,7 @@ export default function PodcastDetail() {
                 />
               ) : (
                 <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                  <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
                   </svg>
                 </div>
@@ -263,9 +263,9 @@ export default function PodcastDetail() {
 
             {/* Podcast Information */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">{podcast.title}</h1>
-              <p className="text-gray-600 mb-4 leading-relaxed">{stripAndTruncate(podcast.description, 300)}</p>
-              <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{podcast.title}</h1>
+              <p className="text-gray-600 mb-3 leading-relaxed text-sm">{stripAndTruncate(podcast.description, 250)}</p>
+              <div className="flex items-center space-x-3 text-sm text-gray-500">
                 <span>{podcast.episodeCount} episodes</span>
                 <span>•</span>
                 <span>Added {new Date(podcast.createdAt).toLocaleDateString()}</span>
@@ -274,7 +274,7 @@ export default function PodcastDetail() {
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-6 flex items-center space-x-4">
+          <div className="mt-4 flex items-center space-x-3">
             <button
               onClick={() => syncEpisodes()}
               disabled={isSyncing}
@@ -300,8 +300,8 @@ export default function PodcastDetail() {
 
       {/* Episodes Section */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div className="p-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
+        <div className="p-3 border-b border-gray-200">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
             Episodes
             {podcast && <span className="text-gray-500 ml-2">({podcast.episodeCount})</span>}
           </h2>
@@ -313,7 +313,7 @@ export default function PodcastDetail() {
             {episodes.map(episode => {
               const episodeCardData = transformEpisodeForCard(episode)
               return (
-                <div key={episode.episodeId} className="p-4">
+                <div key={episode.episodeId} className="p-2">
                   <EpisodeCard
                     episode={episodeCardData}
                     podcastImageUrl={podcast.imageUrl}
@@ -348,7 +348,7 @@ export default function PodcastDetail() {
             )}
           </div>
         ) : (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-6 text-center text-gray-500">
             <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
