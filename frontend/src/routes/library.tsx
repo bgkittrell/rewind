@@ -110,15 +110,15 @@ export default function Library() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-6">
+    <div className="container mx-auto py-6">
+      <div className="mb-6 px-4">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Your Library</h1>
         <p className="text-gray-600">Manage your podcast subscriptions</p>
       </div>
 
       {/* Add Podcast Button */}
       {!authLoading && isAuthenticated && (
-        <div className="mb-6">
+        <div className="mb-6 px-4">
           <button onClick={() => setIsAddModalOpen(true)} className="btn-primary w-full">
             Add Podcast
           </button>
@@ -127,7 +127,7 @@ export default function Library() {
 
       {/* Error Message */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+        <div className="mb-4 mx-4 p-4 bg-red-50 border border-red-200 rounded-md">
           <p className="text-sm text-red-800">{error}</p>
           <button onClick={() => setError(null)} className="text-sm text-red-600 hover:text-red-800 mt-1">
             Dismiss
@@ -137,7 +137,7 @@ export default function Library() {
 
       {/* Loading State */}
       {(authLoading || isLoading) && (
-        <div className="flex justify-center items-center py-8">
+        <div className="flex justify-center items-center py-8 px-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <span className="ml-2 text-gray-600">
             {authLoading ? 'Checking authentication...' : 'Loading podcasts...'}
@@ -147,7 +147,7 @@ export default function Library() {
 
       {/* Empty State */}
       {!authLoading && !isLoading && isAuthenticated && podcasts.length === 0 && !error && (
-        <div className="text-center py-8">
+        <div className="text-center py-8 px-4">
           <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -171,9 +171,9 @@ export default function Library() {
             const isSyncing = syncingEpisodes.has(podcast.podcastId)
 
             return (
-              <div key={podcast.podcastId} className="bg-white rounded-lg border border-gray-200 shadow-sm">
+              <div key={podcast.podcastId} className="bg-white">
                 {/* Enhanced Podcast Card */}
-                <div className="p-4">
+                <div className="px-4 py-2">
                   <div className="flex items-center justify-between">
                     <div
                       className="flex items-center space-x-4 flex-1 cursor-pointer hover:bg-gray-50 -m-2 p-2 rounded-lg transition-colors"
