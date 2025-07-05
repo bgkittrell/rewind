@@ -124,11 +124,38 @@ export default function PodcastDetail() {
     try {
       setIsSyncing(true)
       setSuccessMessage(null)
+      setError(null)
+
       const response = await episodeService.syncEpisodes(podcastId)
 
       if (response.episodeCount > 0) {
+        // Show detailed sync results
+        const stats = response.stats
+        let message = `Sync completed! `
+
+        if (stats) {
+          if (stats.newEpisodes > 0) {
+            message += `${stats.newEpisodes} new episodes added`
+          }
+          if (stats.updatedEpisodes > 0) {
+            message +=
+              stats.newEpisodes > 0
+                ? `, ${stats.updatedEpisodes} episodes updated`
+                : `${stats.updatedEpisodes} episodes updated`
+          }
+          if (stats.duplicatesFound > 0) {
+            message += `. Found and merged ${stats.duplicatesFound} duplicates`
+          }
+        } else {
+          message += `${response.episodeCount} episodes synced`
+        }
+
+        setSuccessMessage(message)
+
         // Reload episodes after successful sync
         await loadEpisodes(undefined, true)
+      } else {
+        setSuccessMessage('No new episodes found in RSS feed')
       }
     } catch (err) {
       console.error('Failed to sync episodes:', err)

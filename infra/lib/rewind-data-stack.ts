@@ -166,6 +166,13 @@ export class RewindDataStack extends cdk.Stack {
       sortKey: { name: 'releaseDate', type: dynamodb.AttributeType.STRING },
     })
 
+    // Add GSI for natural key deduplication (title + releaseDate hash)
+    this.tables.episodes.addGlobalSecondaryIndex({
+      indexName: 'NaturalKeyIndex',
+      partitionKey: { name: 'podcastId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'naturalKey', type: dynamodb.AttributeType.STRING },
+    })
+
     // Listening history table
     this.tables.listeningHistory = new dynamodb.Table(this, 'RewindListeningHistory', {
       tableName: 'RewindListeningHistory',

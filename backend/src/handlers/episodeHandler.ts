@@ -121,6 +121,10 @@ async function syncEpisodes(
       return createErrorResponse('Podcast not found or access denied', 'NOT_FOUND', 404, path)
     }
 
+    // Get existing episodes count before sync
+    const existingEpisodesResponse = await dynamoService.getEpisodesByPodcast(podcastId, 1000)
+    const existingEpisodesCount = existingEpisodesResponse.episodes.length
+
     // Parse episodes from RSS feed
     const episodeData = await rssService.parseEpisodesFromFeed(podcast.rssUrl)
 
@@ -129,19 +133,40 @@ async function syncEpisodes(
         {
           message: 'No episodes found in RSS feed',
           episodeCount: 0,
+          episodes: [],
+          stats: {
+            newEpisodes: 0,
+            updatedEpisodes: 0,
+            totalProcessed: 0,
+            duplicatesFound: 0,
+          },
         },
         200,
         path,
       )
     }
 
-    // Save episodes to database
+    // Save/update episodes with deduplication
     const savedEpisodes = await dynamoService.saveEpisodes(podcastId, episodeData)
+
+    // Calculate statistics
+    const newEpisodesResponse = await dynamoService.getEpisodesByPodcast(podcastId, 1000)
+    const newEpisodesCount = newEpisodesResponse.episodes.length
+
+    const newEpisodes = Math.max(0, newEpisodesCount - existingEpisodesCount)
+    const updatedEpisodes = Math.max(0, savedEpisodes.length - newEpisodes)
+    const duplicatesFound = episodeData.length - savedEpisodes.length
 
     const response = {
       message: 'Episodes synced successfully',
       episodeCount: savedEpisodes.length,
       episodes: savedEpisodes.slice(0, 5), // Return first 5 episodes as preview
+      stats: {
+        newEpisodes,
+        updatedEpisodes,
+        totalProcessed: episodeData.length,
+        duplicatesFound: Math.max(0, duplicatesFound),
+      },
     }
 
     return createSuccessResponse(response, 201, path)

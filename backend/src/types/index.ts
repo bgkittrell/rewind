@@ -39,6 +39,8 @@ export interface Episode {
   guests?: string[]
   tags?: string[]
   createdAt: string
+  // Natural key for deduplication (hash of title + releaseDate)
+  naturalKey: string
   // AI Guest Extraction Fields
   extractedGuests?: string[]
   guestExtractionStatus?: 'pending' | 'completed' | 'failed'

@@ -12,6 +12,7 @@ export interface Episode {
   guests?: string[]
   tags?: string[]
   createdAt: string
+  naturalKey: string
 }
 
 export interface EpisodeListResponse {
@@ -27,6 +28,12 @@ export interface EpisodeSyncResponse {
   message: string
   episodeCount: number
   episodes: Episode[]
+  stats: {
+    newEpisodes: number
+    updatedEpisodes: number
+    totalProcessed: number
+    duplicatesFound: number
+  }
 }
 
 export interface ProgressResponse {
