@@ -58,7 +58,7 @@ USER_POOL_ID=us-east-1_Cw78Mapt3
 USER_POOL_CLIENT_ID=49kf2uvsl9vg08ka6o67ts41jj
 ```
 
-## 🚀 Currently Implemented Endpoints
+## 🚀 Currently Implemented & Deployed Endpoints
 
 ### Podcast Management - DEPLOYED ✅
 
@@ -219,6 +219,38 @@ USER_POOL_CLIENT_ID=49kf2uvsl9vg08ka6o67ts41jj
     }
     ```
 
+### Episodes & Playback - DEPLOYED ✅
+
+- **Get Episodes for Podcast**:
+  - URL: `/episodes/{podcastId}`
+  - Method: `GET`
+  - Authorization: Required
+
+- **Sync Episodes from RSS**:
+  - URL: `/episodes/{podcastId}/sync`
+  - Method: `POST`
+  - Authorization: Required
+
+- **Delete Episodes for Podcast**:
+  - URL: `/episodes/{podcastId}`
+  - Method: `DELETE`
+  - Authorization: Required
+
+- **Get Listening History**:
+  - URL: `/listening-history`
+  - Method: `GET`
+  - Authorization: Required
+
+- **Get Playback Progress**:
+  - URL: `/episodes/{episodeId}/progress`
+  - Method: `GET`
+  - Authorization: Required
+
+- **Save Playback Progress**:
+  - URL: `/episodes/{episodeId}/progress`
+  - Method: `PUT`
+  - Authorization: Required
+
 ### Health Check - DEPLOYED ✅
 
 - **Health Check**:
@@ -234,107 +266,279 @@ USER_POOL_CLIENT_ID=49kf2uvsl9vg08ka6o67ts41jj
     }
     ```
 
-## 📋 Planned Future Endpoints
+## 📋 Additional Implemented Endpoints
 
-_These endpoints are documented for future implementation but are not yet available:_
+_These endpoints are implemented but have different deployment status:_
 
-### Episodes (Phase 2 - Planned)
+### Episodes (Phase 2 - DEPLOYED ✅)
 
 - **Get Episodes for Podcast**:
-  - URL: `/podcasts/{podcastId}/episodes`
+  - URL: `/episodes/{podcastId}`
   - Method: `GET`
   - Authorization: Required
   - Query Parameters:
-    - `limit`: Number of episodes (default: 50)
+    - `limit`: Number of episodes (default: 100)
     - `offset`: Pagination offset (default: 0)
-    - `sort`: Sort order (`newest`, `oldest`, default: `newest`)
   - Response:
     ```json
     {
-      "episodes": [
-        {
-          "episodeId": "ep123",
-          "title": "Episode Title",
-          "description": "Episode description",
-          "audioUrl": "http://example.com/episode.mp3",
-          "duration": "45:30",
-          "releaseDate": "2023-01-15T08:00:00Z",
-          "imageUrl": "http://example.com/episode-image.jpg",
-          "isListened": false,
-          "playbackPosition": 0
-        }
-      ],
-      "total": 150,
-      "hasMore": true
+      "data": {
+        "episodes": [
+          {
+            "episodeId": "ep123",
+            "podcastId": "pod456",
+            "title": "Episode Title",
+            "description": "Episode description",
+            "audioUrl": "http://example.com/episode.mp3",
+            "duration": "45:30",
+            "releaseDate": "2023-01-15T08:00:00Z",
+            "imageUrl": "http://example.com/episode-image.jpg",
+            "extractedGuests": ["John Doe", "Jane Smith"],
+            "createdAt": "2024-01-15T10:30:00Z",
+            "updatedAt": "2024-01-15T10:30:00Z"
+          }
+        ],
+        "total": 150,
+        "hasMore": true
+      },
+      "timestamp": "2024-01-15T10:30:00Z",
+      "path": "/episodes/pod456"
     }
     ```
   - Status Codes:
     - `200`: Success
     - `404`: Podcast not found
+    - `401`: Unauthorized
 
-### Recommendations (Phase 3 - Planned)
-
-- **Get Recommendations**:
-  - URL: `/recommendations`
-  - Method: `GET`
+- **Sync Episodes from RSS**:
+  - URL: `/episodes/{podcastId}/sync`
+  - Method: `POST`
   - Authorization: Required
-  - Query Parameters:
-    - `limit`: Number of recommendations (default: 10)
-    - `filters`: Comma-separated filters (`not_recent`, `favorites`, `comedy`, etc.)
   - Response:
     ```json
     {
-      "recommendations": [
-        {
-          "episodeId": "ep123",
-          "title": "Test Episode",
-          "podcastName": "Test Podcast",
-          "podcastId": "pod456",
-          "releaseDate": "2023-01-15T08:00:00Z",
-          "duration": "45:30",
-          "audioUrl": "http://example.com/episode.mp3",
-          "imageUrl": "http://example.com/image.jpg",
-          "description": "Episode description",
-          "reason": "You haven't listened to this comedy episode in 3 months",
-          "confidence": 0.85
-        }
-      ],
-      "total": 10
+      "data": {
+        "synced": 15,
+        "total": 150,
+        "message": "Episodes synced successfully"
+      },
+      "timestamp": "2024-01-15T10:30:00Z",
+      "path": "/episodes/pod456/sync"
     }
     ```
 
-- **Submit Feedback**:
-  - URL: `/episodes/{episodeId}/feedback`
-  - Method: `POST`
+- **Delete Episodes for Podcast**:
+  - URL: `/episodes/{podcastId}`
+  - Method: `DELETE`
   - Authorization: Required
-  - Request Body:
+  - Response:
     ```json
     {
-      "type": "like|dislike|favorite",
-      "rating": 4,
-      "comment": "Great episode!"
+      "data": {
+        "deleted": 150,
+        "message": "Episodes deleted successfully"
+      },
+      "timestamp": "2024-01-15T10:30:00Z",
+      "path": "/episodes/pod456"
     }
     ```
 
-### Playback (Phase 2 - Planned)
+- **Get Listening History**:
+  - URL: `/listening-history`
+  - Method: `GET`
+  - Authorization: Required
+  - Query Parameters:
+    - `limit`: Number of results (default: 50)
+    - `offset`: Pagination offset (default: 0)
+  - Response:
+    ```json
+    {
+      "data": {
+        "history": [
+          {
+            "episodeId": "ep123",
+            "podcastId": "pod456",
+            "lastPlayed": "2024-01-15T10:30:00Z",
+            "playbackPosition": 1230.5,
+            "duration": 2700.0,
+            "completionRate": 0.45,
+            "isCompleted": false
+          }
+        ],
+        "total": 25,
+        "hasMore": false
+      },
+      "timestamp": "2024-01-15T10:30:00Z",
+      "path": "/listening-history"
+    }
+    ```
 
-- **Save Playback Position**:
-  - URL: `/episodes/{episodeId}/playback`
+- **Get Playback Progress**:
+  - URL: `/episodes/{episodeId}/progress`
+  - Method: `GET`
+  - Authorization: Required
+  - Response:
+    ```json
+    {
+      "data": {
+        "episodeId": "ep123",
+        "playbackPosition": 1230.5,
+        "duration": 2700.0,
+        "completionRate": 0.45,
+        "isCompleted": false,
+        "lastPlayed": "2024-01-15T10:30:00Z"
+      },
+      "timestamp": "2024-01-15T10:30:00Z",
+      "path": "/episodes/ep123/progress"
+    }
+    ```
+
+- **Save Playback Progress**:
+  - URL: `/episodes/{episodeId}/progress`
   - Method: `PUT`
   - Authorization: Required
   - Request Body:
     ```json
     {
-      "position": 1230.5,
+      "playbackPosition": 1230.5,
       "duration": 2700.0,
       "isCompleted": false
     }
     ```
+  - Response:
+    ```json
+    {
+      "data": {
+        "message": "Progress saved successfully",
+        "playbackPosition": 1230.5,
+        "completionRate": 0.45
+      },
+      "timestamp": "2024-01-15T10:30:00Z",
+      "path": "/episodes/ep123/progress"
+    }
+    ```
 
-- **Get Playback Position**:
-  - URL: `/episodes/{episodeId}/playback`
+### Recommendations (Phase 3 - IMPLEMENTED BUT NOT DEPLOYED ❌)
+
+**Status**: Backend implementation complete with AWS Bedrock integration, but Lambda functions not deployed to API Gateway.
+
+- **Get Recommendations**:
+  - URL: `/recommendations` ❌ NOT DEPLOYED
   - Method: `GET`
   - Authorization: Required
+  - Query Parameters:
+    - `limit`: Number of recommendations (default: 20, max: 50)
+    - `not_recent`: Filter out recent episodes (boolean)
+    - `favorites`: Show only favorites (boolean)
+    - `guests`: Show only episodes with guest matches (boolean)
+    - `new`: Show only new episodes (boolean)
+  - Response:
+    ```json
+    {
+      "data": [
+        {
+          "episodeId": "ep123",
+          "episode": {
+            "episodeId": "ep123",
+            "title": "Test Episode",
+            "podcastName": "Test Podcast",
+            "podcastId": "pod456",
+            "releaseDate": "2023-01-15T08:00:00Z",
+            "duration": "45:30",
+            "audioUrl": "http://example.com/episode.mp3",
+            "imageUrl": "http://example.com/image.jpg",
+            "description": "Episode description",
+            "extractedGuests": ["John Doe", "Jane Smith"]
+          },
+          "score": 0.85,
+          "reasons": [
+            "You've been listening to this show recently",
+            "Features John Doe you've enjoyed before",
+            "An episode from your past that might be worth revisiting"
+          ],
+          "factors": {
+            "recentShowListening": 0.8,
+            "newEpisodeBonus": 0.0,
+            "rediscoveryBonus": 0.6,
+            "guestMatchBonus": 0.9,
+            "favoriteBonus": 0.7
+          }
+        }
+      ],
+      "timestamp": "2024-01-15T10:30:00Z",
+      "path": "/recommendations"
+    }
+    ```
+
+- **Extract Guests from Episode**:
+  - URL: `/recommendations/extract-guests` ❌ NOT DEPLOYED
+  - Method: `POST`
+  - Authorization: Required
+  - Request Body:
+    ```json
+    {
+      "episodeId": "ep123",
+      "title": "Episode Title",
+      "description": "Episode description text"
+    }
+    ```
+  - Response:
+    ```json
+    {
+      "data": {
+        "episodeId": "ep123",
+        "extractedGuests": ["John Doe", "Jane Smith"],
+        "confidence": 0.95,
+        "extractedAt": "2024-01-15T10:30:00Z"
+      }
+    }
+    ```
+
+- **Batch Extract Guests**:
+  - URL: `/recommendations/batch-extract-guests` ❌ NOT DEPLOYED
+  - Method: `POST`
+  - Authorization: Required
+  - Request Body:
+    ```json
+    [
+      {
+        "episodeId": "ep123",
+        "title": "Episode Title",
+        "description": "Episode description text"
+      }
+    ]
+    ```
+  - Response:
+    ```json
+    {
+      "data": [
+        {
+          "episodeId": "ep123",
+          "extractedGuests": ["John Doe", "Jane Smith"],
+          "confidence": 0.95,
+          "extractedAt": "2024-01-15T10:30:00Z"
+        }
+      ]
+    }
+    ```
+
+- **Update Guest Analytics**:
+  - URL: `/recommendations/guest-analytics` ❌ NOT DEPLOYED
+  - Method: `POST`
+  - Authorization: Required
+  - Request Body:
+    ```json
+    {
+      "episodeId": "ep123",
+      "guests": ["John Doe", "Jane Smith"],
+      "action": "listen|favorite",
+      "rating": 4
+    }
+    ```
+
+### Playback (Phase 2 - DEPLOYED ✅)
+
+**Note**: Playback endpoints are implemented as part of the Episodes section above using `/episodes/{episodeId}/progress` endpoints.
 
 ### Library Sharing (Phase 3 - Planned)
 
@@ -385,26 +589,34 @@ _These endpoints are documented for future implementation but are not yet availa
 
 ## Implementation Status
 
-### Current Implementation (Phase 1 - Complete ✅)
+### Current Implementation (Phase 1-2 - Complete ✅)
 
-- ✅ Podcast Management (Add, Get, Delete)
-- ✅ Authentication (Cognito integration)
-- ✅ Error handling and logging
-- ✅ CORS configuration
-- ✅ Health check endpoint
+- ✅ Podcast Management (Add, Get, Delete) - DEPLOYED
+- ✅ Authentication (Cognito integration) - DEPLOYED
+- ✅ Error handling and logging - DEPLOYED
+- ✅ CORS configuration - DEPLOYED
+- ✅ Health check endpoint - DEPLOYED
+- ✅ Episode management and RSS parsing - DEPLOYED
+- ✅ Audio playback position tracking - DEPLOYED
+- ✅ Listening history tracking - DEPLOYED
 
-### Next Phase (Phase 2 - In Development)
+### Backend Complete - Deployment Needed (Phase 3 - 🚧)
 
-- 🚧 Episode management and RSS parsing
-- 🚧 Audio playback position tracking
-- 🚧 Basic episode recommendations
+- ✅ **Recommendation Engine** - IMPLEMENTED BUT NOT DEPLOYED
+  - Multi-factor scoring algorithm (5 factors)
+  - AWS Bedrock integration for guest extraction
+  - Guest analytics and preference tracking
+  - Batch processing capabilities
+  - Comprehensive unit tests
+- ❌ **API Gateway Deployment** - Lambda functions not deployed
+- ❌ **Frontend Integration** - API calls not implemented
 
 ### Future Phases (Phase 3+ - Planned)
 
-- 📋 Advanced recommendation engine with AWS Personalize
 - 📋 Library sharing functionality
 - 📋 User favorites and feedback system
 - 📋 Push notifications
+- 📋 Advanced ML features (collaborative filtering)
 
 ## Notes for AI Agent
 
