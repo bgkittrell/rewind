@@ -4,10 +4,13 @@ import {
   QueryCommand,
   DeleteItemCommand,
   BatchWriteItemCommand,
+  UpdateItemCommand,
 } from '@aws-sdk/client-dynamodb'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { Podcast, Episode, EpisodeData, ListeningHistoryItem } from '../types'
 import { v4 as uuidv4 } from 'uuid'
+
+const crypto = require('crypto')
 
 const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' })
 const PODCASTS_TABLE = process.env.PODCASTS_TABLE || 'RewindPodcasts'
@@ -114,39 +117,193 @@ export class DynamoService {
     const savedEpisodes: Episode[] = []
     const batchSize = 25 // DynamoDB batch write limit
 
-    // Process episodes in batches
+    // Process episodes in batches to avoid DynamoDB limits
     for (let i = 0; i < episodes.length; i += batchSize) {
       const batch = episodes.slice(i, i + batchSize)
-      const episodesToSave: Episode[] = batch.map(episodeData => ({
-        episodeId: uuidv4(),
-        podcastId,
-        ...episodeData,
-        createdAt: new Date().toISOString(),
-      }))
-
-      // Prepare batch write request
-      const writeRequests = episodesToSave.map(episode => ({
-        PutRequest: {
-          Item: marshall(episode),
-        },
-      }))
-
-      const params = {
-        RequestItems: {
-          [EPISODES_TABLE]: writeRequests,
-        },
-      }
-
-      try {
-        await this.dynamoClient.send(new BatchWriteItemCommand(params))
-        savedEpisodes.push(...episodesToSave)
-      } catch (error) {
-        console.error('Error saving episodes batch:', error)
-        throw new Error('Failed to save episodes')
+      
+      // Process each episode in the batch for deduplication
+      for (const episodeData of batch) {
+        try {
+          const naturalKey = this.generateNaturalKey(episodeData)
+          const existingEpisode = await this.findExistingEpisode(podcastId, naturalKey)
+          
+          if (existingEpisode) {
+            // Update existing episode
+            const updatedEpisode = await this.updateEpisode(existingEpisode.episodeId, episodeData, naturalKey)
+            savedEpisodes.push(updatedEpisode)
+          } else {
+            // Create new episode
+            const newEpisode = await this.createEpisode(podcastId, episodeData, naturalKey)
+            savedEpisodes.push(newEpisode)
+          }
+        } catch (error) {
+          console.error('Error processing episode:', error)
+          // Continue processing other episodes even if one fails
+        }
       }
     }
 
     return savedEpisodes
+  }
+
+  // Generate consistent natural key for episodes
+  private generateNaturalKey(episode: EpisodeData): string {
+    // Normalize title and use release date for key generation
+    const normalizedTitle = episode.title.toLowerCase().trim()
+    const releaseDate = new Date(episode.releaseDate).toISOString().split('T')[0]
+    
+    // Use title + releaseDate as the natural key components
+    const keyData = `${normalizedTitle}:${releaseDate}`
+    
+    // Generate MD5 hash for consistent key length
+    return crypto.createHash('md5').update(keyData).digest('hex')
+  }
+
+  // Find existing episode by natural key
+  private async findExistingEpisode(podcastId: string, naturalKey: string): Promise<Episode | null> {
+    const params = {
+      TableName: EPISODES_TABLE,
+      IndexName: 'NaturalKeyIndex',
+      KeyConditionExpression: 'podcastId = :podcastId AND naturalKey = :naturalKey',
+      ExpressionAttributeValues: marshall({
+        ':podcastId': podcastId,
+        ':naturalKey': naturalKey,
+      }),
+      Limit: 1,
+    }
+
+    try {
+      const result = await this.dynamoClient.send(new QueryCommand(params))
+      
+      if (!result.Items || result.Items.length === 0) {
+        return null
+      }
+
+      return unmarshall(result.Items[0]) as Episode
+    } catch (error) {
+      console.error('Error finding existing episode:', error)
+      return null
+    }
+  }
+
+  // Update existing episode
+  private async updateEpisode(episodeId: string, episodeData: EpisodeData, naturalKey: string): Promise<Episode> {
+    const now = new Date().toISOString()
+    
+    // Get the podcast ID from the existing episode
+    const existingEpisode = await this.getExistingEpisodeById(episodeId)
+    if (!existingEpisode) {
+      throw new Error('Episode not found for update')
+    }
+    
+    const params = {
+      TableName: EPISODES_TABLE,
+      Key: marshall({
+        podcastId: existingEpisode.podcastId,
+        episodeId: episodeId,
+      }),
+      UpdateExpression: 'SET title = :title, description = :description, audioUrl = :audioUrl, duration = :duration, releaseDate = :releaseDate, naturalKey = :naturalKey, updatedAt = :updatedAt',
+      ExpressionAttributeValues: marshall({
+        ':title': episodeData.title,
+        ':description': episodeData.description,
+        ':audioUrl': episodeData.audioUrl,
+        ':duration': episodeData.duration,
+        ':releaseDate': episodeData.releaseDate,
+        ':naturalKey': naturalKey,
+        ':updatedAt': now,
+      }),
+      ReturnValues: 'ALL_NEW',
+    }
+
+    // Add optional fields if they exist
+    if (episodeData.imageUrl) {
+      params.UpdateExpression += ', imageUrl = :imageUrl'
+      params.ExpressionAttributeValues = marshall({
+        ...unmarshall(params.ExpressionAttributeValues),
+        ':imageUrl': episodeData.imageUrl,
+      })
+    }
+
+    if (episodeData.guests && episodeData.guests.length > 0) {
+      params.UpdateExpression += ', guests = :guests'
+      params.ExpressionAttributeValues = marshall({
+        ...unmarshall(params.ExpressionAttributeValues),
+        ':guests': episodeData.guests,
+      })
+    }
+
+    if (episodeData.tags && episodeData.tags.length > 0) {
+      params.UpdateExpression += ', tags = :tags'
+      params.ExpressionAttributeValues = marshall({
+        ...unmarshall(params.ExpressionAttributeValues),
+        ':tags': episodeData.tags,
+      })
+    }
+
+    try {
+      const result = await this.dynamoClient.send(new UpdateItemCommand(params))
+      
+      if (!result.Attributes) {
+        throw new Error('No attributes returned from update')
+      }
+
+      return unmarshall(result.Attributes) as Episode
+    } catch (error) {
+      console.error('Error updating episode:', error)
+      throw new Error('Failed to update episode')
+    }
+  }
+
+  // Helper method to get existing episode by ID
+  private async getExistingEpisodeById(episodeId: string): Promise<Episode | null> {
+    // We need to scan the table to find the episode by episodeId since we don't have podcastId
+    const params = {
+      TableName: EPISODES_TABLE,
+      FilterExpression: 'episodeId = :episodeId',
+      ExpressionAttributeValues: marshall({
+        ':episodeId': episodeId,
+      }),
+      Limit: 1,
+    }
+
+    try {
+      const result = await this.dynamoClient.send(new QueryCommand(params))
+      
+      if (!result.Items || result.Items.length === 0) {
+        return null
+      }
+
+      return unmarshall(result.Items[0]) as Episode
+    } catch (error) {
+      console.error('Error getting existing episode by ID:', error)
+      return null
+    }
+  }
+
+  // Create new episode
+  private async createEpisode(podcastId: string, episodeData: EpisodeData, naturalKey: string): Promise<Episode> {
+    const now = new Date().toISOString()
+    
+    const episode: Episode = {
+      episodeId: uuidv4(),
+      podcastId,
+      ...episodeData,
+      naturalKey,
+      createdAt: now,
+    }
+
+    const params = {
+      TableName: EPISODES_TABLE,
+      Item: marshall(episode),
+    }
+
+    try {
+      await this.dynamoClient.send(new PutItemCommand(params))
+      return episode
+    } catch (error) {
+      console.error('Error creating episode:', error)
+      throw new Error('Failed to create episode')
+    }
   }
 
   async getEpisodesByPodcast(
