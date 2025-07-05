@@ -78,12 +78,6 @@ export class RewindMonitoringStack extends cdk.Stack {
         includedPages: [`https://${props.domainName}/*`],
         excludedPages: [],
         favoritePages: ['/login', '/signup', '/', '/library'],
-        metricDestinations: [
-          {
-            destination: 'CloudWatch',
-            destinationArn: `arn:aws:logs:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:*`,
-          },
-        ],
       },
     })
 
