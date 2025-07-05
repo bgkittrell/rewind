@@ -1,4 +1,5 @@
 import { apiClient } from './api'
+import { rumService } from './rumService'
 
 export interface RecommendationFilters {
   limit?: number
@@ -90,6 +91,12 @@ class RecommendationService {
    * Get personalized episode recommendations for the user
    */
   async getRecommendations(filters?: RecommendationFilters): Promise<RecommendationScore[]> {
+    // Record attempt to load recommendations
+    rumService.recordRecommendationEvent('load_attempt', {
+      filters,
+      timestamp: new Date().toISOString(),
+    })
+
     try {
       const params: Record<string, any> = {}
 
@@ -102,9 +109,26 @@ class RecommendationService {
       }
 
       console.log('Fetching recommendations with params:', params)
-      return await apiClient.get<RecommendationScore[]>('/recommendations', params)
+      const recommendations = await apiClient.get<RecommendationScore[]>('/recommendations', params)
+      
+      // Record successful load
+      rumService.recordRecommendationEvent('load_success', {
+        filters,
+        count: recommendations.length,
+        timestamp: new Date().toISOString(),
+      })
+
+      return recommendations
     } catch (error) {
       console.error('Error fetching recommendations:', error)
+      
+      // Record error
+      rumService.recordRecommendationEvent('load_error', {
+        filters,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+      })
+
       throw error
     }
   }

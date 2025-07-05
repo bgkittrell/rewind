@@ -1,4 +1,5 @@
 // Base API configuration and utilities
+import { rumService } from './rumService'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
 export interface APIResponse<T = any> {
@@ -65,27 +66,71 @@ class APIClient {
       body: options.body,
     }
 
+    // Start timing for RUM monitoring
+    const startTime = Date.now()
+
     try {
       const response = await fetch(url, config)
       const data: APIResponse<T> = await response.json()
 
+      // Calculate duration
+      const duration = Date.now() - startTime
+
+      // Record API call in RUM
+      rumService.recordApiCall(
+        endpoint,
+        url,
+        config.method,
+        response.status,
+        duration,
+        {
+          hasAuth: !!this.defaultHeaders['Authorization'],
+          contentType: response.headers.get('content-type'),
+        },
+      )
+
       if (!response.ok) {
-        throw new APIError(
+        const apiError = new APIError(
           data.error?.message || 'Request failed',
           data.error?.code || 'UNKNOWN_ERROR',
           response.status,
           data.error?.details,
         )
+
+        // Record error in RUM
+        rumService.recordError(apiError, {
+          endpoint,
+          method: config.method,
+          statusCode: response.status,
+          duration,
+          hasAuth: !!this.defaultHeaders['Authorization'],
+        })
+
+        throw apiError
       }
 
       return data.data as T
     } catch (error) {
+      const duration = Date.now() - startTime
+
       if (error instanceof APIError) {
+        // API error already recorded above
         throw error
       }
 
       // Handle network errors
-      throw new APIError('Network error occurred', 'NETWORK_ERROR', 0, { originalError: error })
+      const networkError = new APIError('Network error occurred', 'NETWORK_ERROR', 0, { originalError: error })
+      
+      // Record network error in RUM
+      rumService.recordError(networkError, {
+        endpoint,
+        method: config.method,
+        duration,
+        hasAuth: !!this.defaultHeaders['Authorization'],
+        errorType: 'network',
+      })
+
+      throw networkError
     }
   }
 
@@ -114,27 +159,74 @@ class APIClient {
     console.log('Fetching URL:', url)
     console.log('Headers:', this.defaultHeaders)
 
+    // Start timing for RUM monitoring
+    const startTime = Date.now()
+
     try {
       const response = await fetch(url, config)
       const data: APIResponse<T> = await response.json()
 
+      // Calculate duration
+      const duration = Date.now() - startTime
+
+      // Record API call in RUM
+      rumService.recordApiCall(
+        endpoint,
+        url,
+        config.method,
+        response.status,
+        duration,
+        {
+          hasAuth: !!this.defaultHeaders['Authorization'],
+          contentType: response.headers.get('content-type'),
+          hasParams: !!params,
+        },
+      )
+
       if (!response.ok) {
-        throw new APIError(
+        const apiError = new APIError(
           data.error?.message || 'Request failed',
           data.error?.code || 'UNKNOWN_ERROR',
           response.status,
           data.error?.details,
         )
+
+        // Record error in RUM
+        rumService.recordError(apiError, {
+          endpoint,
+          method: config.method,
+          statusCode: response.status,
+          duration,
+          hasAuth: !!this.defaultHeaders['Authorization'],
+          hasParams: !!params,
+        })
+
+        throw apiError
       }
 
       return data.data as T
     } catch (error) {
+      const duration = Date.now() - startTime
+
       if (error instanceof APIError) {
+        // API error already recorded above
         throw error
       }
 
       // Handle network errors
-      throw new APIError('Network error occurred', 'NETWORK_ERROR', 0, { originalError: error })
+      const networkError = new APIError('Network error occurred', 'NETWORK_ERROR', 0, { originalError: error })
+      
+      // Record network error in RUM
+      rumService.recordError(networkError, {
+        endpoint,
+        method: config.method,
+        duration,
+        hasAuth: !!this.defaultHeaders['Authorization'],
+        hasParams: !!params,
+        errorType: 'network',
+      })
+
+      throw networkError
     }
   }
 
