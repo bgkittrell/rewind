@@ -39,6 +39,7 @@ export class RewindBackendStack extends cdk.Stack {
         minify: false,
         sourceMap: true,
         externalModules: ['aws-sdk'],
+        forceDockerBundling: false, // Use local bundling instead of Docker
       },
     })
 
@@ -58,6 +59,7 @@ export class RewindBackendStack extends cdk.Stack {
         minify: false,
         sourceMap: true,
         externalModules: ['aws-sdk'],
+        forceDockerBundling: false, // Use local bundling instead of Docker
       },
     })
 
@@ -77,8 +79,45 @@ export class RewindBackendStack extends cdk.Stack {
         minify: false,
         sourceMap: true,
         externalModules: ['aws-sdk'],
+        forceDockerBundling: false, // Use local bundling instead of Docker
       },
     })
+
+    // Create Lambda function for recommendation operations
+    const recommendationFunction = new NodejsFunction(this, 'RecommendationHandler', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../../backend/src/handlers/recommendationHandlerSecure.ts'),
+      environment: {
+        EPISODES_TABLE: props.tables.episodes.tableName,
+        LISTENING_HISTORY_TABLE: props.tables.listeningHistory.tableName,
+        USER_FAVORITES_TABLE: props.tables.userFavorites.tableName,
+        GUEST_ANALYTICS_TABLE: props.tables.guestAnalytics.tableName,
+        USER_FEEDBACK_TABLE: props.tables.userFeedback.tableName,
+        PODCASTS_TABLE: props.tables.podcasts.tableName,
+        AWS_REGION: this.region,
+      },
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 1024, // More memory for AI processing
+      bundling: {
+        minify: false,
+        sourceMap: true,
+        externalModules: ['aws-sdk'],
+        forceDockerBundling: false, // Use local bundling instead of Docker
+      },
+    })
+
+    // Grant Bedrock permissions to recommendation function
+    recommendationFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        effect: cdk.aws_iam.Effect.ALLOW,
+        actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
+        resources: [
+          `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0`,
+          `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0`,
+        ],
+      }),
+    )
 
     // Grant DynamoDB permissions to the Lambda functions
     Object.values(props.tables).forEach(table => {
@@ -90,6 +129,14 @@ export class RewindBackendStack extends cdk.Stack {
     props.tables.podcasts.grantReadData(episodeFunction)
     props.tables.episodes.grantReadWriteData(episodeFunction)
     props.tables.listeningHistory.grantReadWriteData(episodeFunction)
+
+    // Grant specific permissions to recommendation function
+    props.tables.episodes.grantReadData(recommendationFunction)
+    props.tables.listeningHistory.grantReadData(recommendationFunction)
+    props.tables.userFavorites.grantReadWriteData(recommendationFunction)
+    props.tables.guestAnalytics.grantReadWriteData(recommendationFunction)
+    props.tables.userFeedback.grantReadWriteData(recommendationFunction)
+    props.tables.podcasts.grantReadData(recommendationFunction)
 
     // Create Cognito authorizer for API Gateway
     const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'RewindAuthorizer', {
@@ -212,6 +259,36 @@ export class RewindBackendStack extends cdk.Stack {
     // GET /listening-history - Get user's listening history
     const listeningHistory = api.root.addResource('listening-history')
     listeningHistory.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // Add recommendation routes
+    const recommendations = api.root.addResource('recommendations')
+
+    // GET /recommendations - Get personalized recommendations
+    recommendations.addMethod('GET', new apigateway.LambdaIntegration(recommendationFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // POST /recommendations/extract-guests - Extract guests from episode
+    const extractGuests = recommendations.addResource('extract-guests')
+    extractGuests.addMethod('POST', new apigateway.LambdaIntegration(recommendationFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // POST /recommendations/batch-extract-guests - Batch extract guests
+    const batchExtractGuests = recommendations.addResource('batch-extract-guests')
+    batchExtractGuests.addMethod('POST', new apigateway.LambdaIntegration(recommendationFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // POST /recommendations/guest-analytics - Update guest analytics
+    const guestAnalytics = recommendations.addResource('guest-analytics')
+    guestAnalytics.addMethod('POST', new apigateway.LambdaIntegration(recommendationFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
