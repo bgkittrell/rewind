@@ -142,7 +142,6 @@ export default function Home() {
       imageUrl: episode.imageUrl,
       description: episode.description,
       playbackPosition: episode.playbackPosition,
-      podcastImageUrl: episode.imageUrl,
     })
   }
 
@@ -238,7 +237,6 @@ export default function Home() {
                     imageUrl: recommendation.episode.imageUrl,
                     description: recommendation.episode.description,
                     playbackPosition: recommendation.episode.playbackPosition,
-                    podcastImageUrl: recommendation.episode.imageUrl,
                   }}
                   podcastImageUrl={recommendation.episode.imageUrl}
                   onPlay={() => handlePlay(recommendation.episode)}
