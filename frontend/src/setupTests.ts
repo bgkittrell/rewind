@@ -65,9 +65,6 @@ Object.defineProperty(HTMLMediaElement.prototype, 'volume', {
   configurable: true,
 })
 
-// Suppress console output during tests to prevent stderr pollution
-const originalConsole = { ...console }
-
 // Mock console methods for cleaner test output
 global.console = {
   ...console,
@@ -79,7 +76,6 @@ global.console = {
 }
 
 // Suppress jsdom errors about unimplemented features
-const originalError = global.console.error
 global.console.error = vi.fn((...args: any[]) => {
   const message = args[0]?.toString() || ''
 
@@ -96,7 +92,7 @@ global.console.error = vi.fn((...args: any[]) => {
 
   // Allow other errors to be logged if needed for debugging
   // Uncomment the line below if you want to see other errors during development
-  // originalError(...args)
+  // console.warn('Suppressed error:', ...args)
 })
 
 // Prevent unhandled promise rejections from polluting output
