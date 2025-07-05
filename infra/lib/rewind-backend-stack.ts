@@ -106,6 +106,22 @@ export class RewindBackendStack extends cdk.Stack {
       },
     })
 
+    // Create Lambda function for logging operations
+    const loggingFunction = new NodejsFunction(this, 'LoggingHandler', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../../backend/src/handlers/loggingHandler.ts'),
+      environment: {},
+      timeout: cdk.Duration.seconds(15),
+      memorySize: 256,
+      bundling: {
+        minify: false,
+        sourceMap: true,
+        externalModules: ['aws-sdk'],
+        forceDockerBundling: false, // Use local bundling instead of Docker
+      },
+    })
+
     // Grant Bedrock permissions to recommendation function
     recommendationFunction.addToRolePolicy(
       new cdk.aws_iam.PolicyStatement({
@@ -114,6 +130,23 @@ export class RewindBackendStack extends cdk.Stack {
         resources: [
           `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0`,
           `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0`,
+        ],
+      }),
+    )
+
+    // Grant CloudWatch Logs permissions to logging function
+    loggingFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        effect: cdk.aws_iam.Effect.ALLOW,
+        actions: [
+          'logs:CreateLogGroup',
+          'logs:CreateLogStream',
+          'logs:PutLogEvents',
+          'logs:DescribeLogStreams'
+        ],
+        resources: [
+          `arn:aws:logs:${this.region}:${this.account}:log-group:/rewind/*`,
+          `arn:aws:logs:${this.region}:${this.account}:log-group:/rewind/*:*`
         ],
       }),
     )
@@ -198,6 +231,9 @@ export class RewindBackendStack extends cdk.Stack {
     auth.addResource('signup').addMethod('POST', new apigateway.LambdaIntegration(authFunction))
     auth.addResource('confirm').addMethod('POST', new apigateway.LambdaIntegration(authFunction))
     auth.addResource('resend').addMethod('POST', new apigateway.LambdaIntegration(authFunction))
+
+    // Add logging endpoint (no authorization needed for debugging purposes)
+    api.root.addResource('logs').addMethod('POST', new apigateway.LambdaIntegration(loggingFunction))
 
     // Add protected API routes (require authorization)
     const podcasts = api.root.addResource('podcasts')

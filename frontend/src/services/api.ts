@@ -1,4 +1,6 @@
 // Base API configuration and utilities
+import RewindLogger from '../utils/logger'
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
 export interface APIResponse<T = any> {
@@ -40,12 +42,21 @@ class APIClient {
     console.log('API Client: Setting auth token', token.substring(0, 20) + '...')
     this.defaultHeaders['Authorization'] = `Bearer ${token}`
     console.log('API Client: Default headers now:', this.defaultHeaders)
+    
+    // Log authentication event
+    RewindLogger.info('Authentication token set', {
+      tokenLength: token.length,
+      tokenPrefix: token.substring(0, 20)
+    })
   }
 
   clearAuthToken() {
     console.log('API Client: Clearing auth token')
     delete this.defaultHeaders['Authorization']
     console.log('API Client: Default headers now:', this.defaultHeaders)
+    
+    // Log authentication event
+    RewindLogger.info('Authentication token cleared')
   }
 
   private async request<T>(
@@ -55,9 +66,11 @@ class APIClient {
     // Ensure endpoint starts with a slash
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
     const url = `${this.baseURL}${normalizedEndpoint}`
+    const method = options.method || 'GET'
+    const startTime = Date.now()
 
     const config = {
-      method: options.method || 'GET',
+      method,
       headers: {
         ...this.defaultHeaders,
         ...options.headers,
@@ -67,9 +80,34 @@ class APIClient {
 
     try {
       const response = await fetch(url, config)
+      const responseTime = Date.now() - startTime
+      
+      // Log successful API calls
+      RewindLogger.apiCall(normalizedEndpoint, method, response.status, responseTime)
+      
       const data: APIResponse<T> = await response.json()
 
       if (!response.ok) {
+        // Log authentication errors specifically
+        if (response.status === 401 || response.status === 403) {
+          RewindLogger.authError(normalizedEndpoint, {
+            status: response.status,
+            statusText: response.statusText,
+            message: data.error?.message || 'Authentication failed',
+            code: data.error?.code,
+            details: data.error?.details
+          })
+        } else {
+          // Log other API errors
+          RewindLogger.apiError(normalizedEndpoint, method, {
+            status: response.status,
+            statusText: response.statusText,
+            message: data.error?.message || 'Request failed',
+            code: data.error?.code,
+            details: data.error?.details
+          }, responseTime)
+        }
+
         throw new APIError(
           data.error?.message || 'Request failed',
           data.error?.code || 'UNKNOWN_ERROR',
@@ -80,9 +118,19 @@ class APIClient {
 
       return data.data as T
     } catch (error) {
+      const responseTime = Date.now() - startTime
+      
       if (error instanceof APIError) {
+        // APIError already logged above
         throw error
       }
+
+      // Log network errors
+      RewindLogger.apiError(normalizedEndpoint, method, {
+        message: (error as Error).message || 'Network error occurred',
+        type: 'NETWORK_ERROR',
+        originalError: error
+      }, responseTime)
 
       // Handle network errors
       throw new APIError('Network error occurred', 'NETWORK_ERROR', 0, { originalError: error })
@@ -90,52 +138,22 @@ class APIClient {
   }
 
   async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
-    // Ensure endpoint starts with a slash
-    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
-    let url = `${this.baseURL}${normalizedEndpoint}`
-
+    let finalEndpoint = endpoint
+    
     if (params) {
-      const urlObj = new URL(url)
+      const urlParams = new URLSearchParams()
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          urlObj.searchParams.append(key, String(value))
+          urlParams.append(key, String(value))
         }
       })
-      url = urlObj.toString()
+      finalEndpoint = `${endpoint}?${urlParams.toString()}`
     }
 
-    // Use the full URL directly instead of reconstructing it
-    const config = {
-      method: 'GET',
-      headers: {
-        ...this.defaultHeaders,
-      },
-    }
-    console.log('Fetching URL:', url)
+    console.log('API GET Request:', finalEndpoint)
     console.log('Headers:', this.defaultHeaders)
 
-    try {
-      const response = await fetch(url, config)
-      const data: APIResponse<T> = await response.json()
-
-      if (!response.ok) {
-        throw new APIError(
-          data.error?.message || 'Request failed',
-          data.error?.code || 'UNKNOWN_ERROR',
-          response.status,
-          data.error?.details,
-        )
-      }
-
-      return data.data as T
-    } catch (error) {
-      if (error instanceof APIError) {
-        throw error
-      }
-
-      // Handle network errors
-      throw new APIError('Network error occurred', 'NETWORK_ERROR', 0, { originalError: error })
-    }
+    return this.request<T>(finalEndpoint, { method: 'GET' })
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {
