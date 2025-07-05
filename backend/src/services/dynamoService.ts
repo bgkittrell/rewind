@@ -156,18 +156,21 @@ export class DynamoService {
         ':podcastId': podcastId,
       }),
       ScanIndexForward: false, // Sort by release date descending
-      IndexName: 'ReleaseDateIndex',
     }
 
-    if (limit) {
-      params.Limit = limit
-    }
-
-    if (lastEvaluatedKey) {
-      params.ExclusiveStartKey = marshall(JSON.parse(lastEvaluatedKey))
-    }
-
+    // Only use the ReleaseDateIndex if it exists, otherwise use the main table
     try {
+      // First try with the index
+      params.IndexName = 'ReleaseDateIndex'
+
+      if (limit) {
+        params.Limit = limit
+      }
+
+      if (lastEvaluatedKey) {
+        params.ExclusiveStartKey = marshall(JSON.parse(lastEvaluatedKey))
+      }
+
       const result = await dynamoClient.send(new QueryCommand(params))
 
       if (!result.Items || result.Items.length === 0) {
@@ -184,8 +187,35 @@ export class DynamoService {
 
       return response
     } catch (error) {
-      console.error('Error getting episodes:', error)
-      throw new Error('Failed to get episodes')
+      console.warn('ReleaseDateIndex not available, falling back to main table:', error)
+
+      // Fallback to main table without index
+      delete params.IndexName
+      delete params.ScanIndexForward
+
+      try {
+        const result = await dynamoClient.send(new QueryCommand(params))
+
+        if (!result.Items || result.Items.length === 0) {
+          return { episodes: [] }
+        }
+
+        const episodes = result.Items.map((item: any) => unmarshall(item) as Episode)
+
+        // Sort by release date manually since we can't use the index
+        episodes.sort((a: Episode, b: Episode) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
+
+        const response: { episodes: Episode[]; lastEvaluatedKey?: string } = { episodes }
+
+        if (result.LastEvaluatedKey) {
+          response.lastEvaluatedKey = JSON.stringify(unmarshall(result.LastEvaluatedKey))
+        }
+
+        return response
+      } catch (fallbackError) {
+        console.error('Error getting episodes from main table:', fallbackError)
+        throw new Error('Failed to get episodes')
+      }
     }
   }
 

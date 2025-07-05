@@ -153,6 +153,119 @@ describe('EpisodeHandler', () => {
     })
   })
 
+  describe('POST /episodes/{podcastId}/fix-images', () => {
+    it('should fix episode images successfully', async () => {
+      const mockPodcasts = [
+        {
+          podcastId: 'test-podcast-id',
+          userId: 'test-user-id',
+          title: 'Test Podcast',
+          description: 'Test podcast description',
+          rssUrl: 'https://example.com/feed.xml',
+          imageUrl: 'https://example.com/image.jpg',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastUpdated: '2024-01-01T00:00:00Z',
+          episodeCount: 1,
+        },
+      ]
+
+      mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
+      mockDynamoService.fixEpisodeImageUrls.mockResolvedValue(undefined)
+
+      const event = createMockEvent('POST', '/episodes/test-podcast-id/fix-images', { podcastId: 'test-podcast-id' })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(200)
+      expect(mockDynamoService.getPodcastsByUser).toHaveBeenCalledWith('test-user-id')
+      expect(mockDynamoService.fixEpisodeImageUrls).toHaveBeenCalledWith('test-podcast-id')
+
+      const responseBody = JSON.parse(result.body)
+      expect(responseBody.data.message).toBe('Episode image URLs fixed successfully')
+    })
+
+    it('should return 400 when podcast ID is missing', async () => {
+      const event = createMockEvent('POST', '/episodes//fix-images', {})
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(400)
+      const responseBody = JSON.parse(result.body)
+      expect(responseBody.error.message).toBe('Podcast ID is required')
+    })
+
+    it('should return 404 when podcast not found', async () => {
+      mockDynamoService.getPodcastsByUser.mockResolvedValue([])
+
+      const event = createMockEvent('POST', '/episodes/test-podcast-id/fix-images', { podcastId: 'test-podcast-id' })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(404)
+      const responseBody = JSON.parse(result.body)
+      expect(responseBody.error.message).toBe('Podcast not found or access denied')
+    })
+
+    it('should return 404 when podcast does not belong to user', async () => {
+      const mockPodcasts = [
+        {
+          podcastId: 'other-podcast-id',
+          userId: 'test-user-id',
+          title: 'Other Podcast',
+          description: 'Other podcast description',
+          rssUrl: 'https://example.com/other-feed.xml',
+          imageUrl: 'https://example.com/other-image.jpg',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastUpdated: '2024-01-01T00:00:00Z',
+          episodeCount: 1,
+        },
+      ]
+
+      mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
+
+      const event = createMockEvent('POST', '/episodes/test-podcast-id/fix-images', { podcastId: 'test-podcast-id' })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(404)
+      const responseBody = JSON.parse(result.body)
+      expect(responseBody.error.message).toBe('Podcast not found or access denied')
+    })
+
+    it('should return 500 when DynamoDB operation fails', async () => {
+      const mockPodcasts = [
+        {
+          podcastId: 'test-podcast-id',
+          userId: 'test-user-id',
+          title: 'Test Podcast',
+          description: 'Test podcast description',
+          rssUrl: 'https://example.com/feed.xml',
+          imageUrl: 'https://example.com/image.jpg',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastUpdated: '2024-01-01T00:00:00Z',
+          episodeCount: 1,
+        },
+      ]
+
+      mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
+      mockDynamoService.fixEpisodeImageUrls.mockRejectedValue(new Error('Database error'))
+
+      const event = createMockEvent('POST', '/episodes/test-podcast-id/fix-images', { podcastId: 'test-podcast-id' })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(500)
+      const responseBody = JSON.parse(result.body)
+      expect(responseBody.error.message).toBe('Failed to fix episode image URLs')
+    })
+
+    it('should handle authorization errors', async () => {
+      mockDynamoService.getPodcastsByUser.mockRejectedValue(new Error('Access denied'))
+
+      const event = createMockEvent('POST', '/episodes/test-podcast-id/fix-images', { podcastId: 'test-podcast-id' })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(500)
+      const responseBody = JSON.parse(result.body)
+      expect(responseBody.error.message).toBe('Failed to fix episode image URLs')
+    })
+  })
+
   describe('PUT /episodes/{episodeId}/progress', () => {
     it('should save progress successfully', async () => {
       const progressData = {
