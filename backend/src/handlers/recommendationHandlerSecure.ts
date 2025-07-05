@@ -341,3 +341,45 @@ export const updateGuestAnalytics = async (event: APIGatewayProxyEvent): Promise
     return createErrorResponse(error, 500, event.path)
   }
 }
+
+/**
+ * Main handler function that routes requests to appropriate recommendation endpoints
+ */
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  try {
+    const path = event.path
+    const method = event.httpMethod
+
+    console.log(
+      createSafeLogMessage('Recommendation handler routing', {
+        path,
+        method,
+        resource: event.resource,
+      }),
+    )
+
+    // Route to appropriate handler based on path and method
+    if (method === 'GET' && path === '/recommendations') {
+      return await getRecommendations(event)
+    } else if (method === 'POST' && path === '/recommendations/extract-guests') {
+      return await extractGuests(event)
+    } else if (method === 'POST' && path === '/recommendations/batch-extract-guests') {
+      return await batchExtractGuests(event)
+    } else if (method === 'POST' && path === '/recommendations/guest-analytics') {
+      return await updateGuestAnalytics(event)
+    } else {
+      // Unknown endpoint
+      return createErrorResponse(new Error(`Unknown endpoint: ${method} ${path}`), 404, path)
+    }
+  } catch (error) {
+    console.error(
+      createSafeLogMessage('Error in recommendation handler router', {
+        path: event.path,
+        method: event.httpMethod,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }),
+    )
+
+    return createErrorResponse(error, 500, event.path)
+  }
+}
