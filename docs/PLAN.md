@@ -123,6 +123,7 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 **�📋 Detailed Implementation Plan**: `docs/RECOMMENDATION_ENGINE_IMPLEMENTATION_PLAN.md`
 
 **Core Features**:
+
 - [ ] AWS Bedrock guest extraction from episode titles and descriptions
 - [ ] Multi-factor recommendation scoring system (5 factors)
 - [ ] Guest analytics and preference tracking
@@ -130,6 +131,7 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 - [ ] Recommendation API endpoints with filtering
 
 **Ranking Factors**:
+
 1. Recent show listening patterns (shows listened to recently)
 2. New episode discovery (episodes not yet heard)
 3. Episode rediscovery (episodes not heard in a while)
@@ -137,6 +139,7 @@ Rewind is a mobile-first Progressive Web App (PWA) designed for podcast enthusia
 5. Favorite episodes (user-marked favorites)
 
 **Implementation Timeline**:
+
 - Week 1: Database schema enhancement (Episodes, GuestAnalytics, UserFavorites)
 - Week 2: AWS Bedrock integration for guest extraction
 - Week 3: Multi-factor recommendation algorithm

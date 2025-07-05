@@ -12,18 +12,12 @@ import {
   validateUserId,
   validateContentForAI,
 } from '../validation/schemas'
-import {
-  createErrorResponse,
-  createRateLimitResponse,
-  createSafeLogMessage,
-} from '../utils/errorSanitizer'
+import { createErrorResponse, createRateLimitResponse, createSafeLogMessage } from '../utils/errorSanitizer'
 
 /**
  * Get personalized episode recommendations for a user
  */
-export const getRecommendations = async (
-  event: APIGatewayProxyEvent,
-): Promise<APIGatewayProxyResult> => {
+export const getRecommendations = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Extract user from authorizer
     const authorizer = event.requestContext.authorizer as APIGatewayAuthorizerEvent
@@ -76,7 +70,6 @@ export const getRecommendations = async (
       },
       body: JSON.stringify(response),
     }
-
   } catch (error) {
     console.error('Error getting recommendations:', error)
 
@@ -104,9 +97,7 @@ export const getRecommendations = async (
 /**
  * Extract guests from episode using AI
  */
-export const extractGuests = async (
-  event: APIGatewayProxyEvent,
-): Promise<APIGatewayProxyResult> => {
+export const extractGuests = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Extract user from authorizer
     const authorizer = event.requestContext.authorizer as APIGatewayAuthorizerEvent
@@ -183,7 +174,6 @@ export const extractGuests = async (
       },
       body: JSON.stringify(response),
     }
-
   } catch (error) {
     console.error('Error extracting guests:', error)
 
@@ -211,9 +201,7 @@ export const extractGuests = async (
 /**
  * Batch extract guests from multiple episodes
  */
-export const batchExtractGuests = async (
-  event: APIGatewayProxyEvent,
-): Promise<APIGatewayProxyResult> => {
+export const batchExtractGuests = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Extract user from authorizer
     const authorizer = event.requestContext.authorizer as APIGatewayAuthorizerEvent
@@ -328,7 +316,6 @@ export const batchExtractGuests = async (
       },
       body: JSON.stringify(response),
     }
-
   } catch (error) {
     console.error('Error batch extracting guests:', error)
 
@@ -356,9 +343,7 @@ export const batchExtractGuests = async (
 /**
  * Update guest analytics when user interacts with an episode
  */
-export const updateGuestAnalytics = async (
-  event: APIGatewayProxyEvent,
-): Promise<APIGatewayProxyResult> => {
+export const updateGuestAnalytics = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Extract user from authorizer
     const authorizer = event.requestContext.authorizer as APIGatewayAuthorizerEvent
@@ -453,13 +438,7 @@ export const updateGuestAnalytics = async (
     }
 
     // Update guest analytics
-    await recommendationService.updateGuestAnalytics(
-      userId,
-      episodeId,
-      guests,
-      action,
-      rating,
-    )
+    await recommendationService.updateGuestAnalytics(userId, episodeId, guests, action, rating)
 
     const response: APIResponse = {
       data: { success: true },
@@ -475,7 +454,6 @@ export const updateGuestAnalytics = async (
       },
       body: JSON.stringify(response),
     }
-
   } catch (error) {
     console.error('Error updating guest analytics:', error)
 

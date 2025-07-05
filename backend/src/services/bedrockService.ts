@@ -1,8 +1,4 @@
-import {
-  BedrockRuntimeClient,
-  InvokeModelCommand,
-  InvokeModelCommandInput,
-} from '@aws-sdk/client-bedrock-runtime'
+import { BedrockRuntimeClient, InvokeModelCommand, InvokeModelCommandInput } from '@aws-sdk/client-bedrock-runtime'
 import { GuestExtractionRequest, GuestExtractionResult } from '../types'
 
 export class BedrockService {
@@ -111,10 +107,8 @@ Respond only with the JSON object, no additional text.`
       }
 
       const guests = Array.isArray(parsed.guests) ? parsed.guests : []
-      const confidence = typeof parsed.confidence === 'number' ?
-        Math.max(0, Math.min(1, parsed.confidence)) : 0.5
-      const reasoning = typeof parsed.reasoning === 'string' ?
-        parsed.reasoning : 'No reasoning provided'
+      const confidence = typeof parsed.confidence === 'number' ? Math.max(0, Math.min(1, parsed.confidence)) : 0.5
+      const reasoning = typeof parsed.reasoning === 'string' ? parsed.reasoning : 'No reasoning provided'
 
       // Normalize guest names
       const normalizedGuests = guests
@@ -146,9 +140,7 @@ Respond only with the JSON object, no additional text.`
     return name
       .trim()
       .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-      .replace(/\b\w+/g, (word) =>
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
-      ) // Proper case formatting
+      .replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) // Proper case formatting
   }
 
   /**
@@ -174,12 +166,14 @@ Respond only with the JSON object, no additional text.`
       } catch (error) {
         console.error(`Error processing batch starting at index ${i}:`, error)
         // Add empty results for failed batch
-        results.push(...batch.map(() => ({
-          guests: [],
-          confidence: 0,
-          reasoning: 'Batch processing failed',
-          rawResponse: 'Error in batch processing',
-        })))
+        results.push(
+          ...batch.map(() => ({
+            guests: [],
+            confidence: 0,
+            reasoning: 'Batch processing failed',
+            rawResponse: 'Error in batch processing',
+          })),
+        )
       }
     }
 

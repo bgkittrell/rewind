@@ -13,7 +13,7 @@ export interface SanitizedError {
  */
 export const sanitizeError = (error: unknown, path?: string): SanitizedError => {
   const timestamp = new Date().toISOString()
-  
+
   // Default sanitized error
   const defaultError: SanitizedError = {
     message: 'An internal error occurred',
@@ -24,10 +24,12 @@ export const sanitizeError = (error: unknown, path?: string): SanitizedError => 
 
   if (error instanceof Error) {
     // Check if it's a validation error (safe to expose)
-    if (error.message.includes('Validation failed') || 
-        error.message.includes('validation failed') ||
-        error.message.includes('required') ||
-        error.message.includes('Invalid')) {
+    if (
+      error.message.includes('Validation failed') ||
+      error.message.includes('validation failed') ||
+      error.message.includes('required') ||
+      error.message.includes('Invalid')
+    ) {
       return {
         message: error.message,
         code: 'VALIDATION_ERROR',
@@ -37,10 +39,12 @@ export const sanitizeError = (error: unknown, path?: string): SanitizedError => 
     }
 
     // Check if it's an authentication error (safe to expose)
-    if (error.message.includes('Unauthorized') || 
-        error.message.includes('unauthorized') ||
-        error.message.includes('authentication') ||
-        error.message.includes('token')) {
+    if (
+      error.message.includes('Unauthorized') ||
+      error.message.includes('unauthorized') ||
+      error.message.includes('authentication') ||
+      error.message.includes('token')
+    ) {
       return {
         message: 'Unauthorized access',
         code: 'UNAUTHORIZED',
@@ -50,8 +54,7 @@ export const sanitizeError = (error: unknown, path?: string): SanitizedError => 
     }
 
     // Check if it's a rate limiting error (safe to expose)
-    if (error.message.includes('rate limit') || 
-        error.message.includes('too many requests')) {
+    if (error.message.includes('rate limit') || error.message.includes('too many requests')) {
       return {
         message: 'Rate limit exceeded. Please try again later.',
         code: 'RATE_LIMIT_EXCEEDED',
@@ -61,9 +64,11 @@ export const sanitizeError = (error: unknown, path?: string): SanitizedError => 
     }
 
     // Check if it's a not found error (safe to expose)
-    if (error.message.includes('not found') || 
-        error.message.includes('Not found') ||
-        error.message.includes('does not exist')) {
+    if (
+      error.message.includes('not found') ||
+      error.message.includes('Not found') ||
+      error.message.includes('does not exist')
+    ) {
       return {
         message: 'Resource not found',
         code: 'NOT_FOUND',
@@ -73,10 +78,12 @@ export const sanitizeError = (error: unknown, path?: string): SanitizedError => 
     }
 
     // Check if it's a bad request error (safe to expose)
-    if (error.message.includes('bad request') || 
-        error.message.includes('Bad request') ||
-        error.message.includes('invalid format') ||
-        error.message.includes('malformed')) {
+    if (
+      error.message.includes('bad request') ||
+      error.message.includes('Bad request') ||
+      error.message.includes('invalid format') ||
+      error.message.includes('malformed')
+    ) {
       return {
         message: 'Bad request format',
         code: 'BAD_REQUEST',
@@ -99,7 +106,7 @@ export const sanitizeError = (error: unknown, path?: string): SanitizedError => 
 
   // Log the actual error for debugging (but don't expose it)
   console.error('Sanitized error:', error)
-  
+
   return defaultError
 }
 
@@ -107,16 +114,16 @@ export const sanitizeError = (error: unknown, path?: string): SanitizedError => 
  * Create a sanitized API response for errors
  */
 export const createErrorResponse = (
-  error: unknown, 
-  statusCode: number = 500, 
-  path?: string
+  error: unknown,
+  statusCode: number = 500,
+  path?: string,
 ): {
   statusCode: number
   headers: Record<string, string>
   body: string
 } => {
   const sanitizedError = sanitizeError(error, path)
-  
+
   const response: APIResponse = {
     error: sanitizedError,
     timestamp: sanitizedError.timestamp,
@@ -143,20 +150,22 @@ export const sanitizeUserInput = (input: string, maxLength: number = 1000): stri
     throw new Error('Input must be a string')
   }
 
-  return input
-    // Remove HTML/XML tags
-    .replace(/<[^>]*>/g, '')
-    // Remove script tags content
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    // Remove potentially dangerous characters
-    .replace(/[<>'"&]/g, '')
-    // Remove control characters
-    .replace(/[\x00-\x1f\x7f-\x9f]/g, '')
-    // Remove SQL injection patterns
-    .replace(/(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION)\b)/gi, '')
-    // Limit length
-    .slice(0, maxLength)
-    .trim()
+  return (
+    input
+      // Remove HTML/XML tags
+      .replace(/<[^>]*>/g, '')
+      // Remove script tags content
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      // Remove potentially dangerous characters
+      .replace(/[<>'"&]/g, '')
+      // Remove control characters (non-printable ASCII)
+      .replace(/[^\x20-\x7E]/g, '')
+      // Remove SQL injection patterns
+      .replace(/(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION)\b)/gi, '')
+      // Limit length
+      .slice(0, maxLength)
+      .trim()
+  )
 }
 
 /**
@@ -173,7 +182,7 @@ export const sanitizeJsonInput = (jsonString: string, maxSize: number = 100000):
 
   try {
     const parsed = JSON.parse(jsonString)
-    
+
     // Recursively sanitize string values in the object
     return sanitizeObjectStrings(parsed)
   } catch (error) {
@@ -188,11 +197,11 @@ const sanitizeObjectStrings = (obj: unknown): unknown => {
   if (typeof obj === 'string') {
     return sanitizeUserInput(obj)
   }
-  
+
   if (Array.isArray(obj)) {
     return obj.map(sanitizeObjectStrings)
   }
-  
+
   if (obj && typeof obj === 'object') {
     const sanitized: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(obj)) {
@@ -202,7 +211,7 @@ const sanitizeObjectStrings = (obj: unknown): unknown => {
     }
     return sanitized
   }
-  
+
   return obj
 }
 
@@ -211,28 +220,34 @@ const sanitizeObjectStrings = (obj: unknown): unknown => {
  */
 export const createSafeLogMessage = (message: string, data?: unknown): string => {
   const sanitizedMessage = sanitizeUserInput(message, 500)
-  
+
   if (!data) {
     return sanitizedMessage
   }
 
   // Only log safe properties
   const safeData: Record<string, unknown> = {}
-  
+
   if (typeof data === 'object' && data !== null) {
     const obj = data as Record<string, unknown>
-    
+
     // Whitelist of safe properties to log
     const safeProperties = [
-      'userId', 'episodeId', 'podcastId', 'action', 'timestamp', 
-      'path', 'method', 'statusCode', 'limit', 'filters'
+      'userId',
+      'episodeId',
+      'podcastId',
+      'action',
+      'timestamp',
+      'path',
+      'method',
+      'statusCode',
+      'limit',
+      'filters',
     ]
-    
+
     for (const prop of safeProperties) {
       if (prop in obj && obj[prop] !== undefined) {
-        safeData[prop] = typeof obj[prop] === 'string' 
-          ? sanitizeUserInput(obj[prop] as string, 100)
-          : obj[prop]
+        safeData[prop] = typeof obj[prop] === 'string' ? sanitizeUserInput(obj[prop] as string, 100) : obj[prop]
       }
     }
   }
@@ -243,7 +258,9 @@ export const createSafeLogMessage = (message: string, data?: unknown): string =>
 /**
  * Rate limiting error response
  */
-export const createRateLimitResponse = (retryAfter: number = 60): {
+export const createRateLimitResponse = (
+  retryAfter: number = 60,
+): {
   statusCode: number
   headers: Record<string, string>
   body: string

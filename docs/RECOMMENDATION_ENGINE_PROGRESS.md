@@ -3,6 +3,7 @@
 ## ✅ COMPLETED - Week 1: Database Schema Enhancement
 
 ### Database Schema Updates
+
 - **Enhanced Episode table** with AI guest extraction fields:
   - `extractedGuests`: AI-extracted guest names
   - `guestExtractionStatus`: Processing status tracking
@@ -23,6 +24,7 @@
     - `ItemTypeIndex` on UserFavorites
 
 ### TypeScript Types
+
 - **Extended Episode interface** with guest extraction fields
 - **Added recommendation types**:
   - `RecommendationScore`: Scored episode with explanation
@@ -33,6 +35,7 @@
 ## ✅ COMPLETED - AWS Bedrock Integration
 
 ### BedrockService Implementation
+
 - **AI-powered guest extraction** using Claude 3 Haiku
 - **Intelligent prompt engineering** for accurate guest identification
 - **Robust error handling** with fallback responses
@@ -41,6 +44,7 @@
 - **Guest name normalization** for consistency
 
 ### Key Features
+
 - **Conservative extraction**: Only extracts high-confidence guest names
 - **Cost optimization**: Uses Haiku model for efficiency
 - **Batch processing**: Handles up to 10 episodes simultaneously
@@ -49,6 +53,7 @@
 ## ✅ COMPLETED - Recommendation Algorithm
 
 ### RecommendationService Implementation
+
 - **Multi-factor scoring system** with configurable weights:
   - Recent Show Listening (25%): Episodes from recently listened shows
   - New Episode Bonus (25%): Unheard episodes with recency boost
@@ -57,6 +62,7 @@
   - Favorite Bonus (10%): Episodes from favorited shows/episodes
 
 ### Advanced Features
+
 - **Intelligent scoring algorithms**:
   - Time-decay functions for recency calculations
   - Guest preference learning from listening history
@@ -74,6 +80,7 @@
 ## ✅ COMPLETED - API Endpoints
 
 ### Lambda Handlers
+
 - **GET /recommendations**: Personalized episode recommendations
   - Query parameters for limit and filters
   - Returns scored episodes with explanations
@@ -92,6 +99,7 @@
   - Update listening and favorite statistics
 
 ### Authentication & Validation
+
 - **JWT authentication** via API Gateway authorizer
 - **Input validation** for all endpoints
 - **Error handling** with structured responses
@@ -100,6 +108,7 @@
 ## 📋 REMAINING WORK
 
 ### Week 2: Frontend Integration (Next Up)
+
 - [ ] Add recommendation components to React app
 - [ ] Implement recommendation card UI
 - [ ] Add filtering controls
@@ -107,18 +116,21 @@
 - [ ] Integration with existing player
 
 ### Week 3: Background Processing
+
 - [ ] DynamoDB Streams processor for auto-guest extraction
 - [ ] EventBridge integration for async processing
 - [ ] Batch job for existing episode processing
 - [ ] Error handling and retry logic
 
 ### Week 4: API Integration & Optimization
+
 - [ ] Add recommendation endpoints to API Gateway
 - [ ] CDK deployment configuration
 - [ ] Performance optimization
 - [ ] Caching strategies
 
 ### Week 5: Testing & Refinement
+
 - [ ] Unit tests for recommendation logic
 - [ ] Integration tests for AI services
 - [ ] Performance testing
@@ -128,17 +140,20 @@
 ## 🔧 Technical Architecture
 
 ### Services Created
+
 1. **BedrockService**: AI guest extraction with Claude 3 Haiku
 2. **RecommendationService**: Multi-factor scoring algorithm
 3. **RecommendationHandler**: API Lambda functions
 
 ### Database Design
+
 - **Scalable schema** with proper indexing for efficient queries
 - **DynamoDB Streams** for real-time processing
 - **GSI indexes** for complex query patterns
 - **TTL policies** for data lifecycle management
 
 ### AI Integration
+
 - **AWS Bedrock** for guest extraction
 - **Claude 3 Haiku** for cost-effective processing
 - **Structured prompts** for consistent results
@@ -147,18 +162,21 @@
 ## 📊 Key Metrics to Track
 
 ### Recommendation Quality
+
 - Click-through rate on recommendations
 - User engagement with recommended episodes
 - Time spent listening to recommended content
 - User feedback on recommendation relevance
 
 ### AI Accuracy
+
 - Guest extraction accuracy (manual validation)
 - Confidence score correlation with accuracy
 - Processing time and cost per extraction
 - Error rates and failure handling
 
 ### System Performance
+
 - API response times
 - Database query performance
 - Concurrent user handling

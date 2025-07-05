@@ -570,7 +570,7 @@ describe('RecommendationService', () => {
             guestName: 'John Doe',
           },
           UpdateExpression: expect.stringContaining('ADD listenCount'),
-        })
+        }),
       )
     })
 
@@ -587,7 +587,7 @@ describe('RecommendationService', () => {
             guestName: 'John Doe',
           },
           UpdateExpression: expect.stringContaining('ADD favoriteCount'),
-        })
+        }),
       )
     })
 

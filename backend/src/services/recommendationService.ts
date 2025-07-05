@@ -20,9 +20,9 @@ export class RecommendationService {
   private readonly WEIGHTS = {
     recentShowListening: 0.25,
     newEpisodeBonus: 0.25,
-    rediscoveryBonus: 0.20,
-    guestMatchBonus: 0.20,
-    favoriteBonus: 0.10,
+    rediscoveryBonus: 0.2,
+    guestMatchBonus: 0.2,
+    favoriteBonus: 0.1,
   }
 
   constructor() {
@@ -55,19 +55,14 @@ export class RecommendationService {
 
       // Score each episode
       const scoredEpisodes = await Promise.all(
-        allEpisodes.map(episode =>
-          this.scoreEpisode(episode, userId, listeningHistory, favorites, guestAnalytics),
-        ),
+        allEpisodes.map(episode => this.scoreEpisode(episode, userId, listeningHistory, favorites, guestAnalytics)),
       )
 
       // Apply filters
       let filteredEpisodes = this.applyFilters(scoredEpisodes, filters, listeningHistory)
 
       // Sort by score and return top recommendations
-      return filteredEpisodes
-        .sort((a, b) => b.score - a.score)
-        .slice(0, limit)
-
+      return filteredEpisodes.sort((a, b) => b.score - a.score).slice(0, limit)
     } catch (error) {
       console.error('Error generating recommendations:', error)
       return []
@@ -95,7 +90,7 @@ export class RecommendationService {
     // Calculate weighted total score
     const score = Object.entries(factors).reduce((total, [factor, value]) => {
       const weight = this.WEIGHTS[factor as keyof typeof this.WEIGHTS]
-      return total + (value * weight)
+      return total + value * weight
     }, 0)
 
     // Generate explanation for the recommendation
@@ -119,8 +114,9 @@ export class RecommendationService {
     if (showHistory.length === 0) return 0
 
     // Find most recent listen to this show
-    const mostRecent = showHistory
-      .sort((a, b) => new Date(b.lastPlayed).getTime() - new Date(a.lastPlayed).getTime())[0]
+    const mostRecent = showHistory.sort(
+      (a, b) => new Date(b.lastPlayed).getTime() - new Date(a.lastPlayed).getTime(),
+    )[0]
 
     const daysSinceLastListen = this.daysSince(mostRecent.lastPlayed)
 
@@ -144,10 +140,10 @@ export class RecommendationService {
     // Boost newer episodes
     const daysSinceRelease = this.daysSince(episode.releaseDate)
 
-    if (daysSinceRelease <= 1) return 1.0    // Brand new
-    if (daysSinceRelease <= 7) return 0.9    // This week
-    if (daysSinceRelease <= 30) return 0.7   // This month
-    if (daysSinceRelease <= 90) return 0.5   // Last 3 months
+    if (daysSinceRelease <= 1) return 1.0 // Brand new
+    if (daysSinceRelease <= 7) return 0.9 // This week
+    if (daysSinceRelease <= 30) return 0.7 // This month
+    if (daysSinceRelease <= 90) return 0.5 // Last 3 months
 
     return 0.3 // Older episodes
   }
@@ -163,10 +159,10 @@ export class RecommendationService {
     const daysSinceLastListen = this.daysSince(episodeHistory.lastPlayed)
 
     // Sweet spot for rediscovery: listened to before but not recently
-    if (daysSinceLastListen >= 365) return 1.0  // Over a year ago
-    if (daysSinceLastListen >= 180) return 0.8  // 6+ months ago
-    if (daysSinceLastListen >= 90) return 0.6   // 3+ months ago
-    if (daysSinceLastListen >= 30) return 0.3   // 1+ month ago
+    if (daysSinceLastListen >= 365) return 1.0 // Over a year ago
+    if (daysSinceLastListen >= 180) return 0.8 // 6+ months ago
+    if (daysSinceLastListen >= 90) return 0.6 // 3+ months ago
+    if (daysSinceLastListen >= 30) return 0.3 // 1+ month ago
 
     return 0 // Too recent for rediscovery
   }
@@ -188,9 +184,7 @@ export class RecommendationService {
       if (guestData) {
         // Score based on how much user likes this guest
         const guestScore = Math.min(
-          (guestData.listenCount * 0.3) +
-          (guestData.favoriteCount * 0.5) +
-          (guestData.averageRating * 0.2),
+          guestData.listenCount * 0.3 + guestData.favoriteCount * 0.5 + guestData.averageRating * 0.2,
           1.0,
         )
         totalScore += guestScore
@@ -206,8 +200,8 @@ export class RecommendationService {
    */
   private calculateFavoriteScore(episode: Episode, favorites: UserFavorites[]): number {
     // Check if episode is directly favorited
-    const episodeFavorite = favorites.find(f =>
-      f.itemId === episode.episodeId && f.itemType === 'episode' && f.isFavorite,
+    const episodeFavorite = favorites.find(
+      f => f.itemId === episode.episodeId && f.itemType === 'episode' && f.isFavorite,
     )
 
     if (episodeFavorite) {
@@ -215,8 +209,8 @@ export class RecommendationService {
     }
 
     // Check if podcast is favorited
-    const podcastFavorite = favorites.find(f =>
-      f.itemId === episode.podcastId && f.itemType === 'podcast' && f.isFavorite,
+    const podcastFavorite = favorites.find(
+      f => f.itemId === episode.podcastId && f.itemType === 'podcast' && f.isFavorite,
     )
 
     if (podcastFavorite) {
@@ -241,21 +235,21 @@ export class RecommendationService {
     }
 
     if (factors.rediscoveryBonus > 0.5) {
-      reasons.push("An episode from your past that might be worth revisiting")
+      reasons.push('An episode from your past that might be worth revisiting')
     }
 
     if (factors.guestMatchBonus > 0.3) {
-      const guests = episode.extractedGuests?.slice(0, 2).join(", ") || "guests"
+      const guests = episode.extractedGuests?.slice(0, 2).join(', ') || 'guests'
       reasons.push(`Features ${guests} you've enjoyed before`)
     }
 
     if (factors.favoriteBonus > 0.8) {
-      reasons.push("From one of your favorite shows")
+      reasons.push('From one of your favorite shows')
     } else if (factors.favoriteBonus > 0.5) {
       reasons.push("You've favorited this episode")
     }
 
-    return reasons.length > 0 ? reasons : ["Recommended based on your listening patterns"]
+    return reasons.length > 0 ? reasons : ['Recommended based on your listening patterns']
   }
 
   /**
@@ -318,7 +312,7 @@ export class RecommendationService {
       })
 
       const result = await this.client.send(command)
-      return result.Items as ListeningHistory[] || []
+      return (result.Items as ListeningHistory[]) || []
     } catch (error) {
       console.error('Error fetching listening history:', error)
       return []
@@ -339,7 +333,7 @@ export class RecommendationService {
       })
 
       const result = await this.client.send(command)
-      return result.Items as UserFavorites[] || []
+      return (result.Items as UserFavorites[]) || []
     } catch (error) {
       console.error('Error fetching user favorites:', error)
       return []
@@ -360,7 +354,7 @@ export class RecommendationService {
       })
 
       const result = await this.client.send(command)
-      return result.Items as GuestAnalytics[] || []
+      return (result.Items as GuestAnalytics[]) || []
     } catch (error) {
       console.error('Error fetching guest analytics:', error)
       return []
@@ -380,18 +374,16 @@ export class RecommendationService {
 
       // Get user's podcasts
       const userPodcasts = await this.getUserPodcasts(userId)
-      
+
       if (userPodcasts.length === 0) {
         return []
       }
 
       // Fetch episodes for all podcasts
-      const episodePromises = userPodcasts.map(podcast => 
-        this.getEpisodesForPodcast(podcast.podcastId)
-      )
+      const episodePromises = userPodcasts.map(podcast => this.getEpisodesForPodcast(podcast.podcastId))
 
       const episodeArrays = await Promise.all(episodePromises)
-      
+
       // Flatten and sort by release date (newest first)
       const allEpisodes = episodeArrays
         .flat()
@@ -419,7 +411,7 @@ export class RecommendationService {
       })
 
       const result = await this.client.send(command)
-      return result.Items as Array<{ podcastId: string; title: string }> || []
+      return (result.Items as Array<{ podcastId: string; title: string }>) || []
     } catch (error) {
       console.error('Error fetching user podcasts:', error)
       return []
@@ -443,7 +435,7 @@ export class RecommendationService {
       })
 
       const result = await this.client.send(command)
-      return result.Items as Episode[] || []
+      return (result.Items as Episode[]) || []
     } catch (error) {
       console.error(`Error fetching episodes for podcast ${podcastId}:`, error)
       return []
@@ -464,9 +456,10 @@ export class RecommendationService {
       try {
         const normalizedGuest = guest.trim()
 
-        const updateExpression = action === 'listen'
-          ? 'ADD listenCount :inc, episodeIds :episodeId SET lastListenDate = :date, updatedAt = :now'
-          : 'ADD favoriteCount :inc SET averageRating = if_not_exists(averageRating, :rating), updatedAt = :now'
+        const updateExpression =
+          action === 'listen'
+            ? 'ADD listenCount :inc, episodeIds :episodeId SET lastListenDate = :date, updatedAt = :now'
+            : 'ADD favoriteCount :inc SET averageRating = if_not_exists(averageRating, :rating), updatedAt = :now'
 
         const expressionAttributeValues: any = {
           ':inc': 1,

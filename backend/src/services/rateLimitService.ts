@@ -36,7 +36,7 @@ export class RateLimitService {
       windowMinutes: 60,
       burstLimit: 3, // Allow 3 batch requests in quick succession
     },
-    'recommendations': {
+    recommendations: {
       endpoint: 'recommendations',
       maxRequests: 1000, // 1000 requests per hour
       windowMinutes: 60,
@@ -60,7 +60,10 @@ export class RateLimitService {
   /**
    * Check if a request is allowed for the given user and endpoint
    */
-  async isRequestAllowed(userId: string, endpoint: string): Promise<{
+  async isRequestAllowed(
+    userId: string,
+    endpoint: string,
+  ): Promise<{
     allowed: boolean
     remaining: number
     resetTime: number
@@ -77,19 +80,19 @@ export class RateLimitService {
     }
 
     const now = Date.now()
-    const windowStartTime = now - (rule.windowMinutes * 60 * 1000)
-    
+    const windowStartTime = now - rule.windowMinutes * 60 * 1000
+
     try {
       // Get current rate limit record
       const record = await this.getRateLimitRecord(userId, endpoint)
-      
+
       if (!record) {
         // First request - create new record
         await this.createRateLimitRecord(userId, endpoint, now, rule)
         return {
           allowed: true,
           remaining: rule.maxRequests - 1,
-          resetTime: now + (rule.windowMinutes * 60 * 1000),
+          resetTime: now + rule.windowMinutes * 60 * 1000,
         }
       }
 
@@ -100,19 +103,19 @@ export class RateLimitService {
         return {
           allowed: true,
           remaining: rule.maxRequests - 1,
-          resetTime: now + (rule.windowMinutes * 60 * 1000),
+          resetTime: now + rule.windowMinutes * 60 * 1000,
         }
       }
 
       // Check burst limit (requests in last 5 minutes)
-      const burstWindowStart = now - (5 * 60 * 1000) // 5 minutes
+      const burstWindowStart = now - 5 * 60 * 1000 // 5 minutes
       if (rule.burstLimit && record.lastRequest > burstWindowStart) {
         if (record.burstCount >= rule.burstLimit) {
-          const retryAfter = Math.ceil((burstWindowStart + (5 * 60 * 1000) - now) / 1000)
+          const retryAfter = Math.ceil((burstWindowStart + 5 * 60 * 1000 - now) / 1000)
           return {
             allowed: false,
             remaining: 0,
-            resetTime: record.windowStart + (rule.windowMinutes * 60 * 1000),
+            resetTime: record.windowStart + rule.windowMinutes * 60 * 1000,
             retryAfter,
           }
         }
@@ -120,31 +123,30 @@ export class RateLimitService {
 
       // Check main rate limit
       if (record.requests >= rule.maxRequests) {
-        const retryAfter = Math.ceil((record.windowStart + (rule.windowMinutes * 60 * 1000) - now) / 1000)
+        const retryAfter = Math.ceil((record.windowStart + rule.windowMinutes * 60 * 1000 - now) / 1000)
         return {
           allowed: false,
           remaining: 0,
-          resetTime: record.windowStart + (rule.windowMinutes * 60 * 1000),
+          resetTime: record.windowStart + rule.windowMinutes * 60 * 1000,
           retryAfter,
         }
       }
 
       // Request is allowed - increment counters
       await this.incrementRateLimitCounters(userId, endpoint, now, record, rule)
-      
+
       return {
         allowed: true,
         remaining: rule.maxRequests - record.requests - 1,
-        resetTime: record.windowStart + (rule.windowMinutes * 60 * 1000),
+        resetTime: record.windowStart + rule.windowMinutes * 60 * 1000,
       }
-
     } catch (error) {
       console.error('Error checking rate limit:', error)
       // On error, allow the request but log it
       return {
         allowed: true,
         remaining: rule.maxRequests,
-        resetTime: now + (rule.windowMinutes * 60 * 1000),
+        resetTime: now + rule.windowMinutes * 60 * 1000,
       }
     }
   }
@@ -162,17 +164,17 @@ export class RateLimitService {
     })
 
     const result = await this.client.send(command)
-    return result.Item as RateLimitRecord || null
+    return (result.Item as RateLimitRecord) || null
   }
 
   /**
    * Create new rate limit record
    */
   private async createRateLimitRecord(
-    userId: string, 
-    endpoint: string, 
-    now: number, 
-    rule: RateLimitRule
+    userId: string,
+    endpoint: string,
+    now: number,
+    rule: RateLimitRule,
   ): Promise<void> {
     const record: RateLimitRecord = {
       userId,
@@ -181,7 +183,7 @@ export class RateLimitService {
       windowStart: now,
       lastRequest: now,
       burstCount: 1,
-      ttl: Math.floor((now + (rule.windowMinutes * 60 * 1000)) / 1000), // TTL in seconds
+      ttl: Math.floor((now + rule.windowMinutes * 60 * 1000) / 1000), // TTL in seconds
     }
 
     const command = new PutCommand({
@@ -196,10 +198,10 @@ export class RateLimitService {
    * Reset rate limit window
    */
   private async resetRateLimitWindow(
-    userId: string, 
-    endpoint: string, 
-    now: number, 
-    rule: RateLimitRule
+    userId: string,
+    endpoint: string,
+    now: number,
+    rule: RateLimitRule,
   ): Promise<void> {
     const command = new UpdateCommand({
       TableName: this.tableName,
@@ -207,7 +209,8 @@ export class RateLimitService {
         userId,
         endpoint,
       },
-      UpdateExpression: 'SET requests = :requests, windowStart = :windowStart, lastRequest = :lastRequest, burstCount = :burstCount, #ttl = :ttl',
+      UpdateExpression:
+        'SET requests = :requests, windowStart = :windowStart, lastRequest = :lastRequest, burstCount = :burstCount, #ttl = :ttl',
       ExpressionAttributeNames: {
         '#ttl': 'ttl',
       },
@@ -216,7 +219,7 @@ export class RateLimitService {
         ':windowStart': now,
         ':lastRequest': now,
         ':burstCount': 1,
-        ':ttl': Math.floor((now + (rule.windowMinutes * 60 * 1000)) / 1000),
+        ':ttl': Math.floor((now + rule.windowMinutes * 60 * 1000) / 1000),
       },
     })
 
@@ -227,14 +230,14 @@ export class RateLimitService {
    * Increment rate limit counters
    */
   private async incrementRateLimitCounters(
-    userId: string, 
-    endpoint: string, 
-    now: number, 
+    userId: string,
+    endpoint: string,
+    now: number,
     record: RateLimitRecord,
-    rule: RateLimitRule
+    rule: RateLimitRule,
   ): Promise<void> {
     // Reset burst count if outside burst window
-    const burstWindowStart = now - (5 * 60 * 1000) // 5 minutes
+    const burstWindowStart = now - 5 * 60 * 1000 // 5 minutes
     const newBurstCount = record.lastRequest > burstWindowStart ? record.burstCount + 1 : 1
 
     const command = new UpdateCommand({
@@ -243,7 +246,8 @@ export class RateLimitService {
         userId,
         endpoint,
       },
-      UpdateExpression: 'SET requests = requests + :inc, lastRequest = :lastRequest, burstCount = :burstCount, #ttl = :ttl',
+      UpdateExpression:
+        'SET requests = requests + :inc, lastRequest = :lastRequest, burstCount = :burstCount, #ttl = :ttl',
       ExpressionAttributeNames: {
         '#ttl': 'ttl',
       },
@@ -251,7 +255,7 @@ export class RateLimitService {
         ':inc': 1,
         ':lastRequest': now,
         ':burstCount': newBurstCount,
-        ':ttl': Math.floor((record.windowStart + (rule.windowMinutes * 60 * 1000)) / 1000),
+        ':ttl': Math.floor((record.windowStart + rule.windowMinutes * 60 * 1000) / 1000),
       },
     })
 
@@ -261,7 +265,10 @@ export class RateLimitService {
   /**
    * Get rate limit status for a user and endpoint (for monitoring)
    */
-  async getRateLimitStatus(userId: string, endpoint: string): Promise<{
+  async getRateLimitStatus(
+    userId: string,
+    endpoint: string,
+  ): Promise<{
     requests: number
     maxRequests: number
     remaining: number
@@ -280,7 +287,7 @@ export class RateLimitService {
           requests: 0,
           maxRequests: rule.maxRequests,
           remaining: rule.maxRequests,
-          resetTime: Date.now() + (rule.windowMinutes * 60 * 1000),
+          resetTime: Date.now() + rule.windowMinutes * 60 * 1000,
           windowMinutes: rule.windowMinutes,
         }
       }
@@ -289,7 +296,7 @@ export class RateLimitService {
         requests: record.requests,
         maxRequests: rule.maxRequests,
         remaining: Math.max(0, rule.maxRequests - record.requests),
-        resetTime: record.windowStart + (rule.windowMinutes * 60 * 1000),
+        resetTime: record.windowStart + rule.windowMinutes * 60 * 1000,
         windowMinutes: rule.windowMinutes,
       }
     } catch (error) {
