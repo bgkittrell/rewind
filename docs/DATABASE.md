@@ -54,9 +54,9 @@ _These tables are deployed and operational:_
   - Partition Key: `rssUrl` (String)
   - For uniqueness checks.
 
-### Episodes ✅ DEPLOYED
+### Episodes ✅ DEPLOYED (Enhanced for Recommendations)
 
-- **Description**: Stores episode details for each podcast.
+- **Description**: Stores episode details for each podcast with AI-powered guest extraction.
 - **Table Name**: `RewindEpisodes`
 - **Partition Key**: `podcastId` (String)
 - **Sort Key**: `episodeId` (String)
@@ -69,14 +69,21 @@ _These tables are deployed and operational:_
   - `duration` (String): Episode duration (e.g., "45:30").
   - `releaseDate` (String): Episode release date (ISO format).
   - `imageUrl` (String): Episode image URL (optional).
-  - `guests` (List): List of guest names (optional).
+  - `guests` (List): List of guest names (optional, manual).
   - `tags` (List): Episode tags/categories.
   - `createdAt` (String): Addition timestamp (ISO format).
+  - **AI Guest Extraction Fields**:
+    - `extractedGuests` (List): AI-extracted guest names from title/description.
+    - `guestExtractionStatus` (String): 'pending' | 'completed' | 'failed'.
+    - `guestExtractionDate` (String): ISO timestamp of extraction.
+    - `guestExtractionConfidence` (Number): 0-1 confidence score.
+    - `rawGuestData` (String): Raw AI response for debugging.
 - **Global Secondary Index (GSI)**:
   - Index Name: `ReleaseDateIndex`
   - Partition Key: `podcastId` (String)
   - Sort Key: `releaseDate` (String)
   - For sorting by release date.
+- **DynamoDB Streams**: Enabled for guest extraction pipeline.
 
 ### ListeningHistory ✅ DEPLOYED
 
@@ -96,7 +103,7 @@ _These tables are deployed and operational:_
   - `playCount` (Number): Number of times played
   - `createdAt` (String): Record creation timestamp
   - `updatedAt` (String): Last update timestamp
-- **Global Secondary Index (GSI)**: _Not yet implemented_
+- **Global Secondary Index (GSI)**:
   - Index Name: `LastPlayedIndex`
   - Partition Key: `userId` (String)
   - Sort Key: `lastPlayed` (String)
@@ -114,19 +121,16 @@ _These tables are deployed and operational:_
   - `expiresAt` (String): Share expiration timestamp (ISO format).
   - `createdAt` (String): Creation timestamp (ISO format).
 - **Time To Live**: Configured on `expiresAt` attribute for automatic cleanup
-- **Global Secondary Index (GSI)**: _Not yet implemented_
+- **Global Secondary Index (GSI)**:
   - Index Name: `UserSharesIndex`
   - Partition Key: `userId` (String)
   - Sort Key: `createdAt` (String)
   - For user's share history.
 
-## 📋 Planned Future Tables
+### UserFavorites ✅ DEPLOYED
 
-_These tables are documented for future implementation:_
-
-### UserFavorites (Phase 3 - Planned)
-
-- **Description**: Tracks user favorites and ratings.
+- **Description**: Tracks user favorites and ratings for recommendation engine.
+- **Table Name**: `RewindUserFavorites`
 - **Partition Key**: `userId` (String)
 - **Sort Key**: `itemId` (String) - can be episodeId or podcastId
 - **Attributes**:
@@ -136,7 +140,8 @@ _These tables are documented for future implementation:_
   - `isFavorite` (Boolean): Whether item is favorited
   - `rating` (Number): User rating (1-5, optional)
   - `tags` (List): User-applied tags
-  - `createdAt` (String): When favorited
+  - `favoritedAt` (String): When favorited
+  - `createdAt` (String): Record creation timestamp
   - `updatedAt` (String): Last update timestamp
 - **Global Secondary Index (GSI)**:
   - Index Name: `ItemTypeIndex`
@@ -144,29 +149,48 @@ _These tables are documented for future implementation:_
   - Sort Key: `itemType` (String)
   - For filtering by favorites type
 
-### UserFeedback (Phase 3 - Planned)
+### GuestAnalytics ✅ DEPLOYED
 
-- **Description**: Stores user feedback on episodes.
+- **Description**: Tracks guest popularity and user preferences for recommendations.
+- **Table Name**: `RewindGuestAnalytics`
+- **Partition Key**: `userId` (String)
+- **Sort Key**: `guestName` (String)
+- **Attributes**:
+  - `userId` (String): User identifier
+  - `guestName` (String): Guest name (normalized)
+  - `episodeIds` (List): Episodes featuring this guest
+  - `listenCount` (Number): Times user listened to this guest
+  - `favoriteCount` (Number): Times user favorited episodes with this guest
+  - `lastListenDate` (String): Last time user listened to this guest
+  - `averageRating` (Number): Average rating for episodes with this guest
+  - `createdAt` (String): Record creation timestamp
+  - `updatedAt` (String): Last update timestamp
+
+### UserFeedback ✅ DEPLOYED
+
+- **Description**: Stores user feedback on episodes for recommendation engine.
+- **Table Name**: `RewindUserFeedback`
 - **Partition Key**: `userId` (String)
 - **Sort Key**: `episodeId#feedbackId` (String)
 - **Attributes**:
-  - `userId` (String): Providing user.
-  - `episodeId` (String): Targeted episode.
-  - `feedbackId` (String): Unique feedback identifier.
-  - `type` (String): Feedback type ("like", "dislike", "favorite").
-  - `rating` (Number): User rating (0-5).
-  - `comment` (String): User comment.
-  - `createdAt` (String): Feedback timestamp (ISO format).
-- **Notes**: Composite sort key combines `episodeId` and `feedbackId` for uniqueness.
+  - `userId` (String): Providing user
+  - `episodeId` (String): Targeted episode
+  - `feedbackId` (String): Unique feedback identifier
+  - `type` (String): Feedback type ("like", "dislike", "favorite")
+  - `rating` (Number): User rating (0-5)
+  - `comment` (String): User comment (optional)
+  - `createdAt` (String): Feedback timestamp (ISO format)
+- **Notes**: Composite sort key combines `episodeId` and `feedbackId` for uniqueness
 
 ## Relationships
 
 - **One-to-Many**: `Users` to `Podcasts` (accessed via `userId` partition key)
 - **One-to-Many**: `Podcasts` to `Episodes` (accessed via `podcastId` partition key)
 - **One-to-Many**: `Users` to `ListeningHistory` (accessed via `userId` partition key)
-- **One-to-Many**: `Users` to `UserFavorites` (accessed via `userId` partition key) _- Planned_
-- **One-to-Many**: `Users` to `UserFeedback` (accessed via `userId` partition key) _- Planned_
-- **One-to-Many**: `Users` to `Shares` via `UserSharesIndex` GSI _- GSI not yet implemented_
+- **One-to-Many**: `Users` to `UserFavorites` (accessed via `userId` partition key)
+- **One-to-Many**: `Users` to `GuestAnalytics` (accessed via `userId` partition key)
+- **One-to-Many**: `Users` to `UserFeedback` (accessed via `userId` partition key)
+- **One-to-Many**: `Users` to `Shares` via `UserSharesIndex` GSI
 
 ## Query Patterns
 
@@ -178,12 +202,11 @@ _These tables are documented for future implementation:_
 - **Get episode playback position**: Direct query on `ListeningHistory` with `userId` and `episodeId` ✅
 - **Check podcast uniqueness**: Query `RssUrlIndex` GSI with `rssUrl` ✅
 - **Get shared library**: Direct query on `Shares` with `shareId` ✅
-
-### Planned for Future Implementation
-
-- **Get recent listening activity**: Query `LastPlayedIndex` GSI with `userId` and sort by `lastPlayed` 📋
-- **Get user favorites by type**: Query `ItemTypeIndex` GSI with `userId` and `itemType` 📋
-- **Get user shares**: Query `UserSharesIndex` GSI with `userId` 📋
+- **Get recent listening activity**: Query `LastPlayedIndex` GSI with `userId` and sort by `lastPlayed` ✅
+- **Get user favorites by type**: Query `ItemTypeIndex` GSI with `userId` and `itemType` ✅
+- **Get user shares**: Query `UserSharesIndex` GSI with `userId` ✅
+- **Get guest analytics**: Query `GuestAnalytics` table with `userId` partition key ✅
+- **Get user feedback**: Query `UserFeedback` table with `userId` partition key ✅
 
 ## Current CDK Implementation Status
 
@@ -194,18 +217,18 @@ _These tables are documented for future implementation:_
 this.tables = {
   users: Table(RewindUsers), // ✅ Deployed
   podcasts: Table(RewindPodcasts), // ✅ Deployed with RssUrlIndex
-  episodes: Table(RewindEpisodes), // ✅ Deployed with ReleaseDateIndex
-  listeningHistory: Table(RewindListeningHistory), // ✅ Deployed (GSI pending)
-  shares: Table(RewindShares), // ✅ Deployed (GSI pending)
+  episodes: Table(RewindEpisodes), // ✅ Deployed with ReleaseDateIndex & DynamoDB Streams
+  listeningHistory: Table(RewindListeningHistory), // ✅ Deployed with LastPlayedIndex
+  shares: Table(RewindShares), // ✅ Deployed with UserSharesIndex
+  userFavorites: Table(RewindUserFavorites), // ✅ Deployed with ItemTypeIndex
+  guestAnalytics: Table(RewindGuestAnalytics), // ✅ Deployed
+  userFeedback: Table(RewindUserFeedback), // ✅ Deployed
 }
 ```
 
-### Missing Implementations
+### ✅ All Tables Implemented
 
-- `LastPlayedIndex` GSI on ListeningHistory table
-- `UserSharesIndex` GSI on Shares table
-- `UserFavorites` table (planned for Phase 3)
-- `UserFeedback` table (planned for Phase 3)
+All tables for the recommendation engine are now implemented and ready for deployment.
 
 ## Data Migration
 
@@ -225,17 +248,25 @@ this.tables = {
 - ✅ Basic GSIs (RssUrlIndex, ReleaseDateIndex)
 - ✅ TTL configuration for Shares
 
-### Phase 2 - Next Sprint
+### Phase 2 - Complete ✅
 
-- 🚧 Add missing GSIs (LastPlayedIndex, UserSharesIndex)
-- 🚧 Enable DynamoDB Streams for recommendation engine
-- 🚧 Implement episode data population from RSS feeds
+- ✅ Add missing GSIs (LastPlayedIndex, UserSharesIndex)
+- ✅ Enable DynamoDB Streams for recommendation engine
+- ✅ Implement episode data population from RSS feeds
 
-### Phase 3 - Advanced Features
+### Phase 3 - Complete ✅
 
-- 📋 Add UserFavorites table with ItemTypeIndex GSI
-- 📋 Add UserFeedback table for recommendation engine
-- 📋 Implement advanced query patterns for personalization
+- ✅ Add UserFavorites table with ItemTypeIndex GSI
+- ✅ Add GuestAnalytics table for recommendation engine
+- ✅ Add UserFeedback table for recommendation engine
+- ✅ Implement advanced query patterns for personalization
+
+### Next Steps - Ready for Implementation
+
+- 🚧 Deploy updated CDK stack
+- 🚧 Update backend TypeScript types
+- 🚧 Create database service methods for new tables
+- 🚧 Implement AWS Bedrock integration for guest extraction
 
 ## Notes for AI Agent
 

@@ -148,7 +148,7 @@ export class RewindDataStack extends cdk.Stack {
       partitionKey: { name: 'rssUrl', type: dynamodb.AttributeType.STRING },
     })
 
-    // Episodes table
+    // Episodes table with DynamoDB streams for guest extraction
     this.tables.episodes = new dynamodb.Table(this, 'RewindEpisodes', {
       tableName: 'RewindEpisodes',
       partitionKey: { name: 'podcastId', type: dynamodb.AttributeType.STRING },
@@ -156,6 +156,7 @@ export class RewindDataStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES, // Enable streams for guest extraction
     })
 
     // Add GSI for release date queries
@@ -175,12 +176,12 @@ export class RewindDataStack extends cdk.Stack {
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
     })
 
-    // Add GSI for recent listening activity (commented out for now - to be implemented in Phase 3)
-    // this.tables.listeningHistory.addGlobalSecondaryIndex({
-    //   indexName: 'LastPlayedIndex',
-    //   partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
-    //   sortKey: { name: 'lastPlayed', type: dynamodb.AttributeType.STRING },
-    // })
+    // Add GSI for recent listening activity
+    this.tables.listeningHistory.addGlobalSecondaryIndex({
+      indexName: 'LastPlayedIndex',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'lastPlayed', type: dynamodb.AttributeType.STRING },
+    })
 
     // Share links table
     this.tables.shares = new dynamodb.Table(this, 'RewindShares', {
@@ -192,39 +193,49 @@ export class RewindDataStack extends cdk.Stack {
       timeToLiveAttribute: 'expiresAt',
     })
 
-    // Add GSI for user's share history (commented out for now - to be implemented in Phase 3)
-    // this.tables.shares.addGlobalSecondaryIndex({
-    //   indexName: 'UserSharesIndex',
-    //   partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
-    //   sortKey: { name: 'createdAt', type: dynamodb.AttributeType.STRING },
-    // })
+    // Add GSI for user's share history
+    this.tables.shares.addGlobalSecondaryIndex({
+      indexName: 'UserSharesIndex',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'createdAt', type: dynamodb.AttributeType.STRING },
+    })
 
-    // Phase 3 Tables - UserFavorites (commented out for now - to be implemented in Phase 3)
-    // this.tables.userFavorites = new dynamodb.Table(this, 'RewindUserFavorites', {
-    //   tableName: 'RewindUserFavorites',
-    //   partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
-    //   sortKey: { name: 'itemId', type: dynamodb.AttributeType.STRING },
-    //   billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-    //   removalPolicy: cdk.RemovalPolicy.RETAIN,
-    //   encryption: dynamodb.TableEncryption.AWS_MANAGED,
-    // })
+    // UserFavorites table for recommendation engine
+    this.tables.userFavorites = new dynamodb.Table(this, 'RewindUserFavorites', {
+      tableName: 'RewindUserFavorites',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'itemId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+    })
 
-    // Add GSI for filtering by item type (commented out for now - to be implemented in Phase 3)
-    // this.tables.userFavorites.addGlobalSecondaryIndex({
-    //   indexName: 'ItemTypeIndex',
-    //   partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
-    //   sortKey: { name: 'itemType', type: dynamodb.AttributeType.STRING },
-    // })
+    // Add GSI for filtering by item type
+    this.tables.userFavorites.addGlobalSecondaryIndex({
+      indexName: 'ItemTypeIndex',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'itemType', type: dynamodb.AttributeType.STRING },
+    })
 
-    // Phase 3 Tables - UserFeedback (commented out for now - to be implemented in Phase 3)
-    // this.tables.userFeedback = new dynamodb.Table(this, 'RewindUserFeedback', {
-    //   tableName: 'RewindUserFeedback',
-    //   partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
-    //   sortKey: { name: 'episodeId#feedbackId', type: dynamodb.AttributeType.STRING },
-    //   billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-    //   removalPolicy: cdk.RemovalPolicy.RETAIN,
-    //   encryption: dynamodb.TableEncryption.AWS_MANAGED,
-    // })
+    // GuestAnalytics table for recommendation engine
+    this.tables.guestAnalytics = new dynamodb.Table(this, 'RewindGuestAnalytics', {
+      tableName: 'RewindGuestAnalytics',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'guestName', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+    })
+
+    // UserFeedback table for recommendation engine
+    this.tables.userFeedback = new dynamodb.Table(this, 'RewindUserFeedback', {
+      tableName: 'RewindUserFeedback',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'episodeId#feedbackId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+    })
 
     // Output table names for reference
     new cdk.CfnOutput(this, 'UsersTableName', {
@@ -240,6 +251,36 @@ export class RewindDataStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'EpisodesTableName', {
       value: this.tables.episodes.tableName,
       description: 'Episodes table name',
+    })
+
+    new cdk.CfnOutput(this, 'ListeningHistoryTableName', {
+      value: this.tables.listeningHistory.tableName,
+      description: 'Listening history table name',
+    })
+
+    new cdk.CfnOutput(this, 'UserFavoritesTableName', {
+      value: this.tables.userFavorites.tableName,
+      description: 'User favorites table name',
+    })
+
+    new cdk.CfnOutput(this, 'GuestAnalyticsTableName', {
+      value: this.tables.guestAnalytics.tableName,
+      description: 'Guest analytics table name',
+    })
+
+    new cdk.CfnOutput(this, 'UserFeedbackTableName', {
+      value: this.tables.userFeedback.tableName,
+      description: 'User feedback table name',
+    })
+
+    new cdk.CfnOutput(this, 'SharesTableName', {
+      value: this.tables.shares.tableName,
+      description: 'Shares table name',
+    })
+
+    new cdk.CfnOutput(this, 'EpisodesTableStreamArn', {
+      value: this.tables.episodes.tableStreamArn!,
+      description: 'Episodes table stream ARN for guest extraction',
     })
 
     // Cognito outputs for frontend configuration
