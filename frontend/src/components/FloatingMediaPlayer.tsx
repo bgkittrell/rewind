@@ -48,44 +48,117 @@ export function FloatingMediaPlayer({
   const [playbackRate, setPlaybackRate] = useState(1)
   const [volume, setVolume] = useState(1)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const mediaSessionSetupRef = useRef<boolean>(false)
 
   // Setup MediaSession API for lock screen controls
   useEffect(() => {
     if (!episode || !('mediaSession' in navigator)) return
 
+    // Set up MediaSession metadata
+    const artworkUrl = episode.imageUrl || episode.podcastImageUrl
     navigator.mediaSession.metadata = new MediaMetadata({
       title: episode.title,
       artist: episode.podcastName,
-      album: 'Rewind',
-      artwork: episode.imageUrl
+      album: 'Rewind - Rediscover Podcasts',
+      artwork: artworkUrl
         ? [
-            { src: episode.imageUrl, sizes: '96x96', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '128x128', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '192x192', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '256x256', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '384x384', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '512x512', type: 'image/png' },
+            { src: artworkUrl, sizes: '96x96', type: 'image/png' },
+            { src: artworkUrl, sizes: '128x128', type: 'image/png' },
+            { src: artworkUrl, sizes: '192x192', type: 'image/png' },
+            { src: artworkUrl, sizes: '256x256', type: 'image/png' },
+            { src: artworkUrl, sizes: '384x384', type: 'image/png' },
+            { src: artworkUrl, sizes: '512x512', type: 'image/png' },
           ]
-        : undefined,
+        : [
+            { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+          ],
     })
 
-    navigator.mediaSession.setActionHandler('play', onPlay)
-    navigator.mediaSession.setActionHandler('pause', onPause)
-    navigator.mediaSession.setActionHandler('seekbackward', () => {
-      if (audioRef.current) {
-        const newTime = Math.max(0, audioRef.current.currentTime - 15)
-        audioRef.current.currentTime = newTime
-        onSeek(newTime)
+    // Set up action handlers only once
+    if (!mediaSessionSetupRef.current) {
+      navigator.mediaSession.setActionHandler('play', () => {
+        onPlay()
+      })
+      
+      navigator.mediaSession.setActionHandler('pause', () => {
+        onPause()
+      })
+      
+      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        if (audioRef.current) {
+          const seekTime = details.seekOffset || 15
+          const newTime = Math.max(0, audioRef.current.currentTime - seekTime)
+          audioRef.current.currentTime = newTime
+          onSeek(newTime)
+        }
+      })
+      
+      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        if (audioRef.current) {
+          const seekTime = details.seekOffset || 15
+          const newTime = Math.min(duration, audioRef.current.currentTime + seekTime)
+          audioRef.current.currentTime = newTime
+          onSeek(newTime)
+        }
+      })
+
+      // Set up additional handlers for better iOS integration
+      navigator.mediaSession.setActionHandler('previoustrack', null)
+      navigator.mediaSession.setActionHandler('nexttrack', null)
+      
+      mediaSessionSetupRef.current = true
+    }
+
+    // Update playback state
+    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'
+
+    // Cleanup function
+    return () => {
+      // Don't clear handlers here as they should persist while the component is mounted
+      // Only clear metadata when episode changes
+      if (navigator.mediaSession.metadata) {
+        navigator.mediaSession.metadata = null
       }
-    })
-    navigator.mediaSession.setActionHandler('seekforward', () => {
-      if (audioRef.current) {
-        const newTime = Math.min(duration, audioRef.current.currentTime + 15)
-        audioRef.current.currentTime = newTime
-        onSeek(newTime)
+    }
+  }, [episode, isPlaying, onPlay, onPause, onSeek, duration])
+
+  // Update MediaSession playback state when playing state changes
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'
+    }
+  }, [isPlaying])
+
+  // Update MediaSession position state
+  useEffect(() => {
+    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+      if (duration > 0) {
+        navigator.mediaSession.setPositionState({
+          duration: duration,
+          playbackRate: playbackRate,
+          position: currentTime,
+        })
       }
-    })
-  }, [episode, onPlay, onPause, onSeek, duration])
+    }
+  }, [currentTime, duration, playbackRate])
+
+  // Cleanup MediaSession when component unmounts
+  useEffect(() => {
+    return () => {
+      if ('mediaSession' in navigator) {
+        // Clear all handlers when component unmounts
+        navigator.mediaSession.setActionHandler('play', null)
+        navigator.mediaSession.setActionHandler('pause', null)
+        navigator.mediaSession.setActionHandler('seekbackward', null)
+        navigator.mediaSession.setActionHandler('seekforward', null)
+        navigator.mediaSession.setActionHandler('previoustrack', null)
+        navigator.mediaSession.setActionHandler('nexttrack', null)
+        navigator.mediaSession.metadata = null
+        navigator.mediaSession.playbackState = 'none'
+      }
+    }
+  }, [])
 
   // Update audio element when episode changes
   useEffect(() => {
