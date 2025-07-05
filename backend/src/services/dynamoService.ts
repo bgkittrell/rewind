@@ -9,7 +9,7 @@ import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { Podcast, Episode, EpisodeData, ListeningHistoryItem } from '../types'
 import { v4 as uuidv4 } from 'uuid'
 
-const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION })
+const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' })
 const PODCASTS_TABLE = process.env.PODCASTS_TABLE || 'RewindPodcasts'
 const EPISODES_TABLE = process.env.EPISODES_TABLE || 'RewindEpisodes'
 const LISTENING_HISTORY_TABLE = process.env.LISTENING_HISTORY_TABLE || 'RewindListeningHistory'
