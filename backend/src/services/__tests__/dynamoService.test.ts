@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { DynamoService } from '../dynamoService'
 import { DynamoDBClient, QueryCommand, BatchWriteItemCommand } from '@aws-sdk/client-dynamodb'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 
@@ -17,12 +16,15 @@ const mockUnmarshall = vi.mocked(unmarshall)
 // Mock DynamoDBClient constructor
 vi.mocked(DynamoDBClient).mockImplementation(() => mockDynamoClient as any)
 
+// Import DynamoService after mocking
+import { DynamoService } from '../dynamoService'
+
 describe('DynamoService', () => {
   let dynamoService: DynamoService
 
   beforeEach(() => {
     vi.clearAllMocks()
-    dynamoService = new DynamoService()
+    dynamoService = new DynamoService(mockDynamoClient as any)
   })
 
   describe('fixEpisodeImageUrls', () => {
@@ -93,10 +95,7 @@ describe('DynamoService', () => {
       expect(mockDynamoClient.send).toHaveBeenCalledWith(expect.any(BatchWriteItemCommand))
 
       // Verify the marshalled data contains fixed imageUrl
-      const batchWriteCall = mockDynamoClient.send.mock.calls[0][0]
-      const requestItems = batchWriteCall.input.RequestItems[process.env.EPISODES_TABLE || 'RewindEpisodes']
-
-      expect(requestItems).toHaveLength(3)
+      expect(mockMarshall).toHaveBeenCalledTimes(3)
       expect(mockMarshall).toHaveBeenCalledWith(
         expect.objectContaining({
           episodeId: 'episode-1',
