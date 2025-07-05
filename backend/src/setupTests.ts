@@ -50,7 +50,7 @@ global.console.error = vi.fn((...args: any[]) => {
 })
 
 // Suppress unhandled promise rejections from test scenarios
-process.on('unhandledRejection', (reason) => {
+process.on('unhandledRejection', reason => {
   // Only log if it's not a test-related error
   if (reason && typeof reason === 'object' && 'message' in reason) {
     const message = (reason as Error).message

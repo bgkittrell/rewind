@@ -96,7 +96,7 @@ global.console.error = vi.fn((...args: any[]) => {
 })
 
 // Prevent unhandled promise rejections from polluting output
-process.on('unhandledRejection', (reason) => {
+process.on('unhandledRejection', reason => {
   // Only log if it's not a jsdom-related error
   if (reason && typeof reason === 'object' && 'message' in reason) {
     const message = (reason as Error).message

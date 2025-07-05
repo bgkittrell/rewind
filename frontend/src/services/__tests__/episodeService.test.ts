@@ -293,17 +293,21 @@ describe('EpisodeService', () => {
 
     describe('formatReleaseDate', () => {
       it('should format release dates correctly', () => {
-        const yesterday = new Date()
-        yesterday.setDate(yesterday.getDate() - 1)
+        // Use fixed time to avoid timing issues with Math.ceil
+        vi.useFakeTimers()
+        const mockDate = new Date('2024-01-15T12:00:00Z')
+        vi.setSystemTime(mockDate)
+
+        const yesterday = new Date('2024-01-14T12:00:00Z')
+        const threeDaysAgo = new Date('2024-01-12T12:00:00Z')
+        const twoWeeksAgo = new Date('2024-01-01T12:00:00Z')
+
         expect(episodeService.formatReleaseDate(yesterday.toISOString())).toBe('Yesterday')
-
-        const threeDaysAgo = new Date()
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
         expect(episodeService.formatReleaseDate(threeDaysAgo.toISOString())).toBe('3 days ago')
-
-        const twoWeeksAgo = new Date()
-        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
         expect(episodeService.formatReleaseDate(twoWeeksAgo.toISOString())).toBe('2 weeks ago')
+
+        // Restore real time
+        vi.useRealTimers()
       })
     })
   })

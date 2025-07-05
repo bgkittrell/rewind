@@ -77,17 +77,10 @@ class APIClient {
       const duration = Date.now() - startTime
 
       // Record API call in RUM
-      rumService.recordApiCall(
-        endpoint,
-        url,
-        config.method,
-        response.status,
-        duration,
-        {
-          hasAuth: !!this.defaultHeaders['Authorization'],
-          contentType: response.headers.get('content-type'),
-        },
-      )
+      rumService.recordApiCall(endpoint, url, config.method, response.status, duration, {
+        hasAuth: !!this.defaultHeaders['Authorization'],
+        contentType: response.headers.get('content-type'),
+      })
 
       if (!response.ok) {
         const apiError = new APIError(
@@ -170,18 +163,11 @@ class APIClient {
       const duration = Date.now() - startTime
 
       // Record API call in RUM
-      rumService.recordApiCall(
-        endpoint,
-        url,
-        config.method,
-        response.status,
-        duration,
-        {
-          hasAuth: !!this.defaultHeaders['Authorization'],
-          contentType: response.headers.get('content-type'),
-          hasParams: !!params,
-        },
-      )
+      rumService.recordApiCall(endpoint, url, config.method, response.status, duration, {
+        hasAuth: !!this.defaultHeaders['Authorization'],
+        contentType: response.headers.get('content-type'),
+        hasParams: !!params,
+      })
 
       if (!response.ok) {
         const apiError = new APIError(
