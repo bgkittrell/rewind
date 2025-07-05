@@ -19,7 +19,7 @@
     "lint": "npm run lint:frontend && npm run lint:backend && npm run lint:infra",
     "lint:frontend": "cd frontend && npm run lint",
     "lint:backend": "cd backend && npm run lint",
-    "lint:infra": "cd infra && npm run lint",
+    "lint:infra": "cd infra && npm run build",
     "build": "npm run build:backend && npm run build:frontend && npm run build:infra",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",

@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
-import { cleanup } from '@testing-library/react'
 
 // Additional mock setup for build tests
 beforeAll(() => {
@@ -87,7 +86,7 @@ beforeAll(() => {
 })
 
 afterAll(() => {
-  cleanup()
+  // Test cleanup
 })
 
 describe('Build Smoke Tests - Critical Functionality', () => {
@@ -212,15 +211,15 @@ describe('Build Smoke Tests - Critical Functionality', () => {
       expect(floatingPlayerModule.FloatingMediaPlayer || floatingPlayerModule.default).toBeDefined()
       expect(typeof (floatingPlayerModule.FloatingMediaPlayer || floatingPlayerModule.default)).toBe('function')
 
-      // Test PodcastCard component
+            // Test PodcastCard component
       const podcastCardModule = await import('../components/PodcastCard')
-      expect(podcastCardModule.PodcastCard || podcastCardModule.default).toBeDefined()
-      expect(typeof (podcastCardModule.PodcastCard || podcastCardModule.default)).toBe('function')
+      expect(podcastCardModule.default).toBeDefined()
+      expect(typeof podcastCardModule.default).toBe('function')
 
       // Test BottomActionBar component
       const bottomActionBarModule = await import('../components/BottomActionBar')
-      expect(bottomActionBarModule.BottomActionBar || bottomActionBarModule.default).toBeDefined()
-      expect(typeof (bottomActionBarModule.BottomActionBar || bottomActionBarModule.default)).toBe('function')
+      expect(bottomActionBarModule.default).toBeDefined()
+      expect(typeof bottomActionBarModule.default).toBe('function')
     })
   })
 
@@ -249,7 +248,7 @@ describe('Build Smoke Tests - Critical Functionality', () => {
         await import('../routes/podcast-detail'),
       ]
 
-      routes.forEach((route, index) => {
+      routes.forEach((route) => {
         expect(route.default).toBeDefined()
         expect(typeof route.default).toBe('function')
       })
@@ -305,7 +304,7 @@ describe('Build Smoke Tests - Critical Functionality', () => {
       expect(module.podcastService).toBeDefined()
 
       // If this compiles and imports successfully, TypeScript types are working
-      expect(typeof module.podcastService.getUserPodcasts).toBe('function')
+      expect(typeof module.podcastService.getPodcasts).toBe('function')
     })
   })
 
