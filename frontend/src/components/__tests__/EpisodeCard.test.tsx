@@ -1,6 +1,23 @@
+import React from 'react'
 import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { MemoryRouter } from 'react-router'
 import { EpisodeCard } from '../EpisodeCard'
+
+// Mock useNavigate
+const mockNavigate = vi.fn()
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual('react-router')
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  }
+})
+
+// Helper function to render components with router context
+const renderWithRouter = (component: React.ReactElement) => {
+  return render(<MemoryRouter>{component}</MemoryRouter>)
+}
 
 describe('EpisodeCard', () => {
   const mockEpisode = {
@@ -19,6 +36,7 @@ describe('EpisodeCard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockNavigate.mockClear()
   })
 
   afterEach(() => {
@@ -26,7 +44,7 @@ describe('EpisodeCard', () => {
   })
 
   it('renders episode card with basic information', () => {
-    render(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+    renderWithRouter(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
 
     expect(screen.getByText('Test Episode')).toBeInTheDocument()
     expect(screen.getByText('Test Podcast')).toBeInTheDocument()
@@ -34,7 +52,7 @@ describe('EpisodeCard', () => {
   })
 
   it('renders episode image when provided', () => {
-    render(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+    renderWithRouter(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
 
     const image = screen.getByAltText('Test Episode artwork')
     expect(image).toBeInTheDocument()
@@ -44,7 +62,7 @@ describe('EpisodeCard', () => {
   it('renders podcast image when episode image is not provided', () => {
     const episodeWithoutImage = { ...mockEpisode, imageUrl: undefined }
     const podcastImageUrl = 'https://example.com/podcast-image.jpg'
-    render(
+    renderWithRouter(
       <EpisodeCard
         episode={episodeWithoutImage}
         podcastImageUrl={podcastImageUrl}
@@ -60,7 +78,9 @@ describe('EpisodeCard', () => {
 
   it('renders default icon when no image provided', () => {
     const episodeWithoutImage = { ...mockEpisode, imageUrl: undefined }
-    render(<EpisodeCard episode={episodeWithoutImage} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+    renderWithRouter(
+      <EpisodeCard episode={episodeWithoutImage} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />,
+    )
 
     const episodeCard = screen.getByTestId('episode-card')
     const svg = episodeCard.querySelector('svg')
@@ -69,7 +89,7 @@ describe('EpisodeCard', () => {
 
   it('prioritizes episode image over podcast image', () => {
     const podcastImageUrl = 'https://example.com/podcast-image.jpg'
-    render(
+    renderWithRouter(
       <EpisodeCard
         episode={mockEpisode}
         podcastImageUrl={podcastImageUrl}
@@ -84,7 +104,7 @@ describe('EpisodeCard', () => {
   })
 
   it('calls onPlay when play button is clicked', () => {
-    render(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+    renderWithRouter(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
 
     const playButton = screen.getByLabelText('Play Test Episode')
     fireEvent.click(playButton)
@@ -93,7 +113,7 @@ describe('EpisodeCard', () => {
   })
 
   it('calls onAIExplanation when AI explanation button is clicked', () => {
-    render(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+    renderWithRouter(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
 
     const aiButton = screen.getByLabelText('Get AI explanation')
     fireEvent.click(aiButton)
@@ -101,16 +121,35 @@ describe('EpisodeCard', () => {
     expect(mockOnAIExplanation).toHaveBeenCalledWith(mockEpisode)
   })
 
+  it('navigates to episode detail page when episode card is clicked', () => {
+    renderWithRouter(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+
+    const episodeCard = screen.getByTestId('episode-card')
+    fireEvent.click(episodeCard)
+
+    expect(mockNavigate).toHaveBeenCalledWith('/episode/episode-1')
+  })
+
+  it('does not navigate when action buttons are clicked', () => {
+    renderWithRouter(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+
+    const playButton = screen.getByLabelText('Play Test Episode')
+    fireEvent.click(playButton)
+
+    expect(mockNavigate).not.toHaveBeenCalled()
+    expect(mockOnPlay).toHaveBeenCalledWith(mockEpisode)
+  })
+
   describe('Progress indicator', () => {
     it('does not show progress indicator when playbackPosition is undefined', () => {
-      render(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+      renderWithRouter(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
 
       expect(screen.queryByText(/% complete/)).not.toBeInTheDocument()
     })
 
     it('does not show progress indicator when playbackPosition is 0', () => {
       const episodeWithZeroProgress = { ...mockEpisode, playbackPosition: 0 }
-      render(
+      renderWithRouter(
         <EpisodeCard episode={episodeWithZeroProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />,
       )
 
@@ -119,14 +158,18 @@ describe('EpisodeCard', () => {
 
     it('shows correct progress when playbackPosition is provided', () => {
       const episodeWithProgress = { ...mockEpisode, playbackPosition: 25 }
-      render(<EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+      renderWithRouter(
+        <EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />,
+      )
 
       expect(screen.getByText('25% complete')).toBeInTheDocument()
     })
 
     it('shows correct progress bar width when playbackPosition is provided', () => {
       const episodeWithProgress = { ...mockEpisode, playbackPosition: 75 }
-      render(<EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+      renderWithRouter(
+        <EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />,
+      )
 
       const progressBar = screen.getByText('75% complete').previousElementSibling?.querySelector('.bg-primary')
       expect(progressBar).toHaveStyle('width: 75%')
@@ -134,7 +177,9 @@ describe('EpisodeCard', () => {
 
     it('handles decimal progress values correctly', () => {
       const episodeWithProgress = { ...mockEpisode, playbackPosition: 33.7 }
-      render(<EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+      renderWithRouter(
+        <EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />,
+      )
 
       expect(screen.getByText('34% complete')).toBeInTheDocument()
       const progressBar = screen.getByText('34% complete').previousElementSibling?.querySelector('.bg-primary')
@@ -143,7 +188,9 @@ describe('EpisodeCard', () => {
 
     it('handles 100% progress correctly', () => {
       const episodeWithProgress = { ...mockEpisode, playbackPosition: 100 }
-      render(<EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+      renderWithRouter(
+        <EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />,
+      )
 
       expect(screen.getByText('100% complete')).toBeInTheDocument()
       const progressBar = screen.getByText('100% complete').previousElementSibling?.querySelector('.bg-primary')
@@ -152,7 +199,9 @@ describe('EpisodeCard', () => {
 
     it('handles edge case progress values', () => {
       const episodeWithProgress = { ...mockEpisode, playbackPosition: 0.1 }
-      render(<EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+      renderWithRouter(
+        <EpisodeCard episode={episodeWithProgress} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />,
+      )
 
       expect(screen.getByText('0% complete')).toBeInTheDocument()
       const progressBar = screen.getByText('0% complete').previousElementSibling?.querySelector('.bg-primary')
@@ -163,7 +212,9 @@ describe('EpisodeCard', () => {
   describe('Date formatting', () => {
     it('formats date correctly', () => {
       const episodeWithDate = { ...mockEpisode, releaseDate: '2023-12-25' }
-      render(<EpisodeCard episode={episodeWithDate} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+      renderWithRouter(
+        <EpisodeCard episode={episodeWithDate} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />,
+      )
 
       expect(screen.getByText('Dec 25, 2023 • 30:00')).toBeInTheDocument()
     })

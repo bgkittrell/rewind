@@ -32,6 +32,9 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
           return await getListeningHistory(userId, event.queryStringParameters, path)
         } else if (path.includes('/progress')) {
           return await getProgress(userId, event.pathParameters, path)
+        } else if (event.pathParameters?.episodeId && !event.pathParameters?.podcastId) {
+          // Handle individual episode requests: /episode/{episodeId}
+          return await getEpisodeById(event.pathParameters.episodeId, userId, path)
         } else if (event.pathParameters?.podcastId) {
           return await getEpisodes(event.pathParameters.podcastId, event.queryStringParameters, path)
         }
@@ -354,5 +357,30 @@ async function fixEpisodeImages(
   } catch (error) {
     console.error('Error fixing episode image URLs:', error)
     return createErrorResponse('Failed to fix episode image URLs', 'INTERNAL_ERROR', 500, path)
+  }
+}
+
+async function getEpisodeById(episodeId: string, userId: string, path: string): Promise<APIGatewayProxyResult> {
+  try {
+    // First, get all user podcasts to find which podcast this episode belongs to
+    const userPodcasts = await dynamoService.getPodcastsByUser(userId)
+
+    // Try to find the episode in each podcast
+    for (const podcast of userPodcasts) {
+      try {
+        const episode = await dynamoService.getEpisodeById(podcast.podcastId, episodeId)
+        if (episode) {
+          return createSuccessResponse(episode, 200, path)
+        }
+      } catch (error) {
+        // Continue to next podcast if episode not found in this one
+        continue
+      }
+    }
+
+    return createErrorResponse('Episode not found or access denied', 'NOT_FOUND', 404, path)
+  } catch (error) {
+    console.error('Error getting episode:', error)
+    return createErrorResponse('Failed to get episode', 'INTERNAL_ERROR', 500, path)
   }
 }
