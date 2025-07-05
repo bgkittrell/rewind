@@ -195,7 +195,7 @@ export default function PodcastDetail() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="py-6">
+      <div className="px-4 py-6">
         <div className="flex justify-center items-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <span className="ml-2 text-gray-600">Loading podcast...</span>
@@ -206,8 +206,8 @@ export default function PodcastDetail() {
 
   if (error || !podcast) {
     return (
-      <div className="py-6">
-        <div className="mb-4 py-4 bg-red-50 border border-red-200 rounded-md">
+      <div className="px-4 py-6">
+        <div className="mb-4 py-4 px-4 bg-red-50 border-l-4 border-red-500">
           <p className="text-sm text-red-800">{error || 'Podcast not found'}</p>
           <div className="mt-2 space-x-2">
             <button onClick={() => navigate('/library')} className="text-sm text-red-600 hover:text-red-800">
@@ -225,14 +225,14 @@ export default function PodcastDetail() {
   }
 
   return (
-    <div className="py-6">
+    <div className="bg-gray-50 min-h-screen">
       {/* Back Button */}
-      <div className="mb-4">
+      <div className="bg-white px-4 py-3 border-b border-gray-200">
         <button
           onClick={() => navigate('/library')}
           className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
         >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back to Library
@@ -240,67 +240,65 @@ export default function PodcastDetail() {
       </div>
 
       {/* Podcast Details Header */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-4">
-        <div className="py-4">
-          <div className="flex items-start space-x-4">
-            {/* Podcast Artwork */}
-            <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
-              {podcast.imageUrl && !imageError ? (
-                <img
-                  src={podcast.imageUrl}
-                  alt={`${podcast.title} artwork`}
-                  className="w-full h-full object-cover"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                  <svg className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
-                  </svg>
-                </div>
-              )}
-            </div>
-
-            {/* Podcast Information */}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{podcast.title}</h1>
-              <p className="text-gray-600 mb-3 leading-relaxed text-sm">{stripAndTruncate(podcast.description, 250)}</p>
-              <div className="flex items-center space-x-3 text-sm text-gray-500">
-                <span>{podcast.episodeCount} episodes</span>
-                <span>•</span>
-                <span>Added {new Date(podcast.createdAt).toLocaleDateString()}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="mt-4 flex items-center space-x-3">
-            <button
-              onClick={() => syncEpisodes()}
-              disabled={isSyncing}
-              className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-secondary transition-colors disabled:opacity-50"
-            >
-              {isSyncing ? (
-                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
+      <div className="bg-white px-4 py-6 border-b border-gray-200">
+        <div className="flex items-start space-x-4">
+          {/* Podcast Artwork */}
+          <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-300 flex-shrink-0 overflow-hidden">
+            {podcast.imageUrl && !imageError ? (
+              <img
+                src={podcast.imageUrl}
+                alt={`${podcast.title} artwork`}
+                className="w-full h-full object-cover"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                <svg className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
                 </svg>
-              )}
-              <span>{isSyncing ? 'Syncing...' : 'Sync Episodes'}</span>
-            </button>
+              </div>
+            )}
           </div>
+
+          {/* Podcast Information */}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{podcast.title}</h1>
+            <p className="text-gray-600 mb-3 leading-relaxed text-sm">{stripAndTruncate(podcast.description, 250)}</p>
+            <div className="flex items-center space-x-3 text-sm text-gray-500">
+              <span>{podcast.episodeCount} episodes</span>
+              <span>•</span>
+              <span>Added {new Date(podcast.createdAt).toLocaleDateString()}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-6">
+          <button
+            onClick={() => syncEpisodes()}
+            disabled={isSyncing}
+            className="flex items-center space-x-2 px-6 py-3 bg-primary text-white font-medium hover:bg-secondary transition-colors disabled:opacity-50 w-full sm:w-auto justify-center"
+          >
+            {isSyncing ? (
+              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            )}
+            <span>{isSyncing ? 'Syncing...' : 'Sync Episodes'}</span>
+          </button>
         </div>
       </div>
 
       {/* Episodes Section */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div className="py-3 border-b border-gray-200">
+      <div className="bg-white">
+        <div className="px-4 py-4 border-b border-gray-200">
           <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
             Episodes
             {podcast && <span className="text-gray-500 ml-2">({podcast.episodeCount})</span>}
@@ -313,7 +311,7 @@ export default function PodcastDetail() {
             {episodes.map(episode => {
               const episodeCardData = transformEpisodeForCard(episode)
               return (
-                <div key={episode.episodeId} className="py-2">
+                <div key={episode.episodeId}>
                   <EpisodeCard
                     episode={episodeCardData}
                     podcastImageUrl={podcast.imageUrl}
@@ -326,14 +324,14 @@ export default function PodcastDetail() {
 
             {/* Load More / Loading State */}
             {hasMore && (
-              <div className="py-4 text-center">
+              <div className="py-6 text-center bg-gray-50">
                 {isLoadingEpisodes ? (
                   <div className="flex justify-center items-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                     <span className="ml-2 text-gray-600">Loading more episodes...</span>
                   </div>
                 ) : (
-                  <button onClick={handleLoadMore} className="text-primary hover:text-secondary font-medium">
+                  <button onClick={handleLoadMore} className="text-primary hover:text-secondary font-medium px-4 py-2">
                     Load More Episodes
                   </button>
                 )}
@@ -342,13 +340,13 @@ export default function PodcastDetail() {
 
             {/* End of Episodes */}
             {!hasMore && episodes.length > 0 && (
-              <div className="py-4 text-center text-gray-500">
+              <div className="py-6 text-center text-gray-500 bg-gray-50">
                 <p>You've reached the end of the episodes</p>
               </div>
             )}
           </div>
         ) : (
-          <div className="py-6 text-center text-gray-500">
+          <div className="py-8 text-center text-gray-500">
             <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -362,7 +360,7 @@ export default function PodcastDetail() {
             <button
               onClick={() => syncEpisodes()}
               disabled={isSyncing}
-              className="text-primary hover:text-secondary font-medium"
+              className="text-primary hover:text-secondary font-medium px-4 py-2"
             >
               {isSyncing ? 'Syncing...' : 'Sync Episodes'}
             </button>
