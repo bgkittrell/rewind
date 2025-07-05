@@ -73,19 +73,21 @@ export class SearchService {
     // Apply pagination
     const paginatedResults = sortedResults.slice(offset, offset + limit)
 
-    // Format results
-    const results: SearchResult[] = paginatedResults.map(({ episode, score, matchedFields, highlights }) => {
-      const podcast = podcastMap.get(episode.podcastId)!
-      return {
-        episode: this.cleanEpisode(episode),
-        podcast: this.cleanPodcast(podcast),
-        relevance: {
-          score,
-          matchedFields,
-          highlights,
-        },
-      }
-    })
+    // Format results (filter out episodes with missing podcasts)
+    const results: SearchResult[] = paginatedResults
+      .filter(({ episode }) => podcastMap.has(episode.podcastId))
+      .map(({ episode, score, matchedFields, highlights }) => {
+        const podcast = podcastMap.get(episode.podcastId)!
+        return {
+          episode: this.cleanEpisode(episode),
+          podcast: this.cleanPodcast(podcast),
+          relevance: {
+            score,
+            matchedFields,
+            highlights,
+          },
+        }
+      })
 
     const searchTime = (Date.now() - startTime) / 1000
 
