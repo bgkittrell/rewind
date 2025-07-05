@@ -60,9 +60,9 @@ export function ResumePlaybackBar({ resumeData, onResume, onDismiss }: ResumePla
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-              <IconMusic className="w-6 h-6 text-gray-500" />
-            </div>
+                         <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+               <IconMusic className="w-6 h-6 text-gray-500" data-testid="music-icon" />
+             </div>
           )}
         </div>
 
@@ -71,12 +71,12 @@ export function ResumePlaybackBar({ resumeData, onResume, onDismiss }: ResumePla
           <h3 className="font-semibold text-sm truncate">{resumeData.title}</h3>
           <p className="text-xs text-white text-opacity-80 truncate">{resumeData.podcastTitle}</p>
           <div className="flex items-center space-x-2 mt-1">
-            <div className="flex-1 bg-white bg-opacity-30 rounded-full h-2">
-              <div
-                className="bg-white h-2 rounded-full transition-all"
-                style={{ width: `${resumeData.progressPercentage}%` }}
-              />
-            </div>
+                         <div className="flex-1 bg-white bg-opacity-30 rounded-full h-2" role="progressbar" aria-valuenow={resumeData.progressPercentage} aria-valuemin={0} aria-valuemax={100}>
+               <div
+                 className="bg-white h-2 rounded-full transition-all"
+                 style={{ width: `${resumeData.progressPercentage}%` }}
+               />
+             </div>
             <span className="text-xs text-white text-opacity-80">
               {formatTime(resumeData.playbackPosition)} / {formatTime(resumeData.duration)}
             </span>
