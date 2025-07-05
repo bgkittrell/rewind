@@ -98,6 +98,24 @@ export class RewindBackendStack extends cdk.Stack {
       },
     })
 
+    // Create Lambda function for search operations
+    const searchFunction = new NodejsFunction(this, 'SearchHandler', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../../backend/src/handlers/searchHandler.ts'),
+      environment: {
+        PODCASTS_TABLE: props.tables.podcasts.tableName,
+        EPISODES_TABLE: props.tables.episodes.tableName,
+      },
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 512, // Balanced for performance/cost
+      architecture: lambda.Architecture.ARM_64, // Cost optimization
+      bundling: {
+        forceDockerBundling: false,
+        externalModules: [],
+      },
+    })
+
     // Grant Bedrock permissions to recommendation function
     recommendationFunction.addToRolePolicy(
       new cdk.aws_iam.PolicyStatement({
@@ -128,6 +146,10 @@ export class RewindBackendStack extends cdk.Stack {
     props.tables.guestAnalytics.grantReadWriteData(recommendationFunction)
     props.tables.userFeedback.grantReadWriteData(recommendationFunction)
     props.tables.podcasts.grantReadData(recommendationFunction)
+
+    // Grant specific permissions to search function
+    props.tables.podcasts.grantReadData(searchFunction)
+    props.tables.episodes.grantReadData(searchFunction)
 
     // Create Cognito authorizer for API Gateway
     const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'RewindAuthorizer', {
@@ -294,6 +316,14 @@ export class RewindBackendStack extends cdk.Stack {
     // POST /recommendations/guest-analytics - Update guest analytics
     const guestAnalytics = recommendations.addResource('guest-analytics')
     guestAnalytics.addMethod('POST', new apigateway.LambdaIntegration(recommendationFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // Add search endpoint
+    // GET /search - Search episodes
+    const search = api.root.addResource('search')
+    search.addMethod('GET', new apigateway.LambdaIntegration(searchFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
