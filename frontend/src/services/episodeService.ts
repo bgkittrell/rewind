@@ -80,6 +80,16 @@ export class EpisodeService {
     }
   }
 
+  async getEpisodeById(episodeId: string): Promise<Episode> {
+    try {
+      const response = await apiClient.get<Episode>(`/episodes/${episodeId}`)
+      return response
+    } catch (error) {
+      console.error('Error fetching episode:', error)
+      throw new Error('Failed to fetch episode')
+    }
+  }
+
   async syncEpisodes(podcastId: string): Promise<EpisodeSyncResponse> {
     try {
       const response = await apiClient.post<EpisodeSyncResponse>(`/episodes/${podcastId}/sync`)

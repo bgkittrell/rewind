@@ -240,6 +240,13 @@ export class RewindBackendStack extends cdk.Stack {
 
     // Episode progress routes
     const episodeById = episodes.addResource('{episodeId}')
+
+    // GET /episodes/{episodeId} - Get individual episode
+    episodeById.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
     const progress = episodeById.addResource('progress')
 
     // GET /episodes/{episodeId}/progress - Get playback progress
