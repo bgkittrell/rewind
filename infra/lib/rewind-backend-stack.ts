@@ -129,6 +129,19 @@ export class RewindBackendStack extends cdk.Stack {
     props.tables.userFeedback.grantReadWriteData(recommendationFunction)
     props.tables.podcasts.grantReadData(recommendationFunction)
 
+    // Create CloudWatch Logs role for API Gateway
+    const cloudWatchRole = new cdk.aws_iam.Role(this, 'ApiGatewayCloudWatchRole', {
+      assumedBy: new cdk.aws_iam.ServicePrincipal('apigateway.amazonaws.com'),
+      managedPolicies: [
+        cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonAPIGatewayPushToCloudWatchLogs'),
+      ],
+    })
+
+    // Set the CloudWatch role ARN for API Gateway logging
+    const cfnAccount = new apigateway.CfnAccount(this, 'ApiGatewayAccount', {
+      cloudWatchRoleArn: cloudWatchRole.roleArn,
+    })
+
     // Create Cognito authorizer for API Gateway
     const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'RewindAuthorizer', {
       cognitoUserPools: [props.userPool],
@@ -149,8 +162,15 @@ export class RewindBackendStack extends cdk.Stack {
       },
       deployOptions: {
         stageName: 'prod',
+        metricsEnabled: true,
+        loggingLevel: apigateway.MethodLoggingLevel.INFO,
+        dataTraceEnabled: true, // This logs request/response data - be careful with sensitive data
+        tracingEnabled: true, // Enable X-Ray tracing
       },
     })
+
+    // Ensure CloudWatch role is created before API Gateway
+    api.node.addDependency(cfnAccount)
 
     // Add health check endpoint (no authorization needed)
     api.root.addResource('health').addMethod(
