@@ -75,7 +75,7 @@ export class RewindMonitoringStack extends cdk.Stack {
         telemetries: ['errors', 'performance', 'http'],
         identityPoolId: identityPool.ref,
         guestRoleArn: unauthenticatedRole.roleArn,
-        includedPages: ['*'],
+        includedPages: [`https://${props.domainName}/*`],
         excludedPages: [],
         favoritePages: ['/login', '/signup', '/', '/library'],
         metricDestinations: [
