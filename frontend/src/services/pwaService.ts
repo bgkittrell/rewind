@@ -83,10 +83,15 @@ export class PWAService {
     if ('Notification' in window && Notification.permission === 'granted') {
       const notification = new Notification('Update Available', {
         body: 'A new version of Rewind is available. Tap to update.',
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
+        // Icons will be added once created
+        // icon: '/icon-192.png',
+        // badge: '/icon-192.png',
         tag: 'app-update',
         requireInteraction: true,
+        silent: false,
+        data: {
+          // Add any necessary data here
+        },
         // Actions are supported in some browsers but not in TypeScript types
         ...('actions' in Notification.prototype && {
           actions: [
