@@ -122,16 +122,16 @@ interface MediaPlayerContextType {
 ```typescript
 // Check for resume data on app start
 // Show resume UI if available
-// Auto-resume if user preference is set
+// Auto-dismiss after 10 seconds
 ```
 
 ### Phase 3: Enhanced Progress Tracking
 
-#### 3.1 Frequent Progress Saving
+#### 3.1 Regular Progress Saving
 **Location**: `frontend/src/components/FloatingMediaPlayer.tsx`
 
 **Enhancements**:
-- Save progress every 5 seconds during playback
+- Save progress every 30 seconds during playback
 - Save progress on pause/stop
 - Save progress on app unload/beforeunload
 
@@ -159,15 +159,7 @@ const playEpisode = async (episode: Episode) => {
 
 ### Phase 4: User Experience Enhancements
 
-#### 4.1 Resume Preferences
-**Location**: `frontend/src/components/SettingsModal.tsx`
-
-**Add user preferences**:
-- Auto-resume on app startup (default: true)
-- Resume notification timeout (default: 10 seconds)
-- Minimum progress to show resume (default: 30 seconds)
-
-#### 4.2 Visual Progress Indicators
+#### 4.1 Visual Progress Indicators
 **Location**: `frontend/src/components/EpisodeCard.tsx`
 
 **Show progress on episode cards**:
@@ -175,7 +167,7 @@ const playEpisode = async (episode: Episode) => {
 - "Resume" badge for partially played episodes
 - Checkmark for completed episodes
 
-#### 4.3 Recently Played Section
+#### 4.2 Recently Played Section
 **Location**: `frontend/src/routes/home.tsx`
 
 **Add recently played episodes**:
@@ -193,7 +185,7 @@ const playEpisode = async (episode: Episode) => {
    - Regular progress saving begins
 
 2. **Progress tracking during playback**
-   - Save progress every 5 seconds
+   - Save progress every 30 seconds
    - Save on pause/stop/seek
    - Update localStorage backup
 
@@ -256,13 +248,12 @@ PUT /episodes/{episodeId}/progress - Enhanced with user's last played tracking
 - [ ] Update app initialization flow
 
 ### Week 3: Progress Enhancements
-- [ ] Implement frequent progress saving
+- [ ] Implement regular progress saving (30-second intervals)
 - [ ] Add localStorage backup system
 - [ ] Implement automatic progress restoration
 - [ ] Add visual progress indicators
 
 ### Week 4: UX Polish
-- [ ] Add user preferences for resume behavior
 - [ ] Create recently played section
 - [ ] Add comprehensive error handling
 - [ ] Performance optimization and testing
@@ -309,7 +300,7 @@ PUT /episodes/{episodeId}/progress - Enhanced with user's last played tracking
 ## Notes
 
 - **Storage**: Resume data is stored in existing `ListeningHistory` table
-- **Performance**: Minimal impact on app startup (single API call)
+- **Performance**: Minimal impact on app startup (single API call), progress saved every 30 seconds
 - **Backwards Compatible**: Existing users will see resume data from their history
 - **Privacy**: Resume data is user-specific and follows existing auth patterns
 - **Offline Support**: localStorage backup ensures functionality without internet
@@ -341,6 +332,6 @@ PUT /episodes/{episodeId}/progress - Enhanced with user's last played tracking
 - [ ] Test resume with deleted episodes
 - [ ] Test resume across different browsers
 - [ ] Verify performance impact is minimal
-- [ ] Confirm user preferences work correctly
+- [ ] Confirm 30-second progress saving works correctly
 
 This plan provides a comprehensive approach to implementing robust playback resume functionality that will significantly improve the user experience in the Rewind app.
