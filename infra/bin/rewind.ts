@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib'
 import { RewindDataStack } from '../lib/rewind-data-stack'
 import { RewindBackendStack } from '../lib/rewind-backend-stack'
 import { RewindFrontendStack } from '../lib/rewind-frontend-stack'
+import { RewindMonitoringStack } from '../lib/rewind-monitoring-stack'
 
 const app = new cdk.App()
 
@@ -35,9 +36,16 @@ const frontendStack = new RewindFrontendStack(app, 'RewindFrontendStack', {
   apiUrl: backendStack.apiUrl,
 })
 
+// Monitoring stack (RUM, CloudWatch)
+const monitoringStack = new RewindMonitoringStack(app, 'RewindMonitoringStack', {
+  ...{ env, description: 'Monitoring and observability infrastructure for Rewind app' },
+  domainName: frontendStack.distributionDomainName,
+  userPool: dataStack.userPool,
+})
+
 // Add tags to all resources
 cdk.Tags.of(app).add('Project', 'Rewind')
 cdk.Tags.of(app).add('Environment', process.env.NODE_ENV || 'development')
 
 // Ensure all stacks are used (prevents linter warnings)
-console.log(`Created stacks: ${dataStack.stackName}, ${backendStack.stackName}, ${frontendStack.stackName}`)
+// All stacks are properly instantiated and deployed

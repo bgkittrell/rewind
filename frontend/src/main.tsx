@@ -17,6 +17,9 @@ import Auth from './routes/auth'
 
 // Import PWA service
 import { pwaService } from './services/pwaService'
+// Import RUM service
+import { rumService } from './services/rumService'
+import { rumConfig, isRumConfigured } from './config/rumConfig'
 
 const router = createBrowserRouter([
   {
@@ -62,6 +65,15 @@ const router = createBrowserRouter([
 
 // Initialize PWA service for update handling
 pwaService.initialize()
+
+// Initialize RUM service for monitoring
+if (isRumConfigured()) {
+  rumService.initialize(rumConfig).catch(error => {
+    console.error('Failed to initialize RUM service:', error)
+  })
+} else {
+  console.warn('RUM service not configured, skipping initialization')
+}
 
 // Show update notification when available
 let updateNotificationElement: HTMLDivElement | null = null

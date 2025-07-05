@@ -17,7 +17,7 @@ export class RewindFrontendStack extends cdk.Stack {
 
     // S3 bucket for hosting static website
     const websiteBucket = new s3.Bucket(this, 'WebsiteBucket', {
-      bucketName: `rewind-frontend-${this.account}-${this.region}`,
+      bucketName: `rewind-frontend-${cdk.Stack.of(this).account}-${cdk.Stack.of(this).region}`,
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
