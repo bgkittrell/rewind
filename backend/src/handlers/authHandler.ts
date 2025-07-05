@@ -12,8 +12,8 @@ import { marshall } from '@aws-sdk/util-dynamodb'
 import { createResponse } from '../utils/response'
 import { User } from '../types'
 
-const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION })
-const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION })
+const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION || 'us-east-1' })
+const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' })
 
 const USER_POOL_CLIENT_ID = process.env.USER_POOL_CLIENT_ID!
 const USERS_TABLE = process.env.USERS_TABLE!

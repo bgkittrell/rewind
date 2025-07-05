@@ -95,7 +95,6 @@ export class RewindBackendStack extends cdk.Stack {
         GUEST_ANALYTICS_TABLE: props.tables.guestAnalytics.tableName,
         USER_FEEDBACK_TABLE: props.tables.userFeedback.tableName,
         PODCASTS_TABLE: props.tables.podcasts.tableName,
-        AWS_REGION: this.region,
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 1024, // More memory for AI processing
