@@ -35,12 +35,6 @@ export class RewindBackendStack extends cdk.Stack {
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
-      bundling: {
-        minify: false,
-        sourceMap: true,
-        externalModules: ['aws-sdk'],
-        forceDockerBundling: false, // Use local bundling instead of Docker
-      },
     })
 
     // Create Lambda function for authentication operations
@@ -55,12 +49,6 @@ export class RewindBackendStack extends cdk.Stack {
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
-      bundling: {
-        minify: false,
-        sourceMap: true,
-        externalModules: ['aws-sdk'],
-        forceDockerBundling: false, // Use local bundling instead of Docker
-      },
     })
 
     // Create Lambda function for episode operations
@@ -75,12 +63,6 @@ export class RewindBackendStack extends cdk.Stack {
       },
       timeout: cdk.Duration.seconds(60), // Longer timeout for RSS parsing
       memorySize: 512, // More memory for episode processing
-      bundling: {
-        minify: false,
-        sourceMap: true,
-        externalModules: ['aws-sdk'],
-        forceDockerBundling: false, // Use local bundling instead of Docker
-      },
     })
 
     // Create Lambda function for recommendation operations
@@ -98,12 +80,6 @@ export class RewindBackendStack extends cdk.Stack {
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 1024, // More memory for AI processing
-      bundling: {
-        minify: false,
-        sourceMap: true,
-        externalModules: ['aws-sdk'],
-        forceDockerBundling: false, // Use local bundling instead of Docker
-      },
     })
 
     // Grant Bedrock permissions to recommendation function
