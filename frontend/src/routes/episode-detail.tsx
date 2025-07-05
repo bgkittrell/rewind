@@ -21,7 +21,9 @@ type MediaPlayerEpisode = {
 }
 
 export default function EpisodeDetail() {
-  const { episodeId } = useParams<{ episodeId: string }>()
+  const params = useParams<{ episodeId: string; podcastId?: string }>()
+  const episodeId = params.episodeId
+  const podcastId = params.podcastId
   const navigate = useNavigate()
   const { isAuthenticated, isLoading: authLoading } = useAuth()
   const { playEpisode } = useMediaPlayer()
@@ -55,7 +57,26 @@ export default function EpisodeDetail() {
       setError(null)
 
       // Get the episode
-      const episodeData = await episodeService.getEpisodeById(episodeId)
+      let episodeData: Episode | null = null
+
+      if (podcastId) {
+        // If we have podcastId, use the more efficient direct query
+        try {
+          episodeData = await episodeService.getEpisodeByIdWithPodcast(podcastId, episodeId)
+        } catch (err) {
+          console.warn('Failed to get episode with podcastId, falling back to search:', err)
+          // Fall back to the original method
+          episodeData = await episodeService.getEpisodeById(episodeId)
+        }
+      } else {
+        // Use the original method that searches through all podcasts
+        episodeData = await episodeService.getEpisodeById(episodeId)
+      }
+
+      if (!episodeData) {
+        throw new Error('Episode not found')
+      }
+
       setEpisode(episodeData)
 
       // Get the podcast details

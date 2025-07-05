@@ -12,6 +12,7 @@ interface EpisodeCardProps {
     imageUrl?: string
     description?: string
     playbackPosition?: number
+    podcastId?: string
   }
   podcastImageUrl?: string
   onPlay?: (_episode: EpisodeCardProps['episode']) => void
@@ -33,7 +34,11 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
   }
 
   const handleCardClick = () => {
-    navigate(`/episode/${episode.id}`)
+    if (episode.podcastId) {
+      navigate(`/episode/${episode.podcastId}/${episode.id}`)
+    } else {
+      navigate(`/episode/${episode.id}`)
+    }
   }
 
   const formatDate = (dateString: string) => {

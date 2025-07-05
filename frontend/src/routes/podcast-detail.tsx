@@ -20,6 +20,7 @@ type MediaPlayerEpisode = {
   description?: string
   playbackPosition?: number
   podcastImageUrl?: string
+  podcastId?: string
 }
 
 export default function PodcastDetail() {
@@ -236,6 +237,7 @@ export default function PodcastDetail() {
       imageUrl: episode.imageUrl,
       description: episode.description,
       podcastImageUrl: podcast.imageUrl,
+      podcastId: episode.podcastId,
     }
 
     playEpisode(episodeForPlayer)
@@ -257,6 +259,7 @@ export default function PodcastDetail() {
       imageUrl: episode.imageUrl,
       description: episode.description,
       podcastImageUrl: podcast?.imageUrl,
+      podcastId: episode.podcastId,
     }
   }
 
