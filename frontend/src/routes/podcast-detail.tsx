@@ -145,7 +145,7 @@ export default function PodcastDetail() {
     try {
       setIsDeleting(true)
       await podcastService.deletePodcast(podcastId)
-      
+
       // Navigate back to library after successful deletion
       navigate('/library')
     } catch (err) {
@@ -301,14 +301,16 @@ export default function PodcastDetail() {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{podcast.title}</h1>
-                <p className="text-gray-600 mb-3 leading-relaxed text-sm">{stripAndTruncate(podcast.description, 250)}</p>
+                <p className="text-gray-600 mb-3 leading-relaxed text-sm">
+                  {stripAndTruncate(podcast.description, 250)}
+                </p>
                 <div className="flex items-center space-x-3 text-sm text-gray-500">
                   <span>{podcast.episodeCount} episodes</span>
                   <span>•</span>
                   <span>Added {new Date(podcast.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
-              
+
               {/* Dropdown Menu */}
               <div className="relative">
                 <button
@@ -347,10 +349,14 @@ export default function PodcastDetail() {
                         )}
                         <span>{isSyncing ? 'Syncing...' : 'Sync Episodes'}</span>
                       </button>
-                      
+
                       <button
                         onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete "${podcast.title}"? This action cannot be undone.`)) {
+                          if (
+                            window.confirm(
+                              `Are you sure you want to delete "${podcast.title}"? This action cannot be undone.`,
+                            )
+                          ) {
                             handleDeletePodcast()
                           } else {
                             setIsDropdownOpen(false)
