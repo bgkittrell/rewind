@@ -13,6 +13,7 @@ import Library from './routes/library'
 import Search from './routes/search'
 import ErrorPage from './routes/error-page'
 import PodcastDetail from './routes/podcast-detail'
+import EpisodeDetail from './routes/episode-detail'
 import Auth from './routes/auth'
 
 // Import PWA service
@@ -45,7 +46,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'episode/:episodeId',
-        element: <div>Episode Details</div>, // TODO: Create EpisodeDetails component
+        element: <EpisodeDetail />,
       },
       {
         path: 'share/:shareId',

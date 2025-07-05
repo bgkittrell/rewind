@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 
 interface EpisodeCardProps {
   episode: {
@@ -19,13 +20,20 @@ interface EpisodeCardProps {
 
 export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation }: EpisodeCardProps) {
   const [imageError, setImageError] = useState(false)
+  const navigate = useNavigate()
 
-  const handlePlay = () => {
+  const handlePlay = (e: React.MouseEvent) => {
+    e.stopPropagation()
     onPlay?.(episode)
   }
 
-  const handleAIExplanation = () => {
+  const handleAIExplanation = (e: React.MouseEvent) => {
+    e.stopPropagation()
     onAIExplanation?.(episode)
+  }
+
+  const handleCardClick = () => {
+    navigate(`/episode/${episode.id}`)
   }
 
   const formatDate = (dateString: string) => {
@@ -40,7 +48,11 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
   const hasProgress = episode.playbackPosition && episode.playbackPosition > 0
 
   return (
-    <div className="bg-white px-4 py-4 hover:bg-gray-50 transition-colors" data-testid="episode-card">
+    <div 
+      className="bg-white px-4 py-4 hover:bg-gray-50 transition-colors cursor-pointer" 
+      data-testid="episode-card"
+      onClick={handleCardClick}
+    >
       <div className="flex gap-3 sm:gap-4">
         {/* Episode/Podcast Thumbnail */}
         <div className="w-16 h-16 sm:w-18 sm:h-18 bg-gray-300 flex-shrink-0 rounded-lg overflow-hidden">
