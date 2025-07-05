@@ -239,6 +239,13 @@ export class RewindBackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
+    // POST /episodes/{podcastId}/fix-images - Fix episode image URLs
+    const fixImages = episodesByPodcast.addResource('fix-images')
+    fixImages.addMethod('POST', new apigateway.LambdaIntegration(episodeFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
     // Episode progress routes
     const episodeById = episodes.addResource('{episodeId}')
     const progress = episodeById.addResource('progress')
