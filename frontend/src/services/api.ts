@@ -120,7 +120,7 @@ class APIClient {
 
       // Handle network errors
       const networkError = new APIError('Network error occurred', 'NETWORK_ERROR', 0, { originalError: error })
-      
+
       // Record network error in RUM
       rumService.recordError(networkError, {
         endpoint,
@@ -215,7 +215,7 @@ class APIClient {
 
       // Handle network errors
       const networkError = new APIError('Network error occurred', 'NETWORK_ERROR', 0, { originalError: error })
-      
+
       // Record network error in RUM
       rumService.recordError(networkError, {
         endpoint,

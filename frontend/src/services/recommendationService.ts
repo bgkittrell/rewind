@@ -110,7 +110,7 @@ class RecommendationService {
 
       console.log('Fetching recommendations with params:', params)
       const recommendations = await apiClient.get<RecommendationScore[]>('/recommendations', params)
-      
+
       // Record successful load
       rumService.recordRecommendationEvent('load_success', {
         filters,
@@ -121,7 +121,7 @@ class RecommendationService {
       return recommendations
     } catch (error) {
       console.error('Error fetching recommendations:', error)
-      
+
       // Record error
       rumService.recordRecommendationEvent('load_error', {
         filters,

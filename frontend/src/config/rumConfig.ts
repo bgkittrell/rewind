@@ -5,7 +5,7 @@ export const rumConfig = {
   applicationId: import.meta.env.VITE_RUM_APPLICATION_ID || '',
   identityPoolId: import.meta.env.VITE_RUM_IDENTITY_POOL_ID || '',
   region: import.meta.env.VITE_RUM_REGION || 'us-east-1',
-  
+
   // RUM settings
   allowCookies: false,
   enableXRay: true,

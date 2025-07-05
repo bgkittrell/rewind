@@ -48,7 +48,11 @@ export class RumService {
     }
 
     try {
-      this.awsRum.recordError(error, additionalDetails)
+      this.awsRum.recordError(error)
+      
+      if (additionalDetails) {
+        this.awsRum.recordEvent('error_details', additionalDetails)
+      }
     } catch (rumError) {
       console.error('Failed to record error in RUM:', rumError)
     }
@@ -61,7 +65,14 @@ export class RumService {
     }
 
     try {
-      this.awsRum.recordPageView(pageId, additionalDetails)
+      this.awsRum.recordPageView(pageId)
+      
+      if (additionalDetails) {
+        this.awsRum.recordEvent('page_view_details', {
+          pageId,
+          ...additionalDetails,
+        })
+      }
     } catch (rumError) {
       console.error('Failed to record page view in RUM:', rumError)
     }
@@ -148,9 +159,10 @@ export class RumService {
     }
 
     try {
-      this.awsRum.addUserDetails({
+      this.awsRum.recordEvent('user_details', {
         userId,
         ...userAttributes,
+        timestamp: new Date().toISOString(),
       })
     } catch (rumError) {
       console.error('Failed to add user details in RUM:', rumError)
