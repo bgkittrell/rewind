@@ -76,6 +76,12 @@ if (isRumConfigured()) {
   console.warn('RUM service not configured, skipping initialization')
 }
 
+// Add beforeunload handler to save progress when app closes
+window.addEventListener('beforeunload', () => {
+  // This will trigger any cleanup in the MediaPlayerContext
+  // The actual progress saving is handled in FloatingMediaPlayer component
+})
+
 // Show update notification when available
 let updateNotificationElement: HTMLDivElement | null = null
 

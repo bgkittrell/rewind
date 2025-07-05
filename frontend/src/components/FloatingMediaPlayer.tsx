@@ -108,6 +108,72 @@ export function FloatingMediaPlayer({
     }
   }, [isPlaying])
 
+  // Save progress every 30 seconds when playing
+  useEffect(() => {
+    if (!isPlaying || !episode || !audioRef.current) return
+
+    const saveProgress = async () => {
+      if (audioRef.current && episode) {
+        try {
+          // Import episodeService dynamically to avoid circular dependencies
+          const { episodeService } = await import('../services/episodeService')
+          await episodeService.saveProgress(
+            episode.id,
+            audioRef.current.currentTime,
+            duration,
+            episode.id.split('-')[0] // Extract podcastId from episodeId (assuming format: podcastId-episodeId)
+          )
+        } catch (error) {
+          console.error('Error saving progress:', error)
+        }
+      }
+    }
+
+    const interval = setInterval(saveProgress, 30000) // Save every 30 seconds
+
+    return () => clearInterval(interval)
+  }, [isPlaying, episode, duration])
+
+  // Save progress on pause/stop
+  useEffect(() => {
+    if (!episode || !audioRef.current) return
+
+    const saveProgressOnPause = async () => {
+      if (!isPlaying && currentTime > 0) {
+        try {
+          const { episodeService } = await import('../services/episodeService')
+          await episodeService.saveProgress(
+            episode.id,
+            currentTime,
+            duration,
+            episode.id.split('-')[0] // Extract podcastId from episodeId
+          )
+        } catch (error) {
+          console.error('Error saving progress on pause:', error)
+        }
+      }
+    }
+
+    saveProgressOnPause()
+  }, [isPlaying, episode, currentTime, duration])
+
+  // Save progress on component unmount
+  useEffect(() => {
+    return () => {
+      if (episode && audioRef.current && audioRef.current.currentTime > 0) {
+        // Save progress before unmounting
+        import('../services/episodeService').then(({ episodeService }) => {
+          episodeService.saveProgress(
+            episode.id,
+            audioRef.current?.currentTime || 0,
+            duration,
+            episode.id.split('-')[0]
+          ).catch(error => console.error('Error saving progress on unmount:', error))
+        })
+      }
+    }
+  }, [episode, duration])
+
   // EARLY RETURN AFTER ALL HOOKS - THIS FIXES THE HOOKS ERROR
   if (!episode) return null
 

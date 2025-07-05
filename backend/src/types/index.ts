@@ -173,3 +173,17 @@ export interface RecommendationFilters {
   guests?: boolean
   new?: boolean
 }
+
+export interface LastPlayedEpisode {
+  episodeId: string
+  podcastId: string
+  title: string
+  podcastTitle: string
+  playbackPosition: number
+  duration: number
+  lastPlayed: string
+  progressPercentage: number
+  audioUrl: string
+  imageUrl?: string
+  podcastImageUrl?: string
+}

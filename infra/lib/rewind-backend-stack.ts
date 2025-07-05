@@ -268,6 +268,13 @@ export class RewindBackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
+    // GET /resume - Get resume data for last played episode
+    const resume = api.root.addResource('resume')
+    resume.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
     // Add recommendation routes
     const recommendations = api.root.addResource('recommendations')
 

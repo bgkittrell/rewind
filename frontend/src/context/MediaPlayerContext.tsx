@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { episodeService } from '../services/episodeService'
+import { resumeService, ResumeData } from '../services/resumeService'
 
 interface Episode {
   id: string
@@ -26,6 +28,9 @@ interface MediaPlayerContextType {
   resume: () => void
   stop: () => void
   seek: (_position: number) => void
+  resumePlayback: (_resumeData: ResumeData) => void
+  canResume: boolean
+  resumeData: ResumeData | null
 }
 
 const MediaPlayerContext = createContext<MediaPlayerContextType | null>(null)
@@ -36,13 +41,34 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     isPlaying: false,
     currentPosition: 0,
   })
+  const [resumeData, setResumeData] = useState<ResumeData | null>(null)
 
-  const playEpisode = (episode: Episode) => {
-    setState({
-      currentEpisode: episode,
-      isPlaying: true,
-      currentPosition: episode.playbackPosition || 0,
+  // Load resume data on mount
+  useEffect(() => {
+    resumeService.getResumeData().then(data => {
+      setResumeData(data)
     })
+  }, [])
+
+  const playEpisode = async (episode: Episode) => {
+    // Get saved progress for this episode
+    try {
+      const progress = await episodeService.getProgress(episode.id)
+      const playbackPosition = progress.position > 30 ? progress.position : 0
+      
+      setState({
+        currentEpisode: { ...episode, playbackPosition },
+        isPlaying: true,
+        currentPosition: playbackPosition,
+      })
+    } catch (error) {
+      // If progress fetch fails, play from the beginning
+      setState({
+        currentEpisode: episode,
+        isPlaying: true,
+        currentPosition: episode.playbackPosition || 0,
+      })
+    }
   }
 
   const pause = () => {
@@ -74,6 +100,30 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     }))
   }
 
+  const resumePlayback = (data: ResumeData) => {
+    const episode: Episode = {
+      id: data.episodeId,
+      title: data.title,
+      podcastName: data.podcastTitle,
+      releaseDate: '',
+      duration: data.duration.toString(),
+      audioUrl: data.audioUrl,
+      imageUrl: data.imageUrl,
+      playbackPosition: data.playbackPosition,
+      podcastImageUrl: data.podcastImageUrl,
+    }
+
+    setState({
+      currentEpisode: episode,
+      isPlaying: true,
+      currentPosition: data.playbackPosition,
+    })
+
+    // Clear resume data after resuming
+    setResumeData(null)
+    resumeService.clearResumeData()
+  }
+
   return (
     <MediaPlayerContext.Provider
       value={{
@@ -83,6 +133,9 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
         resume,
         stop,
         seek,
+        resumePlayback,
+        canResume: resumeData !== null,
+        resumeData,
       }}
     >
       {children}

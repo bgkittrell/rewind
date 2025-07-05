@@ -10,7 +10,7 @@ import {
   ReturnValue,
 } from '@aws-sdk/client-dynamodb'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
-import { Podcast, Episode, EpisodeData, ListeningHistoryItem } from '../types'
+import { Podcast, Episode, EpisodeData, ListeningHistoryItem, LastPlayedEpisode } from '../types'
 import { v4 as uuidv4 } from 'uuid'
 
 const crypto = require('crypto')
@@ -620,6 +620,69 @@ export class DynamoService {
     } catch (error) {
       console.error('Error getting listening history:', error)
       throw new Error('Failed to get listening history')
+    }
+  }
+
+  async getLastPlayedEpisode(userId: string): Promise<LastPlayedEpisode | null> {
+    const params = {
+      TableName: LISTENING_HISTORY_TABLE,
+      IndexName: 'LastPlayedIndex',
+      KeyConditionExpression: 'userId = :userId',
+      ExpressionAttributeValues: marshall({
+        ':userId': userId,
+      }),
+      ScanIndexForward: false, // Most recent first
+      Limit: 1,
+    }
+
+    try {
+      const result = await this.dynamoClient.send(new QueryCommand(params))
+
+      if (!result.Items || result.Items.length === 0) {
+        return null
+      }
+
+      const history = unmarshall(result.Items[0]) as ListeningHistoryItem
+
+      // Get episode details
+      const episode = await this.getEpisodeById(history.podcastId, history.episodeId)
+      if (!episode) {
+        return null
+      }
+
+      // Get podcast details
+      const userPodcasts = await this.getPodcastsByUser(userId)
+      const podcast = userPodcasts.find(p => p.podcastId === history.podcastId)
+      if (!podcast) {
+        return null
+      }
+
+      // Only return episodes that have meaningful progress (at least 30 seconds)
+      if (history.playbackPosition < 30) {
+        return null
+      }
+
+      // Don't return completed episodes
+      if (history.isCompleted) {
+        return null
+      }
+
+      return {
+        episodeId: history.episodeId,
+        podcastId: history.podcastId,
+        title: episode.title,
+        podcastTitle: podcast.title,
+        playbackPosition: history.playbackPosition,
+        duration: history.duration,
+        lastPlayed: history.lastPlayed,
+        progressPercentage: Math.round((history.playbackPosition / history.duration) * 100),
+        audioUrl: episode.audioUrl,
+        imageUrl: episode.imageUrl,
+        podcastImageUrl: podcast.imageUrl,
+      }
+    } catch (error) {
+      console.error('Error getting last played episode:', error)
+      return null
     }
   }
 

@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Resume bar animation */
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
+
 @layer base {
   html {
     font-family: Inter, system-ui, sans-serif;
