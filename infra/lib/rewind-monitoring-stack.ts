@@ -94,6 +94,12 @@ export class RewindMonitoringStack extends cdk.Stack {
     })
 
     // Add RUM permissions to both roles
+    const rumArn = cdk.Stack.of(this).formatArn({
+      service: 'rum',
+      resource: 'appmonitor',
+      resourceName: rumAppMonitor.attrId,
+    })
+
     const rumPolicyStatement = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
@@ -102,7 +108,7 @@ export class RewindMonitoringStack extends cdk.Stack {
         'rum:BatchCreateRumMetricDefinitions',
         'rum:GetAppMonitorData',
       ],
-      resources: [rumAppMonitor.attrArn],
+      resources: [rumArn],
     })
 
     unauthenticatedRole.addToPolicy(rumPolicyStatement)
@@ -111,14 +117,8 @@ export class RewindMonitoringStack extends cdk.Stack {
     // Add CloudWatch Logs permissions for RUM
     const cloudWatchPolicyStatement = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      actions: [
-        'logs:CreateLogGroup',
-        'logs:CreateLogStream',
-        'logs:PutLogEvents',
-      ],
-      resources: [
-        `arn:aws:logs:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:log-group:/aws/rum/*`,
-      ],
+      actions: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
+      resources: [`arn:aws:logs:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:log-group:/aws/rum/*`],
     })
 
     unauthenticatedRole.addToPolicy(cloudWatchPolicyStatement)
@@ -127,10 +127,7 @@ export class RewindMonitoringStack extends cdk.Stack {
     // Add X-Ray permissions for enhanced tracing
     const xrayPolicyStatement = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      actions: [
-        'xray:PutTraceSegments',
-        'xray:PutTelemetryRecords',
-      ],
+      actions: ['xray:PutTraceSegments', 'xray:PutTelemetryRecords'],
       resources: ['*'],
     })
 
@@ -159,7 +156,7 @@ export class RewindMonitoringStack extends cdk.Stack {
     })
 
     new cdk.CfnOutput(this, 'RumApplicationArn', {
-      value: rumAppMonitor.attrArn,
+      value: rumArn,
       description: 'RUM Application ARN',
     })
   }
