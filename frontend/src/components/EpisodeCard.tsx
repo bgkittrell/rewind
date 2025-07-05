@@ -40,10 +40,7 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
   const hasProgress = episode.playbackPosition && episode.playbackPosition > 0
 
   return (
-    <div
-      className="bg-white px-4 py-4 hover:bg-gray-50 transition-colors"
-      data-testid="episode-card"
-    >
+    <div className="bg-white px-4 py-4 hover:bg-gray-50 transition-colors" data-testid="episode-card">
       <div className="flex gap-3 sm:gap-4">
         {/* Episode/Podcast Thumbnail */}
         <div className="w-16 h-16 sm:w-18 sm:h-18 bg-gray-300 flex-shrink-0 overflow-hidden">
@@ -119,10 +116,7 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
           {hasProgress && (
             <div className="mt-3">
               <div className="w-full bg-gray-200 h-1">
-                <div
-                  className="bg-primary h-1 transition-all"
-                  style={{ width: `${episode.playbackPosition!}%` }}
-                />
+                <div className="bg-primary h-1 transition-all" style={{ width: `${episode.playbackPosition!}%` }} />
               </div>
               <p className="text-xs text-gray-500 mt-1">{Math.round(episode.playbackPosition!)}% complete</p>
             </div>
