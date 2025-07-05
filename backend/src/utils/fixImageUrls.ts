@@ -6,7 +6,7 @@ import { dynamoService } from '../services/dynamoService'
  */
 export async function fixAllEpisodeImageUrls(): Promise<void> {
   console.log('Starting to fix episode image URLs...')
-  
+
   try {
     // This would require getting all users and their podcasts
     // For now, we'll need to implement this per-podcast using the API endpoint
@@ -23,7 +23,7 @@ export async function fixAllEpisodeImageUrls(): Promise<void> {
  */
 export async function fixEpisodeImageUrlsForPodcast(podcastId: string): Promise<void> {
   console.log(`Fixing episode image URLs for podcast ${podcastId}...`)
-  
+
   try {
     await dynamoService.fixEpisodeImageUrls(podcastId)
     console.log(`Successfully fixed episode image URLs for podcast ${podcastId}`)

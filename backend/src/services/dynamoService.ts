@@ -394,7 +394,7 @@ export class DynamoService {
 
           return {
             ...episode,
-            imageUrl: fixedImageUrl
+            imageUrl: fixedImageUrl,
           }
         })
 
