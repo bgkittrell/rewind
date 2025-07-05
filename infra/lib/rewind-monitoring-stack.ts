@@ -94,6 +94,7 @@ export class RewindMonitoringStack extends cdk.Stack {
     })
 
     // Add RUM permissions to both roles
+    const rumAppMonitorArn = `arn:aws:rum:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:appmonitor/${rumAppMonitor.name}`
     const rumPolicyStatement = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
@@ -102,7 +103,7 @@ export class RewindMonitoringStack extends cdk.Stack {
         'rum:BatchCreateRumMetricDefinitions',
         'rum:GetAppMonitorData',
       ],
-      resources: [rumAppMonitor.attrArn],
+      resources: [rumAppMonitorArn],
     })
 
     unauthenticatedRole.addToPolicy(rumPolicyStatement)
@@ -159,7 +160,7 @@ export class RewindMonitoringStack extends cdk.Stack {
     })
 
     new cdk.CfnOutput(this, 'RumApplicationArn', {
-      value: rumAppMonitor.attrArn,
+      value: rumAppMonitorArn,
       description: 'RUM Application ARN',
     })
   }
