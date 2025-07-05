@@ -1,6 +1,6 @@
 /**
  * MediaSession Service for Rewind PWA
- * 
+ *
  * This service manages the MediaSession API to ensure proper integration with iOS
  * lock screen controls and prevents conflicts with other PWAs.
  */
@@ -9,7 +9,11 @@ interface MediaSessionData {
   title: string
   artist: string
   album: string
-  artwork?: MediaImage[]
+  artwork?: Array<{
+    src: string
+    sizes: string
+    type: string
+  }>
 }
 
 interface MediaSessionHandlers {
@@ -49,12 +53,12 @@ class MediaSessionService {
     // Set up action handlers
     navigator.mediaSession.setActionHandler('play', handlers.onPlay)
     navigator.mediaSession.setActionHandler('pause', handlers.onPause)
-    
-    navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+
+    navigator.mediaSession.setActionHandler('seekbackward', details => {
       handlers.onSeekBackward(details.seekOffset || 15)
     })
-    
-    navigator.mediaSession.setActionHandler('seekforward', (details) => {
+
+    navigator.mediaSession.setActionHandler('seekforward', details => {
       handlers.onSeekForward(details.seekOffset || 15)
     })
 

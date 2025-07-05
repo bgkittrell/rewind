@@ -80,12 +80,12 @@ export function FloatingMediaPlayer({
       navigator.mediaSession.setActionHandler('play', () => {
         onPlay()
       })
-      
+
       navigator.mediaSession.setActionHandler('pause', () => {
         onPause()
       })
-      
-      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+
+      navigator.mediaSession.setActionHandler('seekbackward', details => {
         if (audioRef.current) {
           const seekTime = details.seekOffset || 15
           const newTime = Math.max(0, audioRef.current.currentTime - seekTime)
@@ -93,8 +93,8 @@ export function FloatingMediaPlayer({
           onSeek(newTime)
         }
       })
-      
-      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+
+      navigator.mediaSession.setActionHandler('seekforward', details => {
         if (audioRef.current) {
           const seekTime = details.seekOffset || 15
           const newTime = Math.min(duration, audioRef.current.currentTime + seekTime)
@@ -106,7 +106,7 @@ export function FloatingMediaPlayer({
       // Set up additional handlers for better iOS integration
       navigator.mediaSession.setActionHandler('previoustrack', null)
       navigator.mediaSession.setActionHandler('nexttrack', null)
-      
+
       mediaSessionSetupRef.current = true
     }
 
