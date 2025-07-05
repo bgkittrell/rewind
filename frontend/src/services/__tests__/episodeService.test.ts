@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { episodeService } from '../episodeService'
 import { apiClient } from '../api'
-import { APIError } from '../api'
 
 // Mock the API client
 vi.mock('../api', () => ({
@@ -11,7 +10,6 @@ vi.mock('../api', () => ({
     put: vi.fn(),
     delete: vi.fn(),
   },
-  APIError: vi.fn(),
 }))
 
 const mockApiClient = vi.mocked(apiClient)
