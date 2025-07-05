@@ -45,7 +45,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     const logRequest: LogRequest = JSON.parse(event.body)
-    
+
     // Validate required fields
     if (!logRequest.level || !logRequest.message) {
       return createErrorResponse('Level and message are required', 'VALIDATION_ERROR', 400)
@@ -59,32 +59,32 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         ...logRequest.metadata,
         timestamp: new Date().toISOString(),
         url: logRequest.metadata?.url || 'unknown',
-        userAgent: logRequest.metadata?.userAgent || 'unknown'
+        userAgent: logRequest.metadata?.userAgent || 'unknown',
       },
       timestamp: new Date().toISOString(),
       url: logRequest.metadata?.url || 'unknown',
-      userAgent: logRequest.metadata?.userAgent || 'unknown'
+      userAgent: logRequest.metadata?.userAgent || 'unknown',
     }
 
     // Determine log group based on level
     const logGroupName = getLogGroupName(logRequest.level)
-    
+
     // Send to CloudWatch Logs
     await sendToCloudWatch(logGroupName, logEvent)
 
-    return createResponse(200, { 
-      success: true, 
+    return createResponse(200, {
+      success: true,
       message: 'Log sent successfully',
-      logGroup: logGroupName
+      logGroup: logGroupName,
     })
 
   } catch (error) {
     console.error('Logging error:', error)
-    
+
     if (error instanceof SyntaxError) {
       return createErrorResponse('Invalid JSON in request body', 'INVALID_JSON', 400)
     }
-    
+
     return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500)
   }
 }
@@ -107,21 +107,21 @@ async function sendToCloudWatch(logGroupName: string, logEvent: LogEvent): Promi
   try {
     // Create log stream name based on date
     const logStreamName = `rewind-${new Date().toISOString().split('T')[0]}-${Math.random().toString(36).substr(2, 9)}`
-    
+
     // Ensure log stream exists
     await ensureLogStreamExists(logGroupName, logStreamName)
-    
+
     // Prepare log event for CloudWatch
     const cloudWatchLogEvent = {
       timestamp: Date.now(),
-      message: JSON.stringify(logEvent)
+      message: JSON.stringify(logEvent),
     }
 
     // Send to CloudWatch
     const command = new PutLogEventsCommand({
       logGroupName,
       logStreamName,
-      logEvents: [cloudWatchLogEvent]
+      logEvents: [cloudWatchLogEvent],
     })
 
     await cloudWatchLogs.send(command)
@@ -138,18 +138,18 @@ async function ensureLogStreamExists(logGroupName: string, logStreamName: string
     // Check if log stream exists
     const describeCommand = new DescribeLogStreamsCommand({
       logGroupName,
-      logStreamNamePrefix: logStreamName
+      logStreamNamePrefix: logStreamName,
     })
 
     const result = await cloudWatchLogs.send(describeCommand)
-    
+
     // If log stream doesn't exist, create it
     if (!result.logStreams || result.logStreams.length === 0) {
       const createCommand = new CreateLogStreamCommand({
         logGroupName,
-        logStreamName
+        logStreamName,
       })
-      
+
       await cloudWatchLogs.send(createCommand)
       console.log(`Created log stream: ${logGroupName}/${logStreamName}`)
     }

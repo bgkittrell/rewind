@@ -2,15 +2,15 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 // Mock AWS SDK clients
 const mockDynamoDBClient = {
-  send: vi.fn().mockResolvedValue({ Items: [], Count: 0 })
+  send: vi.fn().mockResolvedValue({ Items: [], Count: 0 }),
 }
 
 const mockCognitoClient = {
-  send: vi.fn().mockResolvedValue({ AuthenticationResult: { AccessToken: 'mock-token' } })
+  send: vi.fn().mockResolvedValue({ AuthenticationResult: { AccessToken: 'mock-token' } }),
 }
 
 const mockCloudWatchLogsClient = {
-  send: vi.fn().mockResolvedValue({ logEvents: [] })
+  send: vi.fn().mockResolvedValue({ logEvents: [] }),
 }
 
 // Mock AWS SDK imports
@@ -26,7 +26,7 @@ vi.mock('@aws-sdk/client-dynamodb', () => ({
 
 vi.mock('@aws-sdk/lib-dynamodb', () => ({
   DynamoDBDocumentClient: {
-    from: vi.fn(() => mockDynamoDBClient)
+    from: vi.fn(() => mockDynamoDBClient),
   },
   GetCommand: vi.fn(),
   PutCommand: vi.fn(),
@@ -206,7 +206,7 @@ describe('Backend Build Smoke Tests', () => {
     it('should handle required environment variables', async () => {
       // Test that handlers can access environment variables
       const episodeModule = await import('../handlers/episodeHandler')
-      
+
       // Create a mock event to test environment variable access
       const mockEvent = {
         httpMethod: 'GET',
@@ -318,8 +318,8 @@ describe('Backend Build Smoke Tests', () => {
           metadata: {
             endpoint: '/test',
             status: 500,
-            error: 'Test error'
-          }
+            error: 'Test error',
+          },
         }),
         pathParameters: null,
         queryStringParameters: null,
@@ -343,16 +343,16 @@ describe('Backend Performance Smoke Tests', () => {
   describe('Handler Performance', () => {
     it('should import handlers quickly', async () => {
       const start = performance.now()
-      
+
       await Promise.all([
         import('../handlers/authHandler'),
         import('../handlers/episodeHandler'),
         import('../handlers/podcastHandler'),
       ])
-      
+
       const end = performance.now()
       const importTime = end - start
-      
+
       // Imports should be reasonably fast (less than 1000ms)
       expect(importTime).toBeLessThan(1000)
     })
@@ -364,12 +364,12 @@ describe('Backend Performance Smoke Tests', () => {
       await import('../services/dynamodb')
       await import('../services/auth')
       await import('../services/podcast')
-      
+
       // If we can import multiple times without errors, memory management is likely working
       await import('../services/dynamodb')
       await import('../services/auth')
       await import('../services/podcast')
-      
+
       expect(true).toBe(true) // If we get here without errors, memory management is working
     })
   })

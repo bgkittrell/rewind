@@ -18,7 +18,7 @@ vi.mock('@aws-sdk/client-cloudwatch-logs', () => ({
         return mockDescribeLogStreams(command)
       }
       return Promise.resolve({})
-    })
+    }),
   })),
   PutLogEventsCommand: vi.fn(),
   CreateLogStreamCommand: vi.fn(),
@@ -44,20 +44,20 @@ describe('CloudWatch Logging Handler', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.AWS_REGION = 'us-east-1'
-    
+
     // Mock successful log stream creation
     mockDescribeLogStreams.mockResolvedValue({
       logStreams: [
         {
           logStreamName: 'test-stream',
-          uploadSequenceToken: 'test-token-123'
-        }
-      ]
+          uploadSequenceToken: 'test-token-123',
+        },
+      ],
     })
-    
+
     // Mock successful log event putting
     mockPutLogEvents.mockResolvedValue({
-      nextSequenceToken: 'test-token-456'
+      nextSequenceToken: 'test-token-456',
     })
   })
 
@@ -88,8 +88,8 @@ describe('CloudWatch Logging Handler', () => {
       expect(JSON.parse(result.body)).toEqual({
         error: {
           message: 'Method not allowed',
-          code: 'METHOD_NOT_ALLOWED'
-        }
+          code: 'METHOD_NOT_ALLOWED',
+        },
       })
     })
 
@@ -101,7 +101,7 @@ describe('CloudWatch Logging Handler', () => {
         body: JSON.stringify({
           level: 'INFO',
           message: 'Test message',
-          metadata: {}
+          metadata: {},
         }),
         pathParameters: null,
         queryStringParameters: null,
@@ -142,8 +142,8 @@ describe('CloudWatch Logging Handler', () => {
       expect(JSON.parse(result.body)).toEqual({
         error: {
           message: 'Request body is required',
-          code: 'MISSING_BODY'
-        }
+          code: 'MISSING_BODY',
+        },
       })
     })
 
@@ -169,8 +169,8 @@ describe('CloudWatch Logging Handler', () => {
       expect(JSON.parse(result.body)).toEqual({
         error: {
           message: 'Invalid JSON in request body',
-          code: 'INVALID_JSON'
-        }
+          code: 'INVALID_JSON',
+        },
       })
     })
 
@@ -182,7 +182,7 @@ describe('CloudWatch Logging Handler', () => {
         body: JSON.stringify({
           level: 'INFO',
           // missing message field
-          metadata: {}
+          metadata: {},
         }),
         pathParameters: null,
         queryStringParameters: null,
@@ -200,8 +200,8 @@ describe('CloudWatch Logging Handler', () => {
       expect(JSON.parse(result.body)).toEqual({
         error: {
           message: 'Missing required fields: message',
-          code: 'MISSING_FIELDS'
-        }
+          code: 'MISSING_FIELDS',
+        },
       })
     })
 
@@ -213,7 +213,7 @@ describe('CloudWatch Logging Handler', () => {
         body: JSON.stringify({
           level: 'INVALID_LEVEL',
           message: 'Test message',
-          metadata: {}
+          metadata: {},
         }),
         pathParameters: null,
         queryStringParameters: null,
@@ -231,8 +231,8 @@ describe('CloudWatch Logging Handler', () => {
       expect(JSON.parse(result.body)).toEqual({
         error: {
           message: 'Invalid log level. Must be one of: DEBUG, INFO, WARN, ERROR',
-          code: 'INVALID_LOG_LEVEL'
-        }
+          code: 'INVALID_LOG_LEVEL',
+        },
       })
     })
   })
@@ -249,7 +249,7 @@ describe('CloudWatch Logging Handler', () => {
           body: JSON.stringify({
             level,
             message: 'Test message',
-            metadata: {}
+            metadata: {},
           }),
           pathParameters: null,
           queryStringParameters: null,
@@ -279,8 +279,8 @@ describe('CloudWatch Logging Handler', () => {
           metadata: {
             endpoint: '/api/test',
             status: 500,
-            error: 'Internal server error'
-          }
+            error: 'Internal server error',
+          },
         }),
         pathParameters: null,
         queryStringParameters: null,
@@ -297,8 +297,8 @@ describe('CloudWatch Logging Handler', () => {
       expect(result.statusCode).toBe(201)
       expect(mockDescribeLogStreams).toHaveBeenCalledWith(
         expect.objectContaining({
-          logGroupName: 'rewind-app-errors'
-        })
+          logGroupName: 'rewind-app-errors',
+        }),
       )
     })
 
@@ -310,7 +310,7 @@ describe('CloudWatch Logging Handler', () => {
         body: JSON.stringify({
           level: 'INFO',
           message: 'Test info message',
-          metadata: {}
+          metadata: {},
         }),
         pathParameters: null,
         queryStringParameters: null,
@@ -327,8 +327,8 @@ describe('CloudWatch Logging Handler', () => {
       expect(result.statusCode).toBe(201)
       expect(mockDescribeLogStreams).toHaveBeenCalledWith(
         expect.objectContaining({
-          logGroupName: 'rewind-app-general'
-        })
+          logGroupName: 'rewind-app-general',
+        }),
       )
     })
   })
@@ -337,7 +337,7 @@ describe('CloudWatch Logging Handler', () => {
     it('should create log stream if it does not exist', async () => {
       // Mock no existing log streams
       mockDescribeLogStreams.mockResolvedValue({
-        logStreams: []
+        logStreams: [],
       })
 
       // Mock successful log stream creation
@@ -350,7 +350,7 @@ describe('CloudWatch Logging Handler', () => {
         body: JSON.stringify({
           level: 'INFO',
           message: 'Test message',
-          metadata: {}
+          metadata: {},
         }),
         pathParameters: null,
         queryStringParameters: null,
@@ -377,7 +377,7 @@ describe('CloudWatch Logging Handler', () => {
         body: JSON.stringify({
           level: 'INFO',
           message: 'Test message',
-          metadata: {}
+          metadata: {},
         }),
         pathParameters: null,
         queryStringParameters: null,
@@ -407,7 +407,7 @@ describe('CloudWatch Logging Handler', () => {
         body: JSON.stringify({
           level: 'INFO',
           message: 'Test message',
-          metadata: {}
+          metadata: {},
         }),
         pathParameters: null,
         queryStringParameters: null,
@@ -425,8 +425,8 @@ describe('CloudWatch Logging Handler', () => {
       expect(JSON.parse(result.body)).toEqual({
         error: {
           message: 'Failed to send logs to CloudWatch',
-          code: 'CLOUDWATCH_ERROR'
-        }
+          code: 'CLOUDWATCH_ERROR',
+        },
       })
     })
   })
@@ -438,7 +438,7 @@ describe('CloudWatch Logging Handler', () => {
         status: 200,
         responseTime: 150,
         userId: 'user123',
-        sessionId: 'session456'
+        sessionId: 'session456',
       }
 
       const event: APIGatewayProxyEvent = {
@@ -448,7 +448,7 @@ describe('CloudWatch Logging Handler', () => {
         body: JSON.stringify({
           level: 'INFO',
           message: 'API call successful',
-          metadata
+          metadata,
         }),
         pathParameters: null,
         queryStringParameters: null,
@@ -468,10 +468,10 @@ describe('CloudWatch Logging Handler', () => {
           logEvents: expect.arrayContaining([
             expect.objectContaining({
               message: expect.stringContaining('API call successful'),
-              timestamp: expect.any(Number)
-            })
-          ])
-        })
+              timestamp: expect.any(Number),
+            }),
+          ]),
+        }),
       )
     })
 
@@ -483,7 +483,7 @@ describe('CloudWatch Logging Handler', () => {
         body: JSON.stringify({
           level: 'INFO',
           message: 'Simple log message',
-          metadata: {}
+          metadata: {},
         }),
         pathParameters: null,
         queryStringParameters: null,
@@ -511,7 +511,7 @@ describe('CloudWatch Logging Handler', () => {
         body: JSON.stringify({
           level: 'INFO',
           message: 'Test message',
-          metadata: {}
+          metadata: {},
         }),
         pathParameters: null,
         queryStringParameters: null,
@@ -536,7 +536,7 @@ describe('CloudWatch Logging Handler', () => {
       const body = JSON.parse(result.body)
       expect(body).toEqual({
         success: true,
-        message: 'Log sent successfully'
+        message: 'Log sent successfully',
       })
     })
 
