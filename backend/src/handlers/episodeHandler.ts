@@ -40,6 +40,8 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       case 'POST':
         if (path.includes('/sync')) {
           return await syncEpisodes(event.pathParameters?.podcastId, userId, path)
+        } else if (path.includes('/fix-images')) {
+          return await fixEpisodeImages(event.pathParameters?.podcastId, userId, path)
         }
         break
 
@@ -293,5 +295,39 @@ async function deleteEpisodes(podcastId: string, userId: string, path: string): 
   } catch (error) {
     console.error('Error deleting episodes:', error)
     return createErrorResponse('Failed to delete episodes', 'INTERNAL_ERROR', 500, path)
+  }
+}
+
+async function fixEpisodeImages(
+  podcastId: string | undefined,
+  userId: string,
+  path: string,
+): Promise<APIGatewayProxyResult> {
+  if (!podcastId) {
+    return createErrorResponse('Podcast ID is required', 'VALIDATION_ERROR', 400, path)
+  }
+
+  try {
+    // First, verify the podcast belongs to the user
+    const userPodcasts = await dynamoService.getPodcastsByUser(userId)
+    const podcast = userPodcasts.find(p => p.podcastId === podcastId)
+
+    if (!podcast) {
+      return createErrorResponse('Podcast not found or access denied', 'NOT_FOUND', 404, path)
+    }
+
+    // Fix episode image URLs
+    await dynamoService.fixEpisodeImageUrls(podcastId)
+
+    return createSuccessResponse(
+      {
+        message: 'Episode image URLs fixed successfully',
+      },
+      200,
+      path,
+    )
+  } catch (error) {
+    console.error('Error fixing episode image URLs:', error)
+    return createErrorResponse('Failed to fix episode image URLs', 'INTERNAL_ERROR', 500, path)
   }
 }

@@ -362,6 +362,62 @@ export class DynamoService {
       throw new Error('Failed to get listening history')
     }
   }
+
+  // Fix existing episodes with complex imageUrl objects
+  async fixEpisodeImageUrls(podcastId: string): Promise<void> {
+    try {
+      // Get all episodes for the podcast
+      const episodes = await this.getEpisodesByPodcast(podcastId)
+
+      if (episodes.episodes.length === 0) {
+        return
+      }
+
+      // Process episodes in batches to fix imageUrl
+      const batchSize = 25
+      for (let i = 0; i < episodes.episodes.length; i += batchSize) {
+        const batch = episodes.episodes.slice(i, i + batchSize)
+        const fixedEpisodes = batch.map(episode => {
+          let fixedImageUrl = episode.imageUrl
+
+          // If imageUrl is a complex object, extract the actual URL
+          if (typeof episode.imageUrl === 'object' && episode.imageUrl !== null) {
+            const imageObj = episode.imageUrl as any
+            if (imageObj.$?.M?.href?.S) {
+              fixedImageUrl = imageObj.$.M.href.S
+            } else if (imageObj.href) {
+              fixedImageUrl = imageObj.href
+            } else if (imageObj.url) {
+              fixedImageUrl = imageObj.url
+            }
+          }
+
+          return {
+            ...episode,
+            imageUrl: fixedImageUrl,
+          }
+        })
+
+        // Update episodes with fixed imageUrl
+        const writeRequests = fixedEpisodes.map(episode => ({
+          PutRequest: {
+            Item: marshall(episode),
+          },
+        }))
+
+        const params = {
+          RequestItems: {
+            [EPISODES_TABLE]: writeRequests,
+          },
+        }
+
+        await dynamoClient.send(new BatchWriteItemCommand(params))
+      }
+    } catch (error) {
+      console.error('Error fixing episode image URLs:', error)
+      throw new Error('Failed to fix episode image URLs')
+    }
+  }
 }
 
 export const dynamoService = new DynamoService()

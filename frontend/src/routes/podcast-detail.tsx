@@ -39,6 +39,8 @@ export default function PodcastDetail() {
   const [isSyncing, setIsSyncing] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isFixingImages, setIsFixingImages] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const EPISODES_PER_PAGE = 20
 
@@ -121,6 +123,7 @@ export default function PodcastDetail() {
 
     try {
       setIsSyncing(true)
+      setSuccessMessage(null)
       const response = await episodeService.syncEpisodes(podcastId)
 
       if (response.episodeCount > 0) {
@@ -157,6 +160,32 @@ export default function PodcastDetail() {
       }
     } finally {
       setIsDeleting(false)
+      setIsDropdownOpen(false)
+    }
+  }
+
+  const handleFixEpisodeImages = async () => {
+    if (!podcastId) return
+
+    try {
+      setIsFixingImages(true)
+      setError(null)
+      setSuccessMessage(null)
+
+      await episodeService.fixEpisodeImages(podcastId)
+
+      // Show success message and reload episodes to see the fixed images
+      setSuccessMessage('Episode images fixed successfully!')
+      await loadEpisodes(undefined, true)
+    } catch (err) {
+      console.error('Failed to fix episode images:', err)
+      if (err instanceof APIError) {
+        setError(`Failed to fix episode images: ${err.message}`)
+      } else {
+        setError('Failed to fix episode images')
+      }
+    } finally {
+      setIsFixingImages(false)
       setIsDropdownOpen(false)
     }
   }
@@ -229,6 +258,16 @@ export default function PodcastDetail() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isDropdownOpen])
 
+  // Auto-hide success message after 5 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [successMessage])
+
   if (authLoading || isLoading) {
     return (
       <div className="px-4 py-6">
@@ -262,6 +301,56 @@ export default function PodcastDetail() {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-50 border-l-4 border-green-500 p-4 m-4 rounded">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-sm text-green-800">{successMessage}</p>
+            <button onClick={() => setSuccessMessage(null)} className="ml-auto text-green-600 hover:text-green-800">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 m-4 rounded">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-sm text-red-800">{error}</p>
+            <button onClick={() => setError(null)} className="ml-auto text-red-600 hover:text-red-800">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Back Button */}
       <div className="bg-white px-4 py-3 border-b border-gray-200">
         <button
@@ -348,6 +437,26 @@ export default function PodcastDetail() {
                           </svg>
                         )}
                         <span>{isSyncing ? 'Syncing...' : 'Sync Episodes'}</span>
+                      </button>
+
+                      <button
+                        onClick={handleFixEpisodeImages}
+                        disabled={isFixingImages}
+                        className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isFixingImages ? (
+                          <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full" />
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                        )}
+                        <span>{isFixingImages ? 'Fixing Images...' : 'Fix Episode Images'}</span>
                       </button>
 
                       <button

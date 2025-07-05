@@ -141,6 +141,16 @@ export class EpisodeService {
     }
   }
 
+  async fixEpisodeImages(podcastId: string): Promise<{ message: string }> {
+    try {
+      const response = await apiClient.post<{ message: string }>(`/episodes/${podcastId}/fix-images`)
+      return response
+    } catch (error) {
+      console.error('Error fixing episode images:', error)
+      throw new Error('Failed to fix episode images')
+    }
+  }
+
   // Utility method to format duration from seconds to MM:SS
   formatDuration(seconds: number): string {
     const minutes = Math.floor(seconds / 60)
