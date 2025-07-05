@@ -9,12 +9,18 @@ import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { Podcast, Episode, EpisodeData, ListeningHistoryItem } from '../types'
 import { v4 as uuidv4 } from 'uuid'
 
+
 const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' })
 const PODCASTS_TABLE = process.env.PODCASTS_TABLE || 'RewindPodcasts'
 const EPISODES_TABLE = process.env.EPISODES_TABLE || 'RewindEpisodes'
 const LISTENING_HISTORY_TABLE = process.env.LISTENING_HISTORY_TABLE || 'RewindListeningHistory'
 
 export class DynamoService {
+  private dynamoClient: DynamoDBClient
+
+  constructor(client?: DynamoDBClient) {
+    this.dynamoClient = client || new DynamoDBClient({ region: process.env.AWS_REGION })
+  }
   async savePodcast(userId: string, podcastData: Omit<Podcast, 'podcastId' | 'userId'>): Promise<Podcast> {
     const podcast: Podcast = {
       podcastId: uuidv4(),
@@ -28,7 +34,7 @@ export class DynamoService {
     }
 
     try {
-      await dynamoClient.send(new PutItemCommand(params))
+      await this.dynamoClient.send(new PutItemCommand(params))
       return podcast
     } catch (error) {
       console.error('Error saving podcast:', error)
@@ -46,13 +52,13 @@ export class DynamoService {
     }
 
     try {
-      const result = await dynamoClient.send(new QueryCommand(params))
+      const result = await this.dynamoClient.send(new QueryCommand(params))
 
       if (!result.Items || result.Items.length === 0) {
         return []
       }
 
-      return result.Items.map(item => unmarshall(item) as Podcast)
+      return result.Items.map((item: any) => unmarshall(item) as Podcast)
     } catch (error) {
       console.error('Error getting podcasts:', error)
       throw new Error('Failed to get podcasts')
@@ -70,7 +76,7 @@ export class DynamoService {
     }
 
     try {
-      await dynamoClient.send(new DeleteItemCommand(params))
+      await this.dynamoClient.send(new DeleteItemCommand(params))
     } catch (error: any) {
       console.error('Error deleting podcast:', error)
       if (error.name === 'ConditionalCheckFailedException') {
@@ -92,7 +98,7 @@ export class DynamoService {
     }
 
     try {
-      const result = await dynamoClient.send(new QueryCommand(params))
+      const result = await this.dynamoClient.send(new QueryCommand(params))
       return !!(result.Items && result.Items.length > 0)
     } catch (error) {
       console.error('Error checking podcast existence:', error)
@@ -133,7 +139,7 @@ export class DynamoService {
       }
 
       try {
-        await dynamoClient.send(new BatchWriteItemCommand(params))
+        await this.dynamoClient.send(new BatchWriteItemCommand(params))
         savedEpisodes.push(...episodesToSave)
       } catch (error) {
         console.error('Error saving episodes batch:', error)
@@ -156,25 +162,28 @@ export class DynamoService {
         ':podcastId': podcastId,
       }),
       ScanIndexForward: false, // Sort by release date descending
-      IndexName: 'ReleaseDateIndex',
     }
 
-    if (limit) {
-      params.Limit = limit
-    }
-
-    if (lastEvaluatedKey) {
-      params.ExclusiveStartKey = marshall(JSON.parse(lastEvaluatedKey))
-    }
-
+    // Only use the ReleaseDateIndex if it exists, otherwise use the main table
     try {
-      const result = await dynamoClient.send(new QueryCommand(params))
+      // First try with the index
+      params.IndexName = 'ReleaseDateIndex'
+
+      if (limit) {
+        params.Limit = limit
+      }
+
+      if (lastEvaluatedKey) {
+        params.ExclusiveStartKey = marshall(JSON.parse(lastEvaluatedKey))
+      }
+
+      const result = await this.dynamoClient.send(new QueryCommand(params))
 
       if (!result.Items || result.Items.length === 0) {
         return { episodes: [] }
       }
 
-      const episodes = result.Items.map(item => unmarshall(item) as Episode)
+      const episodes = result.Items.map((item: any) => unmarshall(item) as Episode)
 
       const response: { episodes: Episode[]; lastEvaluatedKey?: string } = { episodes }
 
@@ -184,8 +193,35 @@ export class DynamoService {
 
       return response
     } catch (error) {
-      console.error('Error getting episodes:', error)
-      throw new Error('Failed to get episodes')
+      console.warn('ReleaseDateIndex not available, falling back to main table:', error)
+
+      // Fallback to main table without index
+      delete params.IndexName
+      delete params.ScanIndexForward
+
+      try {
+        const result = await this.dynamoClient.send(new QueryCommand(params))
+
+        if (!result.Items || result.Items.length === 0) {
+          return { episodes: [] }
+        }
+
+        const episodes = result.Items.map((item: any) => unmarshall(item) as Episode)
+
+        // Sort by release date manually since we can't use the index
+        episodes.sort((a: Episode, b: Episode) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
+
+        const response: { episodes: Episode[]; lastEvaluatedKey?: string } = { episodes }
+
+        if (result.LastEvaluatedKey) {
+          response.lastEvaluatedKey = JSON.stringify(unmarshall(result.LastEvaluatedKey))
+        }
+
+        return response
+      } catch (fallbackError) {
+        console.error('Error getting episodes from main table:', fallbackError)
+        throw new Error('Failed to get episodes')
+      }
     }
   }
 
@@ -199,7 +235,7 @@ export class DynamoService {
     }
 
     try {
-      const result = await dynamoClient.send(new QueryCommand(params))
+      const result = await this.dynamoClient.send(new QueryCommand(params))
 
       if (!result.Items || result.Items.length === 0) {
         return null
@@ -240,7 +276,7 @@ export class DynamoService {
           },
         }
 
-        await dynamoClient.send(new BatchWriteItemCommand(params))
+        await this.dynamoClient.send(new BatchWriteItemCommand(params))
       }
     } catch (error) {
       console.error('Error deleting episodes:', error)
@@ -291,7 +327,7 @@ export class DynamoService {
     }
 
     try {
-      await dynamoClient.send(new PutItemCommand(params))
+      await this.dynamoClient.send(new PutItemCommand(params))
     } catch (error) {
       console.error('Error saving playback progress:', error)
       throw new Error('Failed to save playback progress')
@@ -308,7 +344,7 @@ export class DynamoService {
     }
 
     try {
-      const result = await dynamoClient.send(new QueryCommand(params))
+      const result = await this.dynamoClient.send(new QueryCommand(params))
 
       if (!result.Items || result.Items.length === 0) {
         return null
@@ -350,13 +386,13 @@ export class DynamoService {
     }
 
     try {
-      const result = await dynamoClient.send(new QueryCommand(params))
+      const result = await this.dynamoClient.send(new QueryCommand(params))
 
       if (!result.Items || result.Items.length === 0) {
         return []
       }
 
-      return result.Items.map(item => unmarshall(item) as ListeningHistoryItem)
+      return result.Items.map((item: any) => unmarshall(item) as ListeningHistoryItem)
     } catch (error) {
       console.error('Error getting listening history:', error)
       throw new Error('Failed to get listening history')
@@ -411,7 +447,7 @@ export class DynamoService {
           },
         }
 
-        await dynamoClient.send(new BatchWriteItemCommand(params))
+        await this.dynamoClient.send(new BatchWriteItemCommand(params))
       }
     } catch (error) {
       console.error('Error fixing episode image URLs:', error)
