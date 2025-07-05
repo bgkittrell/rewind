@@ -37,6 +37,8 @@ export default function PodcastDetail() {
   const [hasMore, setHasMore] = useState(true)
   const [cursor, setCursor] = useState<string | undefined>()
   const [isSyncing, setIsSyncing] = useState(false)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const EPISODES_PER_PAGE = 20
 
@@ -137,6 +139,28 @@ export default function PodcastDetail() {
     }
   }
 
+  const handleDeletePodcast = async () => {
+    if (!podcastId) return
+
+    try {
+      setIsDeleting(true)
+      await podcastService.deletePodcast(podcastId)
+
+      // Navigate back to library after successful deletion
+      navigate('/library')
+    } catch (err) {
+      console.error('Failed to delete podcast:', err)
+      if (err instanceof APIError) {
+        setError(`Failed to delete podcast: ${err.message}`)
+      } else {
+        setError('Failed to delete podcast')
+      }
+    } finally {
+      setIsDeleting(false)
+      setIsDropdownOpen(false)
+    }
+  }
+
   const handleLoadMore = useCallback(() => {
     if (hasMore && !isLoadingEpisodes && cursor) {
       loadEpisodes(cursor)
@@ -192,6 +216,18 @@ export default function PodcastDetail() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [handleLoadMore])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isDropdownOpen && !(event.target as Element).closest('.relative')) {
+        setIsDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isDropdownOpen])
 
   if (authLoading || isLoading) {
     return (
@@ -262,37 +298,93 @@ export default function PodcastDetail() {
 
           {/* Podcast Information */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{podcast.title}</h1>
-            <p className="text-gray-600 mb-3 leading-relaxed text-sm">{stripAndTruncate(podcast.description, 250)}</p>
-            <div className="flex items-center space-x-3 text-sm text-gray-500">
-              <span>{podcast.episodeCount} episodes</span>
-              <span>•</span>
-              <span>Added {new Date(podcast.createdAt).toLocaleDateString()}</span>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{podcast.title}</h1>
+                <p className="text-gray-600 mb-3 leading-relaxed text-sm">
+                  {stripAndTruncate(podcast.description, 250)}
+                </p>
+                <div className="flex items-center space-x-3 text-sm text-gray-500">
+                  <span>{podcast.episodeCount} episodes</span>
+                  <span>•</span>
+                  <span>Added {new Date(podcast.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              {/* Dropdown Menu */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+                  title="More options"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                  </svg>
+                </button>
+
+                {/* Dropdown Content */}
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          syncEpisodes()
+                          setIsDropdownOpen(false)
+                        }}
+                        disabled={isSyncing}
+                        className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSyncing ? (
+                          <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full" />
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
+                          </svg>
+                        )}
+                        <span>{isSyncing ? 'Syncing...' : 'Sync Episodes'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `Are you sure you want to delete "${podcast.title}"? This action cannot be undone.`,
+                            )
+                          ) {
+                            handleDeletePodcast()
+                          } else {
+                            setIsDropdownOpen(false)
+                          }
+                        }}
+                        disabled={isDeleting}
+                        className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isDeleting ? (
+                          <div className="animate-spin w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full" />
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        )}
+                        <span>{isDeleting ? 'Deleting...' : 'Delete Podcast'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mt-6">
-          <button
-            onClick={() => syncEpisodes()}
-            disabled={isSyncing}
-            className="flex items-center space-x-2 px-6 py-3 bg-primary text-white font-medium hover:bg-secondary transition-colors disabled:opacity-50 w-full sm:w-auto justify-center"
-          >
-            {isSyncing ? (
-              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            )}
-            <span>{isSyncing ? 'Syncing...' : 'Sync Episodes'}</span>
-          </button>
         </div>
       </div>
 

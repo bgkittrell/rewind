@@ -116,7 +116,10 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
           {hasProgress && (
             <div className="mt-3">
               <div className="w-full bg-gray-200 rounded-full h-1">
-                <div className="bg-primary h-1 rounded-full transition-all" style={{ width: `${episode.playbackPosition!}%` }} />
+                <div
+                  className="bg-primary h-1 rounded-full transition-all"
+                  style={{ width: `${episode.playbackPosition!}%` }}
+                />
               </div>
               <p className="text-xs text-gray-500 mt-1">{Math.round(episode.playbackPosition!)}% complete</p>
             </div>
