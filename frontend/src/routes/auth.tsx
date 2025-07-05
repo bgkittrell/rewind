@@ -51,20 +51,14 @@ export default function Auth() {
         {/* App header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-primary">⏪ Rewind</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Rediscover older episodes from your favorite podcasts
-          </p>
+          <p className="mt-2 text-sm text-gray-600">Rediscover older episodes from your favorite podcasts</p>
         </div>
 
         {/* Login form */}
         <div className="bg-white shadow-md rounded-lg px-8 pt-6 pb-8">
           <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Sign In</h2>
 
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
+          {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -75,7 +69,7 @@ export default function Auth() {
                 type="email"
                 id="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 required
                 disabled={isLoading}
@@ -90,7 +84,7 @@ export default function Auth() {
                 type="password"
                 id="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 required
                 disabled={isLoading}

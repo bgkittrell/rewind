@@ -80,11 +80,9 @@ const LoginPrompt = () => (
       </svg>
     </div>
     <h3 className="text-lg font-semibold text-gray-900 mb-2">Sign in to get recommendations</h3>
-    <p className="text-gray-600 mb-4">
-      Sign in to your account to see personalized podcast episode recommendations.
-    </p>
+    <p className="text-gray-600 mb-4">Sign in to your account to see personalized podcast episode recommendations.</p>
     <button
-      onClick={() => window.location.href = '/login'}
+      onClick={() => (window.location.href = '/login')}
       className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors"
     >
       Sign In
