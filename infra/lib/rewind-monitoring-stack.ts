@@ -62,12 +62,6 @@ export class RewindMonitoringStack extends cdk.Stack {
         unauthenticated: unauthenticatedRole.roleArn,
         authenticated: authenticatedRole.roleArn,
       },
-      roleMappings: {
-        [props.userPool.userPoolId]: {
-          type: 'Token',
-          ambiguousRoleResolution: 'AuthenticatedRole',
-        },
-      },
     })
 
     // Create RUM App Monitor
