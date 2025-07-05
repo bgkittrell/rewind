@@ -3,6 +3,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as apigateway from 'aws-cdk-lib/aws-apigateway'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
+import * as logs from 'aws-cdk-lib/aws-logs'
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import { Construct } from 'constructs'
 import * as path from 'path'
@@ -137,7 +138,7 @@ export class RewindBackendStack extends cdk.Stack {
       resultsCacheTtl: cdk.Duration.seconds(0), // Disable caching for debugging
     })
 
-    // Create API Gateway
+    // Create API Gateway with enhanced logging
     const api = new apigateway.RestApi(this, 'RewindApi', {
       restApiName: 'Rewind API',
       description: 'API for Rewind podcast app',
@@ -147,9 +148,89 @@ export class RewindBackendStack extends cdk.Stack {
         allowHeaders: ['Content-Type', 'Authorization', 'X-Amz-Date', 'X-Api-Key', 'X-Amz-Security-Token'],
         allowCredentials: false,
       },
-      deployOptions: {
-        stageName: 'prod',
-      },
+      // Enable CloudWatch role for API Gateway logging
+      cloudWatchRole: true,
+    })
+
+    // Create CloudWatch Log Group for API Gateway access logs
+    const apiAccessLogGroup = new logs.LogGroup(this, 'ApiAccessLogs', {
+      logGroupName: `/aws/apigateway/${api.restApiId}/access`,
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    })
+
+    // Create CloudWatch Log Group for API Gateway execution logs
+    const apiExecutionLogGroup = new logs.LogGroup(this, 'ApiExecutionLogs', {
+      logGroupName: `/aws/apigateway/${api.restApiId}/execution`,
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    })
+
+    // Configure deployment with detailed logging
+    const deployment = new apigateway.Deployment(this, 'ApiDeployment', {
+      api,
+      description: 'Rewind API Deployment with Enhanced Logging',
+    })
+
+    // Create stage with comprehensive logging configuration
+    const stage = new apigateway.Stage(this, 'ApiStage', {
+      deployment,
+      stageName: 'prod',
+      // Enable detailed execution logging
+      loggingLevel: apigateway.MethodLoggingLevel.INFO,
+      dataTraceEnabled: true,
+      metricsEnabled: true,
+      // Enable X-Ray tracing for distributed tracing
+      tracingEnabled: true,
+      // Configure access logging with authentication details
+      accessLogDestination: new apigateway.LogGroupLogDestination(apiAccessLogGroup),
+      accessLogFormat: apigateway.AccessLogFormat.custom([
+        // Request information
+        '{"requestTime":"$context.requestTime"',
+        '"requestId":"$context.requestId"',
+        '"extendedRequestId":"$context.extendedRequestId"',
+        '"httpMethod":"$context.httpMethod"',
+        '"resourcePath":"$context.resourcePath"',
+        '"protocol":"$context.protocol"',
+        '"sourceIp":"$context.identity.sourceIp"',
+        '"userAgent":"$context.identity.userAgent"',
+        // Authentication details
+        '"user":"$context.identity.user"',
+        '"userArn":"$context.identity.userArn"',
+        '"cognitoIdentityId":"$context.identity.cognitoIdentityId"',
+        '"cognitoAuthenticationType":"$context.identity.cognitoAuthenticationType"',
+        '"cognitoAuthenticationProvider":"$context.identity.cognitoAuthenticationProvider"',
+        // Authorization details
+        '"authorizer.principalId":"$context.authorizer.principalId"',
+        '"authorizer.claims":"$context.authorizer.claims"',
+        // Response information
+        '"status":"$context.status"',
+        '"responseLength":"$context.responseLength"',
+        '"responseLatency":"$context.responseLatency"',
+        '"integrationLatency":"$context.integrationLatency"',
+        // Error details
+        '"error.message":"$context.error.message"',
+        '"error.messageString":"$context.error.messageString"',
+        '"error.responseType":"$context.error.responseType"',
+        '"integrationError":"$context.integrationErrorMessage"}',
+      ].join(',')),
+    })
+
+    // Override the default deployment to use our custom stage
+    api.deploymentStage = stage
+
+    // Enable Lambda function logging with X-Ray tracing
+    const lambdaFunctions = [podcastFunction, authFunction, episodeFunction, recommendationFunction]
+    lambdaFunctions.forEach(fn => {
+      fn.addEnvironment('AWS_LAMBDA_LOG_LEVEL', 'INFO')
+      // Enable X-Ray tracing for all Lambda functions
+      fn.addToRolePolicy(
+        new cdk.aws_iam.PolicyStatement({
+          effect: cdk.aws_iam.Effect.ALLOW,
+          actions: ['xray:PutTraceSegments', 'xray:PutTelemetryRecords'],
+          resources: ['*'],
+        }),
+      )
     })
 
     // Add health check endpoint (no authorization needed)
