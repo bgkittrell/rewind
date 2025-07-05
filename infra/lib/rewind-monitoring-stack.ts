@@ -81,7 +81,6 @@ export class RewindMonitoringStack extends cdk.Stack {
         metricDestinations: [
           {
             destination: 'CloudWatch',
-            destinationArn: `arn:aws:logs:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:*`,
           },
         ],
       },
