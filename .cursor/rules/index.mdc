@@ -81,7 +81,7 @@ All rules reference the comprehensive documentation in the `docs/` directory:
 
 ## Quick Reference
 
-- **API Base URL**: `https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1`
+- **API Base URL**: `https://bds33eqtv5.execute-api.us-east-1.amazonaws.com/prod`
 - **Primary Color**: `#eb4034` (red)
 - **Target Audience**: Podcast enthusiasts aged 35+
 - **Key Feature**: Rediscovery of older podcast episodes
