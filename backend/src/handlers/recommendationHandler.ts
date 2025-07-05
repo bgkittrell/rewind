@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import { APIResponse, APIGatewayAuthorizerEvent, RecommendationFilters, GuestExtractionRequest } from '../types'
+import { APIResponse, RecommendationFilters, GuestExtractionRequest } from '../types'
 import { recommendationService } from '../services/recommendationService'
 import { bedrockService } from '../services/bedrockService'
 import { rateLimitService } from '../services/rateLimitService'
@@ -20,8 +20,7 @@ import { createErrorResponse, createRateLimitResponse, createSafeLogMessage } fr
 export const getRecommendations = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Extract user from authorizer
-    const authorizer = event.requestContext.authorizer as APIGatewayAuthorizerEvent
-    const userId = authorizer.userId
+    const userId = event.requestContext.authorizer?.claims?.sub
 
     if (!userId) {
       return {
@@ -100,8 +99,7 @@ export const getRecommendations = async (event: APIGatewayProxyEvent): Promise<A
 export const extractGuests = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Extract user from authorizer
-    const authorizer = event.requestContext.authorizer as APIGatewayAuthorizerEvent
-    const userId = authorizer.userId
+    const userId = event.requestContext.authorizer?.claims?.sub
 
     if (!userId) {
       return {
@@ -204,8 +202,7 @@ export const extractGuests = async (event: APIGatewayProxyEvent): Promise<APIGat
 export const batchExtractGuests = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Extract user from authorizer
-    const authorizer = event.requestContext.authorizer as APIGatewayAuthorizerEvent
-    const userId = authorizer.userId
+    const userId = event.requestContext.authorizer?.claims?.sub
 
     if (!userId) {
       return {
@@ -346,8 +343,7 @@ export const batchExtractGuests = async (event: APIGatewayProxyEvent): Promise<A
 export const updateGuestAnalytics = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // Extract user from authorizer
-    const authorizer = event.requestContext.authorizer as APIGatewayAuthorizerEvent
-    const userId = authorizer.userId
+    const userId = event.requestContext.authorizer?.claims?.sub
 
     if (!userId) {
       return {
