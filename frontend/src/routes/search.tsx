@@ -43,7 +43,7 @@ export default function Search() {
   // Debounced search function
   const debouncedSearch = useCallback(
     (() => {
-      let timeoutId: number | null = null
+      let timeoutId: ReturnType<typeof setTimeout> | null = null
 
       return (query: string, isNewSearch: boolean = true) => {
         if (timeoutId) {
@@ -125,7 +125,7 @@ export default function Search() {
       audioUrl: episode.audioUrl,
       imageUrl: episode.imageUrl,
       duration: episode.duration,
-      podcastId: episode.podcastId,
+      releaseDate: episode.releaseDate || new Date().toISOString(),
     })
   }
 
