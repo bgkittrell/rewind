@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { IconPlayerPlay, IconX, IconMusic } from '@tabler/icons-react'
 import { ResumeData } from '../services/resumeService'
+import { AUTO_DISMISS_COUNTDOWN } from '../constants/resume'
 
 interface ResumePlaybackBarProps {
   resumeData: ResumeData
@@ -10,7 +11,7 @@ interface ResumePlaybackBarProps {
 
 export function ResumePlaybackBar({ resumeData, onResume, onDismiss }: ResumePlaybackBarProps) {
   const [isVisible, setIsVisible] = useState(true)
-  const [countdown, setCountdown] = useState(10)
+  const [countdown, setCountdown] = useState<number>(AUTO_DISMISS_COUNTDOWN)
 
   useEffect(() => {
     if (!isVisible) return

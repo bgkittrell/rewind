@@ -5,20 +5,7 @@ import { podcastService, Podcast } from '../services/podcastService'
 import { APIError } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useMediaPlayer } from '../context/MediaPlayerContext'
-
-// Import the Episode type from MediaPlayerContext to avoid confusion
-type MediaPlayerEpisode = {
-  id: string
-  title: string
-  podcastName: string
-  releaseDate: string
-  duration: string
-  audioUrl?: string
-  imageUrl?: string
-  description?: string
-  playbackPosition?: number
-  podcastImageUrl?: string
-}
+import type { Episode as MediaPlayerEpisode } from '../types/episode'
 
 export default function EpisodeDetail() {
   const { episodeId } = useParams<{ episodeId: string }>()
@@ -97,7 +84,8 @@ export default function EpisodeDetail() {
     if (!episode || !podcast) return
 
     const episodeForPlayer: MediaPlayerEpisode = {
-      id: episode.episodeId,
+      episodeId: episode.episodeId,
+      podcastId: episode.podcastId,
       title: episode.title,
       podcastName: podcast.title,
       releaseDate: episode.releaseDate,

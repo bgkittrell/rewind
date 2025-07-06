@@ -1,19 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { episodeService } from '../services/episodeService'
 import { resumeService, ResumeData } from '../services/resumeService'
-
-interface Episode {
-  id: string
-  title: string
-  podcastName: string
-  releaseDate: string
-  duration: string
-  audioUrl?: string
-  imageUrl?: string
-  description?: string
-  playbackPosition?: number
-  podcastImageUrl?: string
-}
+import { RESUME_THRESHOLD } from '../constants/resume'
+import type { Episode } from '../types/episode'
 
 interface MediaPlayerState {
   currentEpisode: Episode | null
@@ -53,8 +42,8 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   const playEpisode = async (episode: Episode) => {
     // Get saved progress for this episode
     try {
-      const progress = await episodeService.getProgress(episode.id)
-      const playbackPosition = progress.position > 30 ? progress.position : 0
+      const progress = await episodeService.getProgress(episode.episodeId)
+      const playbackPosition = progress.position > RESUME_THRESHOLD ? progress.position : 0
 
       setState({
         currentEpisode: { ...episode, playbackPosition },
@@ -102,7 +91,8 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
 
   const resumePlayback = (data: ResumeData) => {
     const episode: Episode = {
-      id: data.episodeId,
+      episodeId: data.episodeId,
+      podcastId: data.podcastId,
       title: data.title,
       podcastName: data.podcastTitle,
       releaseDate: '',

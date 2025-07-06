@@ -10,19 +10,8 @@ import {
   IconMusic,
   IconChevronUp,
 } from '@tabler/icons-react'
-
-interface Episode {
-  id: string
-  title: string
-  podcastName: string
-  releaseDate: string
-  duration: string
-  audioUrl?: string
-  imageUrl?: string
-  description?: string
-  playbackPosition?: number
-  podcastImageUrl?: string
-}
+import { PROGRESS_SAVE_INTERVAL } from '../constants/resume'
+import type { Episode } from '../types/episode'
 
 interface FloatingMediaPlayerProps {
   episode: Episode | null
@@ -118,10 +107,10 @@ export function FloatingMediaPlayer({
           // Import episodeService dynamically to avoid circular dependencies
           const { episodeService } = await import('../services/episodeService')
           await episodeService.saveProgress(
-            episode.id,
+            episode.episodeId,
             audioRef.current.currentTime,
             duration,
-            episode.id.split('-')[0], // Extract podcastId from episodeId (assuming format: podcastId-episodeId)
+            episode.podcastId, // Use explicit podcastId field instead of brittle extraction
           )
         } catch (error) {
           console.error('Error saving progress:', error)
@@ -129,7 +118,7 @@ export function FloatingMediaPlayer({
       }
     }
 
-    const interval = setInterval(saveProgress, 30000) // Save every 30 seconds
+    const interval = setInterval(saveProgress, PROGRESS_SAVE_INTERVAL) // Save every 30 seconds
 
     return () => clearInterval(interval)
   }, [isPlaying, episode, duration])
@@ -143,10 +132,10 @@ export function FloatingMediaPlayer({
         try {
           const { episodeService } = await import('../services/episodeService')
           await episodeService.saveProgress(
-            episode.id,
+            episode.episodeId,
             currentTime,
             duration,
-            episode.id.split('-')[0], // Extract podcastId from episodeId
+            episode.podcastId, // Use explicit podcastId field
           )
         } catch (error) {
           console.error('Error saving progress on pause:', error)
@@ -164,7 +153,7 @@ export function FloatingMediaPlayer({
         // Save progress before unmounting
         import('../services/episodeService').then(({ episodeService }) => {
           episodeService
-            .saveProgress(episode.id, audioRef.current?.currentTime || 0, duration, episode.id.split('-')[0])
+            .saveProgress(episode.episodeId, audioRef.current?.currentTime || 0, duration, episode.podcastId)
             .catch(error => console.error('Error saving progress on unmount:', error))
         })
       }

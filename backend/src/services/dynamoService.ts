@@ -11,6 +11,7 @@ import {
 } from '@aws-sdk/client-dynamodb'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { Podcast, Episode, EpisodeData, ListeningHistoryItem, LastPlayedEpisode } from '../types'
+import { RESUME_THRESHOLD, COMPLETION_THRESHOLD } from '../constants/resume'
 import { v4 as uuidv4 } from 'uuid'
 
 const crypto = require('crypto')
@@ -517,7 +518,7 @@ export class DynamoService {
     duration: number,
   ): Promise<void> {
     const now = new Date().toISOString()
-    const isCompleted = position >= duration * 0.95 // Consider 95% as completed
+    const isCompleted = position >= duration * COMPLETION_THRESHOLD // Consider 95% as completed
 
     const historyItem: ListeningHistoryItem = {
       userId,
@@ -658,7 +659,7 @@ export class DynamoService {
       }
 
       // Only return episodes that have meaningful progress (at least 30 seconds)
-      if (history.playbackPosition < 30) {
+      if (history.playbackPosition < RESUME_THRESHOLD) {
         return null
       }
 
