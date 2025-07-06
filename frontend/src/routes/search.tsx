@@ -120,6 +120,7 @@ export default function Search() {
   const handlePlayEpisode = (episode: any) => {
     playEpisode({
       episodeId: episode.episodeId,
+      podcastId: episode.podcastId,
       title: episode.title,
       podcastName: episode.podcastName,
       audioUrl: episode.audioUrl,
