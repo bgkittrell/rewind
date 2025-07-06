@@ -52,12 +52,11 @@ export function FloatingMediaPlayer({
   // Handle visibility change for background audio support
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (audioRef.current && episode) {
-        // Continue playing audio even when app is minimized
-        if (document.visibilityState === 'hidden' && isPlaying) {
-          // Maintain audio focus by ensuring audio continues to play
+      if (audioRef.current && episode && isPlaying) {
+        // Resume audio if it was paused when returning to foreground
+        if (document.visibilityState === 'visible' && audioRef.current.paused) {
           audioRef.current.play().catch((error: unknown) => {
-            console.warn('Failed to maintain audio playback in background:', error)
+            console.warn('Failed to resume audio playback:', error)
           })
         }
       }
