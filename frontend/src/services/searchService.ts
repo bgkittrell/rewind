@@ -111,7 +111,7 @@ export class SearchService {
    */
   convertToEpisodeCard(result: SearchResult) {
     return {
-      id: result.episode.episodeId,
+      episodeId: result.episode.episodeId,
       title: result.episode.title,
       podcastName: result.podcast.title,
       releaseDate: result.episode.releaseDate,
