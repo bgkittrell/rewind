@@ -49,6 +49,26 @@ export function FloatingMediaPlayer({
   const [volume, setVolume] = useState(1)
   const audioRef = useRef<HTMLAudioElement>(null)
 
+  // Handle visibility change for background audio support
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (audioRef.current && episode) {
+        // Continue playing audio even when app is minimized
+        if (document.visibilityState === 'hidden' && isPlaying) {
+          // Maintain audio focus by ensuring audio continues to play
+          audioRef.current.play().catch((error: unknown) => {
+            console.warn('Failed to maintain audio playback in background:', error)
+          })
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [episode, isPlaying])
+
   // Setup MediaSession API for lock screen controls
   useEffect(() => {
     if (!episode || !('mediaSession' in navigator)) return
@@ -168,6 +188,7 @@ export function FloatingMediaPlayer({
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         preload="metadata"
+        playsInline
         data-testid="audio-element"
       />
 
