@@ -25,7 +25,7 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
 
   const handleCardClick = () => {
     if (episode.podcastId) {
-      navigate(`/episode/${episode.podcastId}/${episode.id}`)
+      navigate(`/episode/${episode.podcastId}/${episode.episodeId}`)
     } else {
       navigate(`/episode/${episode.episodeId}`)
     }
