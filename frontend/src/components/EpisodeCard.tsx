@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import type { Episode } from '../types/episode'
 
 interface EpisodeCardProps {
-  episode: Episode
+  episode: Episode,
   podcastImageUrl?: string
   onPlay?: (_episode: Episode) => void
   onAIExplanation?: (_episode: Episode) => void
@@ -24,7 +24,11 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
   }
 
   const handleCardClick = () => {
-    navigate(`/episode/${episode.episodeId}`)
+    if (episode.podcastId) {
+      navigate(`/episode/${episode.podcastId}/${episode.id}`)
+    } else {
+      navigate(`/episode/${episode.episodeId}`)
+    }
   }
 
   const formatDate = (dateString: string) => {

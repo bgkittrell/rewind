@@ -45,6 +45,10 @@ const router = createBrowserRouter([
         element: <Search />,
       },
       {
+        path: 'episode/:podcastId/:episodeId',
+        element: <EpisodeDetail />,
+      },
+      {
         path: 'episode/:episodeId',
         element: <EpisodeDetail />,
       },

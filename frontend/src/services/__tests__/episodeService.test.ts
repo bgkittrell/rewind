@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { episodeService } from '../episodeService'
+import { episodeService, Episode } from '../episodeService'
 import { apiClient } from '../api'
 
 // Mock the API client
@@ -309,6 +309,42 @@ describe('EpisodeService', () => {
         // Restore real time
         vi.useRealTimers()
       })
+    })
+  })
+
+  describe('getEpisodeByIdWithPodcast', () => {
+    it('should fetch episode by podcastId and episodeId', async () => {
+      const mockEpisode: Episode = {
+        episodeId: 'ep123',
+        podcastId: 'pod123',
+        title: 'Test Episode',
+        description: 'Test Description',
+        audioUrl: 'http://example.com/audio.mp3',
+        duration: '30:00',
+        releaseDate: '2024-01-01',
+        imageUrl: 'http://example.com/image.jpg',
+        guests: ['Guest 1'],
+        tags: ['tag1'],
+        createdAt: '2024-01-01T00:00:00Z',
+        naturalKey: 'test-natural-key',
+      }
+
+      const get = vi.fn().mockResolvedValue(mockEpisode)
+      vi.spyOn(apiClient, 'get').mockImplementation(get)
+
+      const result = await episodeService.getEpisodeByIdWithPodcast('pod123', 'ep123')
+
+      expect(get).toHaveBeenCalledWith('/episodes/pod123/ep123')
+      expect(result).toEqual(mockEpisode)
+    })
+
+    it('should throw error when getEpisodeByIdWithPodcast fails', async () => {
+      const get = vi.fn().mockRejectedValue(new Error('Network error'))
+      vi.spyOn(apiClient, 'get').mockImplementation(get)
+
+      await expect(episodeService.getEpisodeByIdWithPodcast('pod123', 'ep123')).rejects.toThrow(
+        'Failed to fetch episode',
+      )
     })
   })
 })

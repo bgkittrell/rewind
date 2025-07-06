@@ -36,6 +36,7 @@ export default defineConfig({
         orientation: 'portrait-primary',
         start_url: '/',
         scope: '/',
+        id: 'com.rewind.podcast',
         icons: [
           {
             src: '/icon-192.png',
