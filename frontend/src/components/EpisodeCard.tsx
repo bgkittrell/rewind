@@ -13,6 +13,10 @@ interface EpisodeCardProps {
     description?: string
     playbackPosition?: number
     podcastId?: string
+    highlights?: {
+      title?: string
+      description?: string
+    }
   }
   podcastImageUrl?: string
   onPlay?: (_episode: EpisodeCardProps['episode']) => void
@@ -80,9 +84,16 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
         {/* Episode Details */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3 mb-2">
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight flex-1 line-clamp-2 break-words">
-              {episode.title}
-            </h3>
+            {episode.highlights?.title ? (
+              <h3
+                className="font-semibold text-gray-900 text-sm leading-tight flex-1 line-clamp-2 break-words"
+                dangerouslySetInnerHTML={{ __html: episode.highlights.title }}
+              />
+            ) : (
+              <h3 className="font-semibold text-gray-900 text-sm leading-tight flex-1 line-clamp-2 break-words">
+                {episode.title}
+              </h3>
+            )}
 
             {/* AI Explanation Button */}
             <button
@@ -107,6 +118,13 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
           </div>
 
           <p className="text-sm text-gray-600 truncate mb-2">{episode.podcastName}</p>
+
+          {episode.highlights?.description && (
+            <p
+              className="text-xs text-gray-500 line-clamp-2 mb-2"
+              dangerouslySetInnerHTML={{ __html: episode.highlights.description }}
+            />
+          )}
 
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-500">

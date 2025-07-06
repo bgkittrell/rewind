@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { SearchService, SearchResult, SearchFilters } from '../services/searchService'
 import { EpisodeCard } from '../components/EpisodeCard'
 import { useAuth } from '../context/AuthContext'
 import { useMediaPlayer } from '../context/MediaPlayerContext'
+import apiClient from '../services/api'
 
 const searchService = new SearchService()
 
@@ -25,6 +26,8 @@ export default function Search() {
   const { user } = useAuth()
   const { playEpisode } = useMediaPlayer()
 
+  const [userPodcasts, setUserPodcasts] = useState<Array<{ podcastId: string; title: string }>>([])
+
   const [searchState, setSearchState] = useState<SearchPageState>({
     query: '',
     results: [],
@@ -39,6 +42,21 @@ export default function Search() {
     },
     searchTime: 0,
   })
+
+  // Fetch user's podcasts for the filter dropdown
+  useEffect(() => {
+    if (user) {
+      const fetchPodcasts = async () => {
+        try {
+          const podcasts = await apiClient.get<any[]>('/podcasts')
+          setUserPodcasts(podcasts.map(p => ({ podcastId: p.podcastId, title: p.title })))
+        } catch (error) {
+          console.error('Failed to fetch podcasts:', error)
+        }
+      }
+      fetchPodcasts()
+    }
+  }, [user])
 
   // Debounced search function
   const debouncedSearch = useCallback(
@@ -151,6 +169,21 @@ export default function Search() {
       },
       searchTime: 0,
     })
+  }
+
+  // Handle podcast filter change
+  const handlePodcastFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const podcastId = e.target.value || undefined
+    setSearchState((prev: SearchPageState) => ({
+      ...prev,
+      filters: { ...prev.filters, podcastId },
+      results: [],
+      pagination: { ...prev.pagination, offset: 0 },
+    }))
+    if (searchState.query) {
+      // Trigger a new search with the updated filter
+      setTimeout(() => debouncedSearch(searchState.query, true), 0)
+    }
   }
 
   // Render search results
@@ -292,8 +325,9 @@ export default function Search() {
         <p className="text-gray-600">Find episodes and podcasts in your library</p>
       </div>
 
-      {/* Search input */}
-      <div className="mb-6">
+      {/* Search input and filters */}
+      <div className="mb-6 space-y-4">
+        {/* Search input */}
         <div className="relative">
           <input
             type="text"
@@ -327,6 +361,28 @@ export default function Search() {
             </button>
           )}
         </div>
+
+        {/* Podcast filter */}
+        {userPodcasts.length > 0 && (
+          <div className="flex items-center gap-3">
+            <label htmlFor="podcast-filter" className="text-sm font-medium text-gray-700">
+              Filter by podcast:
+            </label>
+            <select
+              id="podcast-filter"
+              value={searchState.filters.podcastId || ''}
+              onChange={handlePodcastFilterChange}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+            >
+              <option value="">All podcasts</option>
+              {userPodcasts.map((podcast) => (
+                <option key={podcast.podcastId} value={podcast.podcastId}>
+                  {podcast.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Search results */}
