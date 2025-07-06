@@ -277,7 +277,7 @@ async function getProgress(
   }
 }
 
-  async function getListeningHistory(
+async function getListeningHistory(
   userId: string,
   queryParams: { [key: string]: string | undefined } | null,
   path: string,
@@ -303,10 +303,7 @@ async function getProgress(
   }
 }
 
-async function getResumeData(
-  userId: string,
-  path: string,
-): Promise<APIGatewayProxyResult> {
+async function getResumeData(userId: string, path: string): Promise<APIGatewayProxyResult> {
   try {
     const lastPlayedEpisode = await dynamoService.getLastPlayedEpisode(userId)
 

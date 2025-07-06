@@ -121,7 +121,7 @@ export function FloatingMediaPlayer({
             episode.id,
             audioRef.current.currentTime,
             duration,
-            episode.id.split('-')[0] // Extract podcastId from episodeId (assuming format: podcastId-episodeId)
+            episode.id.split('-')[0], // Extract podcastId from episodeId (assuming format: podcastId-episodeId)
           )
         } catch (error) {
           console.error('Error saving progress:', error)
@@ -146,7 +146,7 @@ export function FloatingMediaPlayer({
             episode.id,
             currentTime,
             duration,
-            episode.id.split('-')[0] // Extract podcastId from episodeId
+            episode.id.split('-')[0], // Extract podcastId from episodeId
           )
         } catch (error) {
           console.error('Error saving progress on pause:', error)
@@ -163,12 +163,9 @@ export function FloatingMediaPlayer({
       if (episode && audioRef.current && audioRef.current.currentTime > 0) {
         // Save progress before unmounting
         import('../services/episodeService').then(({ episodeService }) => {
-          episodeService.saveProgress(
-            episode.id,
-            audioRef.current?.currentTime || 0,
-            duration,
-            episode.id.split('-')[0]
-          ).catch(error => console.error('Error saving progress on unmount:', error))
+          episodeService
+            .saveProgress(episode.id, audioRef.current?.currentTime || 0, duration, episode.id.split('-')[0])
+            .catch(error => console.error('Error saving progress on unmount:', error))
         })
       }
     }

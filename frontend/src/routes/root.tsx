@@ -23,11 +23,7 @@ function RootContent() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Resume notification bar */}
       {canResume && resumeData && (
-        <ResumePlaybackBar
-          resumeData={resumeData}
-          onResume={handleResumePlayback}
-          onDismiss={handleDismissResume}
-        />
+        <ResumePlaybackBar resumeData={resumeData} onResume={handleResumePlayback} onDismiss={handleDismissResume} />
       )}
 
       <Header />

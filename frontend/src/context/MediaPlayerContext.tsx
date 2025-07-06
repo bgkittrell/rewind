@@ -55,7 +55,7 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     try {
       const progress = await episodeService.getProgress(episode.id)
       const playbackPosition = progress.position > 30 ? progress.position : 0
-      
+
       setState({
         currentEpisode: { ...episode, playbackPosition },
         isPlaying: true,

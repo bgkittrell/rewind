@@ -358,7 +358,7 @@ describe('EpisodeHandler', () => {
 
       expect(result.statusCode).toBe(200)
       expect(mockDynamoService.getLastPlayedEpisode).toHaveBeenCalledWith('test-user-id')
-      
+
       const responseBody = JSON.parse(result.body)
       expect(responseBody.data).toEqual(mockResumeData)
     })
@@ -371,7 +371,7 @@ describe('EpisodeHandler', () => {
 
       expect(result.statusCode).toBe(200)
       expect(mockDynamoService.getLastPlayedEpisode).toHaveBeenCalledWith('test-user-id')
-      
+
       const responseBody = JSON.parse(result.body)
       expect(responseBody.data).toBeNull()
     })
