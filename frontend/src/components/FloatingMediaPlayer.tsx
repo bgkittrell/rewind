@@ -49,6 +49,25 @@ export function FloatingMediaPlayer({
   const [volume, setVolume] = useState(1)
   const audioRef = useRef<HTMLAudioElement>(null)
 
+  // Handle visibility change for background audio support
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (audioRef.current && episode && isPlaying) {
+        // Resume audio if it was paused when returning to foreground
+        if (document.visibilityState === 'visible' && audioRef.current.paused) {
+          audioRef.current.play().catch((error: unknown) => {
+            console.warn('Failed to resume audio playback:', error)
+          })
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [episode, isPlaying])
+
   // Setup MediaSession API for lock screen controls
   useEffect(() => {
     if (!episode || !('mediaSession' in navigator)) return
@@ -168,6 +187,7 @@ export function FloatingMediaPlayer({
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         preload="metadata"
+        playsInline
         data-testid="audio-element"
       />
 
