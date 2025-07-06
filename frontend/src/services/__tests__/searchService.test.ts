@@ -1,13 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SearchService } from '../searchService'
-import { apiClient } from '../api'
+import apiClient from '../api'
 
-// Mock the API client
-vi.mock('../api', () => ({
-  apiClient: {
+// Mock the API client - need to mock both named and default exports
+vi.mock('../api', () => {
+  const mockApiClient = {
     get: vi.fn(),
-  },
-}))
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+  }
+  return {
+    apiClient: mockApiClient,
+    default: mockApiClient,
+  }
+})
 
 const mockApiClient = vi.mocked(apiClient)
 
