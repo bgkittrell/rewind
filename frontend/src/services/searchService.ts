@@ -51,13 +51,17 @@ export class SearchService {
   /**
    * Search episodes based on query and filters
    */
-  async searchEpisodes(query: string, filters: SearchFilters = {}, pagination: { limit?: number; offset?: number } = {}): Promise<SearchResponse> {
+  async searchEpisodes(
+    query: string,
+    filters: SearchFilters = {},
+    pagination: { limit?: number; offset?: number } = {},
+  ): Promise<SearchResponse> {
     if (!query || query.trim().length < 2) {
       return {
         results: [],
         total: 0,
         hasMore: false,
-        searchTime: 0
+        searchTime: 0,
       }
     }
 
@@ -88,7 +92,7 @@ export class SearchService {
     query: string,
     filters: SearchFilters = {},
     pagination: { limit?: number; offset?: number } = {},
-    debounceMs: number = 300
+    debounceMs: number = 300,
   ): Promise<SearchResponse> {
     return new Promise((resolve, reject) => {
       setTimeout(async () => {
@@ -129,7 +133,7 @@ export class SearchService {
   formatHighlights(highlights: Record<string, string>) {
     return Object.entries(highlights).map(([field, highlighted]) => ({
       field,
-      text: highlighted
+      text: highlighted,
     }))
   }
 }

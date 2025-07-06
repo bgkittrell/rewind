@@ -24,7 +24,7 @@ interface SearchPageState {
 export default function Search() {
   const { user } = useAuth()
   const { playEpisode } = useMediaPlayer()
-  
+
   const [searchState, setSearchState] = useState<SearchPageState>({
     query: '',
     results: [],
@@ -35,21 +35,21 @@ export default function Search() {
       offset: 0,
       limit: 20,
       total: 0,
-      hasMore: false
+      hasMore: false,
     },
-    searchTime: 0
+    searchTime: 0,
   })
 
   // Debounced search function
   const debouncedSearch = useCallback(
     (() => {
       let timeoutId: number | null = null
-      
+
       return (query: string, isNewSearch: boolean = true) => {
         if (timeoutId) {
           clearTimeout(timeoutId)
         }
-        
+
         timeoutId = setTimeout(async () => {
           if (!query || query.trim().length < 2) {
             setSearchState((prev: SearchPageState) => ({
@@ -57,7 +57,7 @@ export default function Search() {
               results: [],
               loading: false,
               error: null,
-              pagination: { ...prev.pagination, total: 0, hasMore: false }
+              pagination: { ...prev.pagination, total: 0, hasMore: false },
             }))
             return
           }
@@ -66,19 +66,15 @@ export default function Search() {
             ...prev,
             loading: true,
             error: null,
-            ...(isNewSearch && { results: [], pagination: { ...prev.pagination, offset: 0 } })
+            ...(isNewSearch && { results: [], pagination: { ...prev.pagination, offset: 0 } }),
           }))
 
           try {
-            const pagination = isNewSearch 
+            const pagination = isNewSearch
               ? { limit: searchState.pagination.limit, offset: 0 }
               : { limit: searchState.pagination.limit, offset: searchState.pagination.offset }
-              
-            const response = await searchService.searchEpisodes(
-              query, 
-              searchState.filters, 
-              pagination
-            )
+
+            const response = await searchService.searchEpisodes(query, searchState.filters, pagination)
 
             setSearchState((prev: SearchPageState) => ({
               ...prev,
@@ -88,23 +84,22 @@ export default function Search() {
                 ...prev.pagination,
                 total: response.total,
                 hasMore: response.hasMore,
-                offset: isNewSearch ? response.results.length : prev.pagination.offset + response.results.length
+                offset: isNewSearch ? response.results.length : prev.pagination.offset + response.results.length,
               },
-              searchTime: response.searchTime
+              searchTime: response.searchTime,
             }))
-
           } catch (error) {
             console.error('Search failed:', error)
             setSearchState((prev: SearchPageState) => ({
               ...prev,
               loading: false,
-              error: error instanceof Error ? error.message : 'Search failed'
+              error: error instanceof Error ? error.message : 'Search failed',
             }))
           }
         }, 300)
       }
     })(),
-    [searchState.filters, searchState.pagination.limit]
+    [searchState.filters, searchState.pagination.limit],
   )
 
   // Handle search input change
@@ -130,7 +125,7 @@ export default function Search() {
       audioUrl: episode.audioUrl,
       imageUrl: episode.imageUrl,
       duration: episode.duration,
-      podcastId: episode.podcastId
+      podcastId: episode.podcastId,
     })
   }
 
@@ -152,9 +147,9 @@ export default function Search() {
         offset: 0,
         limit: 20,
         total: 0,
-        hasMore: false
+        hasMore: false,
       },
-      searchTime: 0
+      searchTime: 0,
     })
   }
 
@@ -164,7 +159,12 @@ export default function Search() {
       return (
         <div className="text-center text-gray-500 py-12">
           <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
           <p className="text-lg font-medium text-gray-900 mb-2">Find your favorite episodes</p>
           <p className="text-sm text-gray-500">Start typing to search through your podcast library</p>
@@ -186,7 +186,12 @@ export default function Search() {
         <div className="text-center py-12">
           <div className="text-red-500 mb-4">
             <svg className="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
             </svg>
             <p className="text-lg font-medium text-gray-900 mb-2">Search Error</p>
             <p className="text-sm text-gray-500">{searchState.error}</p>
@@ -205,7 +210,12 @@ export default function Search() {
       return (
         <div className="text-center py-12">
           <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.007-5.824-2.562M15 6.5a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.007-5.824-2.562M15 6.5a3 3 0 11-6 0 3 3 0 016 0z"
+            />
           </svg>
           <p className="text-lg font-medium text-gray-900 mb-2">No episodes found</p>
           <p className="text-sm text-gray-500">Try adjusting your search terms</p>
@@ -223,10 +233,7 @@ export default function Search() {
               {searchState.searchTime > 0 && ` (${searchState.searchTime.toFixed(3)}s)`}
             </p>
           </div>
-          <button
-            onClick={clearSearch}
-            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-          >
+          <button onClick={clearSearch} className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
             Clear search
           </button>
         </div>
@@ -302,7 +309,12 @@ export default function Search() {
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
           {searchState.query && (
             <button
