@@ -302,7 +302,6 @@ export default function Home() {
                     imageUrl: recommendation.episode.imageUrl,
                     description: recommendation.episode.description,
                     playbackPosition: recommendation.episode.playbackPosition,
-                    podcastId: recommendation.episode.podcastId,
                   }}
                   podcastImageUrl={recommendation.episode.imageUrl}
                   onPlay={() => handlePlay(recommendation.episode)}
