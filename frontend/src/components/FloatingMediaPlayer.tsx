@@ -10,19 +10,8 @@ import {
   IconMusic,
   IconChevronUp,
 } from '@tabler/icons-react'
-
-interface Episode {
-  id: string
-  title: string
-  podcastName: string
-  releaseDate: string
-  duration: string
-  audioUrl?: string
-  imageUrl?: string
-  description?: string
-  playbackPosition?: number
-  podcastImageUrl?: string
-}
+import { PROGRESS_SAVE_INTERVAL } from '../constants/resume'
+import type { Episode } from '../types/episode'
 
 interface FloatingMediaPlayerProps {
   episode: Episode | null
@@ -126,6 +115,69 @@ export function FloatingMediaPlayer({
       audioRef.current.pause()
     }
   }, [isPlaying])
+
+  // Save progress every 30 seconds when playing
+  useEffect(() => {
+    if (!isPlaying || !episode || !audioRef.current) return
+
+    const saveProgress = async () => {
+      if (audioRef.current && episode) {
+        try {
+          // Import episodeService dynamically to avoid circular dependencies
+          const { episodeService } = await import('../services/episodeService')
+          await episodeService.saveProgress(
+            episode.episodeId,
+            audioRef.current.currentTime,
+            duration,
+            episode.podcastId, // Use explicit podcastId field instead of brittle extraction
+          )
+        } catch (error) {
+          console.error('Error saving progress:', error)
+        }
+      }
+    }
+
+    const interval = setInterval(saveProgress, PROGRESS_SAVE_INTERVAL) // Save every 30 seconds
+
+    return () => clearInterval(interval)
+  }, [isPlaying, episode, duration])
+
+  // Save progress on pause/stop
+  useEffect(() => {
+    if (!episode || !audioRef.current) return
+
+    const saveProgressOnPause = async () => {
+      if (!isPlaying && currentTime > 0) {
+        try {
+          const { episodeService } = await import('../services/episodeService')
+          await episodeService.saveProgress(
+            episode.episodeId,
+            currentTime,
+            duration,
+            episode.podcastId, // Use explicit podcastId field
+          )
+        } catch (error) {
+          console.error('Error saving progress on pause:', error)
+        }
+      }
+    }
+
+    saveProgressOnPause()
+  }, [isPlaying, episode, currentTime, duration])
+
+  // Save progress on component unmount
+  useEffect(() => {
+    return () => {
+      if (episode && audioRef.current && audioRef.current.currentTime > 0) {
+        // Save progress before unmounting
+        import('../services/episodeService').then(({ episodeService }) => {
+          episodeService
+            .saveProgress(episode.episodeId, audioRef.current?.currentTime || 0, duration, episode.podcastId)
+            .catch(error => console.error('Error saving progress on unmount:', error))
+        })
+      }
+    }
+  }, [episode, duration])
 
   // EARLY RETURN AFTER ALL HOOKS - THIS FIXES THE HOOKS ERROR
   if (!episode) return null

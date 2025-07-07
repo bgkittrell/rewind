@@ -205,7 +205,7 @@ describe('SearchService', () => {
       const result = searchService.convertToEpisodeCard(searchResult)
 
       expect(result).toEqual({
-        id: 'episode-1',
+        episodeId: 'episode-1',
         title: 'Test Episode',
         podcastName: 'Test Podcast',
         releaseDate: '2024-01-01T00:00:00Z',

@@ -335,6 +335,74 @@ describe('EpisodeHandler', () => {
     })
   })
 
+  describe('GET /resume', () => {
+    it('should return resume data when available', async () => {
+      const mockResumeData = {
+        episodeId: 'episode-1',
+        podcastId: 'podcast-1',
+        title: 'Test Episode',
+        podcastTitle: 'Test Podcast',
+        playbackPosition: 150,
+        duration: 300,
+        lastPlayed: '2024-01-15T10:30:00Z',
+        progressPercentage: 50,
+        audioUrl: 'https://example.com/audio.mp3',
+        imageUrl: 'https://example.com/image.jpg',
+        podcastImageUrl: 'https://example.com/podcast-image.jpg',
+      }
+
+      mockDynamoService.getLastPlayedEpisode.mockResolvedValue(mockResumeData)
+
+      const event = createMockEvent('GET', '/resume')
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(200)
+      expect(mockDynamoService.getLastPlayedEpisode).toHaveBeenCalledWith('test-user-id')
+
+      const responseBody = JSON.parse(result.body)
+      expect(responseBody.data).toEqual(mockResumeData)
+    })
+
+    it('should return null when no resume data available', async () => {
+      mockDynamoService.getLastPlayedEpisode.mockResolvedValue(null)
+
+      const event = createMockEvent('GET', '/resume')
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(200)
+      expect(mockDynamoService.getLastPlayedEpisode).toHaveBeenCalledWith('test-user-id')
+
+      const responseBody = JSON.parse(result.body)
+      expect(responseBody.data).toBeNull()
+    })
+
+    it('should handle errors gracefully', async () => {
+      mockDynamoService.getLastPlayedEpisode.mockRejectedValue(new Error('Database error'))
+
+      const event = createMockEvent('GET', '/resume')
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(500)
+      const responseBody = JSON.parse(result.body)
+      expect(responseBody.error.message).toBe('Failed to get resume data')
+    })
+
+    it('should require authentication', async () => {
+      const event = {
+        httpMethod: 'GET',
+        path: '/resume',
+        requestContext: {
+          authorizer: {
+            claims: {},
+          },
+        },
+      }
+
+      const result = await handler(event as any)
+      expect(result.statusCode).toBe(401)
+    })
+  })
+
   describe('Error handling', () => {
     it('should handle unexpected errors', async () => {
       mockDynamoService.getEpisodesByPodcast.mockRejectedValue(new Error('Database error'))

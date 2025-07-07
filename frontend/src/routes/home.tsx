@@ -166,7 +166,8 @@ export default function Home() {
 
     // Play episode
     playEpisode({
-      id: episode.episodeId,
+      episodeId: episode.episodeId,
+      podcastId: episode.podcastId,
       title: episode.title,
       podcastName: episode.podcastName,
       releaseDate: episode.releaseDate,
@@ -291,7 +292,8 @@ export default function Home() {
               <div key={recommendation.episodeId} className="relative">
                 <EpisodeCard
                   episode={{
-                    id: recommendation.episode.episodeId,
+                    episodeId: recommendation.episode.episodeId,
+                    podcastId: recommendation.episode.podcastId,
                     title: recommendation.episode.title,
                     podcastName: recommendation.episode.podcastName,
                     releaseDate: recommendation.episode.releaseDate,
@@ -300,7 +302,6 @@ export default function Home() {
                     imageUrl: recommendation.episode.imageUrl,
                     description: recommendation.episode.description,
                     playbackPosition: recommendation.episode.playbackPosition,
-                    podcastId: recommendation.episode.podcastId,
                   }}
                   podcastImageUrl={recommendation.episode.imageUrl}
                   onPlay={() => handlePlay(recommendation.episode)}

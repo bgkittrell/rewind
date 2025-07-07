@@ -21,7 +21,8 @@ const renderWithRouter = (component: React.ReactElement) => {
 
 describe('EpisodeCard', () => {
   const mockEpisode = {
-    id: 'episode-1',
+    episodeId: 'episode-1',
+    podcastId: 'podcast-1',
     title: 'Test Episode',
     podcastName: 'Test Podcast',
     releaseDate: '2023-01-01',
@@ -127,7 +128,7 @@ describe('EpisodeCard', () => {
     const episodeCard = screen.getByTestId('episode-card')
     fireEvent.click(episodeCard)
 
-    expect(mockNavigate).toHaveBeenCalledWith('/episode/episode-1')
+    expect(mockNavigate).toHaveBeenCalledWith('/episode/podcast-1/episode-1')
   })
 
   it('does not navigate when action buttons are clicked', () => {

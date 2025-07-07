@@ -22,7 +22,8 @@ Object.defineProperty(global, 'HTMLAudioElement', {
 
 describe('FloatingMediaPlayer', () => {
   const mockEpisode = {
-    id: 'episode-1',
+    episodeId: 'episode-1',
+    podcastId: 'podcast-1',
     title: 'Test Episode',
     podcastName: 'Test Podcast',
     releaseDate: '2023-01-01',

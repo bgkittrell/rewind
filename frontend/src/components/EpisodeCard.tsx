@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router'
+import type { Episode } from '../types/episode'
 
 interface EpisodeCardProps {
   episode: {
@@ -19,8 +20,8 @@ interface EpisodeCardProps {
     }
   }
   podcastImageUrl?: string
-  onPlay?: (_episode: EpisodeCardProps['episode']) => void
-  onAIExplanation?: (_episode: EpisodeCardProps['episode']) => void
+  onPlay?: (_episode: Episode) => void
+  onAIExplanation?: (_episode: Episode) => void
 }
 
 export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation }: EpisodeCardProps) {
@@ -39,9 +40,9 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
 
   const handleCardClick = () => {
     if (episode.podcastId) {
-      navigate(`/episode/${episode.podcastId}/${episode.id}`)
+      navigate(`/episode/${episode.podcastId}/${episode.episodeId}`)
     } else {
-      navigate(`/episode/${episode.id}`)
+      navigate(`/episode/${episode.episodeId}`)
     }
   }
 

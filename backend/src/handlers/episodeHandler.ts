@@ -28,7 +28,9 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     // Route handling
     switch (method) {
       case 'GET':
-        if (path.includes('/listening-history')) {
+        if (path.includes('/resume')) {
+          return await getResumeData(userId, path)
+        } else if (path.includes('/listening-history')) {
           return await getListeningHistory(userId, event.queryStringParameters, path)
         } else if (path.includes('/progress')) {
           return await getProgress(userId, event.pathParameters, path)
@@ -306,6 +308,21 @@ async function getListeningHistory(
   } catch (error) {
     console.error('Error getting listening history:', error)
     return createErrorResponse('Failed to get listening history', 'INTERNAL_ERROR', 500, path)
+  }
+}
+
+async function getResumeData(userId: string, path: string): Promise<APIGatewayProxyResult> {
+  try {
+    const lastPlayedEpisode = await dynamoService.getLastPlayedEpisode(userId)
+
+    if (!lastPlayedEpisode) {
+      return createSuccessResponse(null, 200, path)
+    }
+
+    return createSuccessResponse(lastPlayedEpisode, 200, path)
+  } catch (error) {
+    console.error('Error getting resume data:', error)
+    return createErrorResponse('Failed to get resume data', 'INTERNAL_ERROR', 500, path)
   }
 }
 

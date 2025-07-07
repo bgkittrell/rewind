@@ -137,7 +137,8 @@ export default function Search() {
   // Handle play episode
   const handlePlayEpisode = (episode: any) => {
     playEpisode({
-      id: episode.id,
+      episodeId: episode.episodeId,
+      podcastId: episode.podcastId,
       title: episode.title,
       podcastName: episode.podcastName,
       audioUrl: episode.audioUrl,

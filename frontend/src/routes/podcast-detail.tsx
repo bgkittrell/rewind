@@ -8,20 +8,7 @@ import { useMediaPlayer } from '../context/MediaPlayerContext'
 import EpisodeCard from '../components/EpisodeCard'
 import { stripAndTruncate } from '../utils/textUtils'
 
-// Import the Episode type from MediaPlayerContext to avoid confusion
-type MediaPlayerEpisode = {
-  id: string
-  title: string
-  podcastName: string
-  releaseDate: string
-  duration: string
-  audioUrl?: string
-  imageUrl?: string
-  description?: string
-  playbackPosition?: number
-  podcastImageUrl?: string
-  podcastId?: string
-}
+import type { Episode as MediaPlayerEpisode } from '../types/episode'
 
 export default function PodcastDetail() {
   const { podcastId } = useParams<{ podcastId: string }>()
@@ -228,7 +215,8 @@ export default function PodcastDetail() {
     if (!podcast) return
 
     const episodeForPlayer: MediaPlayerEpisode = {
-      id: episode.episodeId,
+      episodeId: episode.episodeId,
+      podcastId: episode.podcastId,
       title: episode.title,
       podcastName: podcast.title,
       releaseDate: episode.releaseDate,
@@ -237,7 +225,6 @@ export default function PodcastDetail() {
       imageUrl: episode.imageUrl,
       description: episode.description,
       podcastImageUrl: podcast.imageUrl,
-      podcastId: episode.podcastId,
     }
 
     playEpisode(episodeForPlayer)
@@ -250,7 +237,8 @@ export default function PodcastDetail() {
 
   const transformEpisodeForCard = (episode: Episode): MediaPlayerEpisode => {
     return {
-      id: episode.episodeId,
+      episodeId: episode.episodeId,
+      podcastId: episode.podcastId,
       title: episode.title,
       podcastName: podcast?.title || 'Unknown Podcast',
       releaseDate: episode.releaseDate,
@@ -259,7 +247,6 @@ export default function PodcastDetail() {
       imageUrl: episode.imageUrl,
       description: episode.description,
       podcastImageUrl: podcast?.imageUrl,
-      podcastId: episode.podcastId,
     }
   }
 

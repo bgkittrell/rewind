@@ -492,6 +492,212 @@ describe('DynamoService', () => {
     })
   })
 
+  describe('getLastPlayedEpisode', () => {
+    it('should return last played episode with valid progress', async () => {
+      const mockHistoryItem = {
+        userId: 'test-user-id',
+        episodeId: 'episode-1',
+        podcastId: 'podcast-1',
+        playbackPosition: 120, // 2 minutes
+        duration: 3600, // 1 hour
+        isCompleted: false,
+        lastPlayed: '2024-01-15T10:30:00Z',
+        firstPlayed: '2024-01-15T10:00:00Z',
+        playCount: 1,
+        createdAt: '2024-01-15T10:00:00Z',
+        updatedAt: '2024-01-15T10:30:00Z',
+      }
+
+      const mockEpisode = {
+        episodeId: 'episode-1',
+        podcastId: 'podcast-1',
+        title: 'Test Episode',
+        description: 'Test description',
+        audioUrl: 'https://example.com/audio.mp3',
+        duration: '60:00',
+        releaseDate: '2024-01-01T00:00:00Z',
+        imageUrl: 'https://example.com/image.jpg',
+        createdAt: '2024-01-01T00:00:00Z',
+        naturalKey: 'test-key',
+      }
+
+      const mockPodcast = {
+        podcastId: 'podcast-1',
+        userId: 'test-user-id',
+        title: 'Test Podcast',
+        description: 'Test podcast description',
+        rssUrl: 'https://example.com/rss.xml',
+        imageUrl: 'https://example.com/podcast-image.jpg',
+        createdAt: '2024-01-01T00:00:00Z',
+        lastUpdated: '2024-01-15T10:30:00Z',
+        episodeCount: 10,
+      }
+
+      // Mock listening history query
+      mockDynamoClient.send.mockResolvedValueOnce({
+        Items: [{ unmarshalled: mockHistoryItem }],
+      })
+
+      // Mock episode lookup
+      mockDynamoClient.send.mockResolvedValueOnce({
+        Item: { unmarshalled: mockEpisode },
+      })
+
+      // Mock user podcasts lookup
+      mockDynamoClient.send.mockResolvedValueOnce({
+        Items: [{ unmarshalled: mockPodcast }],
+      })
+
+      mockUnmarshall.mockImplementation(item => item.unmarshalled)
+
+      const result = await dynamoService.getLastPlayedEpisode('test-user-id')
+
+      expect(result).toEqual({
+        episodeId: 'episode-1',
+        podcastId: 'podcast-1',
+        title: 'Test Episode',
+        podcastTitle: 'Test Podcast',
+        playbackPosition: 120,
+        duration: 3600,
+        lastPlayed: '2024-01-15T10:30:00Z',
+        progressPercentage: 3, // 120/3600 * 100
+        audioUrl: 'https://example.com/audio.mp3',
+        imageUrl: 'https://example.com/image.jpg',
+        podcastImageUrl: 'https://example.com/podcast-image.jpg',
+      })
+    })
+
+    it('should return null when no listening history exists', async () => {
+      mockDynamoClient.send.mockResolvedValueOnce({
+        Items: [],
+      })
+
+      const result = await dynamoService.getLastPlayedEpisode('test-user-id')
+
+      expect(result).toBeNull()
+    })
+
+    it('should return null when progress is less than 30 seconds', async () => {
+      const mockHistoryItem = {
+        userId: 'test-user-id',
+        episodeId: 'episode-1',
+        podcastId: 'podcast-1',
+        playbackPosition: 15, // Only 15 seconds
+        duration: 3600,
+        isCompleted: false,
+        lastPlayed: '2024-01-15T10:30:00Z',
+      }
+
+      mockDynamoClient.send.mockResolvedValueOnce({
+        Items: [{ unmarshalled: mockHistoryItem }],
+      })
+
+      mockUnmarshall.mockImplementation(item => item.unmarshalled)
+
+      const result = await dynamoService.getLastPlayedEpisode('test-user-id')
+
+      expect(result).toBeNull()
+    })
+
+    it('should return null when episode is completed', async () => {
+      const mockHistoryItem = {
+        userId: 'test-user-id',
+        episodeId: 'episode-1',
+        podcastId: 'podcast-1',
+        playbackPosition: 3420, // 57 minutes
+        duration: 3600,
+        isCompleted: true,
+        lastPlayed: '2024-01-15T10:30:00Z',
+      }
+
+      mockDynamoClient.send.mockResolvedValueOnce({
+        Items: [{ unmarshalled: mockHistoryItem }],
+      })
+
+      mockUnmarshall.mockImplementation(item => item.unmarshalled)
+
+      const result = await dynamoService.getLastPlayedEpisode('test-user-id')
+
+      expect(result).toBeNull()
+    })
+
+    it('should return null when episode is not found', async () => {
+      const mockHistoryItem = {
+        userId: 'test-user-id',
+        episodeId: 'episode-1',
+        podcastId: 'podcast-1',
+        playbackPosition: 120,
+        duration: 3600,
+        isCompleted: false,
+        lastPlayed: '2024-01-15T10:30:00Z',
+      }
+
+      // Mock listening history query
+      mockDynamoClient.send.mockResolvedValueOnce({
+        Items: [{ unmarshalled: mockHistoryItem }],
+      })
+
+      // Mock episode lookup - not found
+      mockDynamoClient.send.mockResolvedValueOnce({
+        Item: null,
+      })
+
+      mockUnmarshall.mockImplementation(item => item.unmarshalled)
+
+      const result = await dynamoService.getLastPlayedEpisode('test-user-id')
+
+      expect(result).toBeNull()
+    })
+
+    it('should return null when podcast is not found', async () => {
+      const mockHistoryItem = {
+        userId: 'test-user-id',
+        episodeId: 'episode-1',
+        podcastId: 'podcast-1',
+        playbackPosition: 120,
+        duration: 3600,
+        isCompleted: false,
+        lastPlayed: '2024-01-15T10:30:00Z',
+      }
+
+      const mockEpisode = {
+        episodeId: 'episode-1',
+        podcastId: 'podcast-1',
+        title: 'Test Episode',
+        audioUrl: 'https://example.com/audio.mp3',
+      }
+
+      // Mock listening history query
+      mockDynamoClient.send.mockResolvedValueOnce({
+        Items: [{ unmarshalled: mockHistoryItem }],
+      })
+
+      // Mock episode lookup
+      mockDynamoClient.send.mockResolvedValueOnce({
+        Item: { unmarshalled: mockEpisode },
+      })
+
+      // Mock user podcasts lookup - empty array
+      mockDynamoClient.send.mockResolvedValueOnce({
+        Items: [],
+      })
+
+      mockUnmarshall.mockImplementation(item => item.unmarshalled)
+
+      const result = await dynamoService.getLastPlayedEpisode('test-user-id')
+
+      expect(result).toBeNull()
+    })
+
+    it('should handle errors gracefully', async () => {
+      mockDynamoClient.send.mockRejectedValueOnce(new Error('Database error'))
+
+      const result = await dynamoService.getLastPlayedEpisode('test-user-id')
+
+      expect(result).toBeNull()
+    })
+  })
+
   describe('duplicate detection', () => {
     it('should handle duplicate detection queries', async () => {
       // Mock successful query
