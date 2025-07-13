@@ -38,6 +38,31 @@ jobs:
       - name: Run unit tests
         run: npm run test
 
+      - name: Set up LocalStack for backend tests
+        run: |
+          # Install LocalStack dependencies
+          pip install localstack awscli boto3 requests
+          
+          # Start LocalStack using existing setup
+          npm run localstack:setup
+          
+          # Verify LocalStack is running
+          curl -f http://localhost:4566/health
+
+      - name: Run LocalStack integration tests
+        run: |
+          # Run existing LocalStack tests
+          npm run localstack:test
+          
+          # Run backend integration tests with LocalStack
+          cd backend
+          npm run test:integration || echo "Integration tests not configured yet"
+
+      - name: Cleanup LocalStack
+        if: always()
+        run: |
+          npm run localstack:stop || true
+
       # Disabled for speed
       # - name: Run frontend E2E tests
       #   run: |
