@@ -26,6 +26,7 @@ This document outlines the implementation plan for a serverless search backend t
 Since DynamoDB doesn't support full-text search natively, we'll implement a multi-pronged approach:
 
 #### Primary Strategy: Client-Side Filtering (Cost-Optimized)
+
 - Fetch all episodes for user's podcasts
 - Perform search filtering in Lambda function
 - Return filtered results to frontend
@@ -33,6 +34,7 @@ Since DynamoDB doesn't support full-text search natively, we'll implement a mult
 - **Cons**: Higher latency for users with large libraries
 
 #### Future Enhancement: AWS OpenSearch (When Scale Justifies)
+
 - Integrate AWS OpenSearch Service when user base grows
 - Use DynamoDB Streams to sync data
 - Provides full-text search capabilities
@@ -41,6 +43,7 @@ Since DynamoDB doesn't support full-text search natively, we'll implement a mult
 ### 2. Search Implementation Details
 
 #### Search Fields
+
 - Episode title (primary)
 - Episode description (secondary)
 - Podcast title
@@ -48,6 +51,7 @@ Since DynamoDB doesn't support full-text search natively, we'll implement a mult
 - Tags
 
 #### Search Features
+
 - Case-insensitive matching
 - Partial word matching
 - Multi-term search (AND logic)
@@ -60,12 +64,14 @@ GET /search?q={query}&limit={limit}&offset={offset}&podcastId={podcastId}
 ```
 
 **Query Parameters:**
+
 - `q` (required): Search query string
 - `limit` (optional): Number of results (default: 20, max: 100)
 - `offset` (optional): Pagination offset (default: 0)
 - `podcastId` (optional): Filter by specific podcast
 
 **Response Format:**
+
 ```json
 {
   "data": {
@@ -109,6 +115,7 @@ GET /search?q={query}&limit={limit}&offset={offset}&podcastId={podcastId}
 ### 4. Lambda Function Implementation
 
 #### Search Handler Structure
+
 ```typescript
 // searchHandler.ts
 export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
@@ -122,6 +129,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 ```
 
 #### Search Algorithm
+
 1. **Tokenization**: Split search query into terms
 2. **Normalization**: Lowercase, remove special characters
 3. **Matching**: Check each term against searchable fields
@@ -135,17 +143,20 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 ### 5. Performance Optimizations
 
 #### Caching Strategy
+
 - Cache user's episode list in Lambda memory (5-minute TTL)
 - Use CloudFront for API caching (GET requests only)
 - Cache invalidation on podcast/episode updates
 
 #### Lambda Optimizations
+
 - Memory: 512MB (balanced for performance/cost)
 - Timeout: 10 seconds
 - Reserved concurrency: Not needed at low scale
 - ARM architecture for cost savings
 
 #### Query Optimizations
+
 - Parallel DynamoDB queries for multiple podcasts
 - Batch get operations where possible
 - Projection expressions to fetch only needed fields
@@ -153,6 +164,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 ### 6. Cost Analysis
 
 #### At Low Scale (100 users, 50 episodes each)
+
 - **Lambda**: ~$0.50/month (assuming 1000 searches/day)
 - **API Gateway**: ~$3.50/month (1M requests)
 - **DynamoDB**: Already covered by existing tables
@@ -160,6 +172,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 - **Total**: ~$4.50/month
 
 #### Cost Optimization Strategies
+
 - Use DynamoDB on-demand pricing
 - No additional infrastructure needed
 - Leverage existing tables and indexes
@@ -168,6 +181,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 ### 7. Implementation Steps
 
 #### Phase 1: Basic Search (Week 1)
+
 1. Create `searchHandler.ts` Lambda function
 2. Implement basic text matching algorithm
 3. Add search endpoint to API Gateway
@@ -175,6 +189,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 5. Basic error handling and logging
 
 #### Phase 2: Enhanced Search (Week 2)
+
 1. Add relevance scoring
 2. Implement search result highlighting
 3. Add pagination support
@@ -182,6 +197,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 5. Comprehensive testing
 
 #### Phase 3: Advanced Features (Future)
+
 1. Search filters (date range, duration)
 2. Search history/suggestions
 3. Fuzzy matching for typos
@@ -190,17 +206,20 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 ### 8. Technical Implementation
 
 #### New Files to Create
+
 1. `backend/src/handlers/searchHandler.ts` - Main search handler
 2. `backend/src/services/searchService.ts` - Search logic
 3. `backend/src/utils/searchUtils.ts` - Search utilities
 4. `backend/src/types/search.ts` - Search type definitions
 
 #### Infrastructure Updates
+
 1. Update `rewind-backend-stack.ts` to add search endpoint
 2. Grant Lambda permissions to read tables
 3. Configure API Gateway route
 
 #### Testing Strategy
+
 1. Unit tests for search algorithm
 2. Integration tests for API endpoint
 3. Performance tests with various data sizes
@@ -209,12 +228,14 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 ### 9. Monitoring and Metrics
 
 #### CloudWatch Metrics
+
 - Search latency (p50, p90, p99)
 - Search volume by user
 - Error rates and types
 - Lambda cold starts
 
 #### Business Metrics
+
 - Most searched terms
 - Search success rate (clicks on results)
 - Average results per search
@@ -223,12 +244,14 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 ### 10. Future Enhancements
 
 #### When to Consider OpenSearch
+
 - Average library size > 1000 episodes
 - Search latency > 2 seconds
 - User complaints about search quality
 - Need for advanced features (typo tolerance, synonyms)
 
 #### OpenSearch Migration Path
+
 1. Set up OpenSearch domain
 2. Create DynamoDB Streams
 3. Lambda function to sync data
