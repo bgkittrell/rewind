@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
+    image: localstack/localstack:3.0
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # External services port range
+    environment:
+      - DEBUG=${DEBUG-1}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR-docker}
+      - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY-}
+      - PERSISTENCE=${PERSISTENCE-1}
+      - SERVICES=dynamodb,lambda,apigateway,cognito-idp,bedrock,events,personalize,sts,iam,logs,s3
+      - DATA_DIR=/tmp/localstack/data
+      - PORT_WEB_UI=${PORT_WEB_UI-8080}
+      - LAMBDA_REMOVE_CONTAINERS=true
+      - LAMBDA_DOCKER_NETWORK=localstack_default
+      - KINESIS_ERROR_PROBABILITY=${KINESIS_ERROR_PROBABILITY-0.0}
+      - DISABLE_CORS_CHECKS=1
+      - SKIP_INFRA_DOWNLOADS=0
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - localstack_default
+
+networks:
+  localstack_default:
+    driver: bridge

@@ -20,7 +20,15 @@
     "format:check": "prettier --check .",
     "checks": "npm run lint && npm run format:check && npm run type-check && npm run test",
     "type-check": "tsc --noEmit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "localstack:start": "docker-compose -f docker-compose.localstack.yml --env-file .env.local up -d",
+    "localstack:stop": "docker-compose -f docker-compose.localstack.yml down",
+    "localstack:restart": "npm run localstack:stop && npm run localstack:start",
+    "localstack:init": "./scripts/localstack-init.sh",
+    "localstack:setup": "npm run localstack:start && sleep 10 && npm run localstack:init",
+    "localstack:logs": "docker-compose -f docker-compose.localstack.yml logs -f",
+    "localstack:reset": "npm run localstack:stop && docker volume rm rewind_localstack_volume || true && npm run localstack:setup",
+    "localstack:test": "./scripts/test-localstack.sh"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

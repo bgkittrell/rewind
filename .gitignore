@@ -83,3 +83,8 @@ workbox-*.js
 
 # TypeScript cache
 *.tsbuildinfo 
+
+# LocalStack
+volume/
+.localstack/
+localstack_volume/
