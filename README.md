@@ -1,186 +1,281 @@
-# Rewind 🎙️
+# LocalStack GitHub Actions Testing
 
-**Rediscover older podcast episodes with AI-powered recommendations**
+This repository demonstrates how to set up and use LocalStack in GitHub Actions for testing AWS services locally in CI/CD pipelines.
 
-Rewind is a mobile-first Progressive Web App designed for podcast enthusiasts aged 35+ who want to rediscover older episodes from their favorite shows, with a focus on comedy podcasts.
+## 🚀 Features
 
-## 🚀 The "Vibe Coding" Experiment
+- **Comprehensive AWS Service Testing**: Tests S3, DynamoDB, Lambda, and SQS
+- **Two Deployment Methods**: Docker service and direct installation
+- **AWS CLI Integration**: Demonstrates both boto3 and AWS CLI usage
+- **Health Checks**: Proper service startup validation
+- **Error Handling**: Robust error handling and cleanup
 
-This project is an attempt to fully "vibe code" an entire application using comprehensive documentation as the foundation. Instead of starting with code, we started with detailed specs and let the implementation emerge naturally from well-thought-out documentation.
+## 📋 What's Included
 
-### How It Works
+### GitHub Actions Workflows
 
-1. **📚 Documentation First**: Everything starts in the [`docs/`](docs/) directory
-2. **🎯 Comprehensive Specs**: Detailed technical specifications for every component
-3. **🤖 AI-Assisted Development**: Using the docs as context for intelligent code generation
-4. **✅ Test-Driven Validation**: E2E tests with visual screenshots ensure quality
+The workflow (`.github/workflows/localstack-test.yml`) includes:
 
-Check out the [`docs/`](docs/) directory to see the complete specifications that drive this project.
+1. **Primary Job (`localstack-tests`)**:
+   - Uses LocalStack as a Docker service
+   - Runs comprehensive tests for multiple AWS services
+   - Tests both Python (boto3) and AWS CLI integration
 
-## 🎯 Key Features
+2. **Alternative Job (`localstack-alternative`)**:
+   - Installs LocalStack directly in the runner
+   - Demonstrates alternative setup method
+   - Useful for more complex LocalStack configurations
 
-- **🔍 Smart Recommendations**: AI-powered suggestions for older episodes you might have missed
-- **📱 Mobile-First PWA**: App-like experience with offline capabilities
-- **🎧 Audio Playback**: Integrated media player with external device support
-- **🤝 Library Sharing**: Share your podcast library with friends
-- **🔐 Secure Authentication**: AWS Cognito integration
-- **🎨 Beautiful UI**: Red-themed design with accessibility in mind
+### Test Coverage
 
-## 🛠️ Technology Stack
+- **S3**: Bucket operations, file upload/download
+- **DynamoDB**: Table creation, item management
+- **Lambda**: Function creation, invocation, deletion
+- **SQS**: Queue management, message handling
+- **Health Checks**: Service availability validation
 
-### Frontend
-
-- **React Router v7** with TypeScript
-- **Vite** for fast development
-- **Tailwind CSS** for styling
-- **Playwright** for E2E testing
-- **PWA** capabilities for offline use
-
-### Backend
-
-- **AWS Lambda** serverless functions
-- **DynamoDB** for data storage
-- **API Gateway** for HTTP APIs
-- **AWS Cognito** for authentication
-- **EventBridge** for scheduled tasks
-
-### Infrastructure
-
-- **AWS CDK** for infrastructure as code
-- **CloudFront** for content delivery
-- **S3** for static assets
-
-## 🏃‍♂️ Quick Start
+## � Local Setup
 
 ### Prerequisites
 
-- Node.js 18+
-- AWS CLI configured
+- Python 3.11+
+- Docker (for LocalStack)
 - Git
 
-### Development Setup
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone <your-repo-url>
+   cd <your-repo-name>
+   ```
+
+2. **Create virtual environment**:
+   ```bash
+   python -m venv localstack-env
+   source localstack-env/bin/activate  # On Windows: localstack-env\Scripts\activate
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Start LocalStack**:
+   ```bash
+   localstack start
+   ```
+
+5. **Run tests locally**:
+   ```bash
+   # Set AWS credentials for LocalStack
+   export AWS_ACCESS_KEY_ID=test
+   export AWS_SECRET_ACCESS_KEY=test
+   export AWS_DEFAULT_REGION=us-east-1
+   
+   # Test with AWS CLI
+   aws --endpoint-url=http://localhost:4566 s3 mb s3://test-bucket
+   aws --endpoint-url=http://localhost:4566 s3 ls
+   ```
+
+## 🔄 GitHub Actions Usage
+
+### Triggering Workflows
+
+The workflow runs automatically on:
+- Push to `main` or `develop` branches
+- Pull requests to `main` or `develop` branches
+- Manual trigger via GitHub UI (`workflow_dispatch`)
+
+### Workflow Configuration
+
+#### Docker Service Method (Recommended)
+
+```yaml
+services:
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - 4566:4566
+    env:
+      DEBUG: 1
+      SERVICES: s3,dynamodb,lambda,sqs,sns,cloudformation,logs,events
+```
+
+#### Direct Installation Method
+
+```yaml
+- name: Install LocalStack
+  run: |
+    pip install localstack[runtime] awscli boto3 requests
+
+- name: Start LocalStack
+  run: |
+    localstack start --detached
+```
+
+### Environment Variables
+
+The workflow uses these environment variables:
+
+- `AWS_ACCESS_KEY_ID=test`
+- `AWS_SECRET_ACCESS_KEY=test`
+- `AWS_DEFAULT_REGION=us-east-1`
+- `LOCALSTACK_ENDPOINT=http://localhost:4566`
+
+## 📝 Configuration Options
+
+### LocalStack Services
+
+To enable specific services, modify the `SERVICES` environment variable:
+
+```yaml
+env:
+  SERVICES: s3,dynamodb,lambda,sqs,sns,cloudformation,logs,events,apigateway,cloudwatch
+```
+
+### Custom Endpoint
+
+For different LocalStack configurations:
+
+```yaml
+env:
+  LOCALSTACK_ENDPOINT: http://localhost:4566
+  EDGE_PORT: 4566
+```
+
+## 🧪 Testing Examples
+
+### Python (boto3) Example
+
+```python
+import boto3
+
+# Create S3 client
+s3_client = boto3.client(
+    's3',
+    endpoint_url='http://localhost:4566',
+    aws_access_key_id='test',
+    aws_secret_access_key='test',
+    region_name='us-east-1'
+)
+
+# Create bucket
+s3_client.create_bucket(Bucket='test-bucket')
+
+# Upload file
+s3_client.put_object(Bucket='test-bucket', Key='test.txt', Body='Hello World!')
+```
+
+### AWS CLI Example
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/rewind.git
-cd rewind
+# Configure AWS CLI
+aws configure set aws_access_key_id test
+aws configure set aws_secret_access_key test
+aws configure set default.region us-east-1
 
-# Install dependencies
-npm install
-
-# Start frontend development server
-npm run dev
-
-# Run E2E tests with screenshots
-cd frontend
-npm run test:e2e:screenshots
+# Use with LocalStack
+aws --endpoint-url=http://localhost:4566 s3 mb s3://test-bucket
+aws --endpoint-url=http://localhost:4566 s3 cp file.txt s3://test-bucket/
 ```
 
-### Project Structure
+## � Debugging
 
-```
-rewind-cursor/
-├── docs/           # 📚 Complete project specifications
-├── frontend/       # 📱 React PWA application
-├── backend/        # 🔧 Lambda functions
-├── infra/          # 🏗️ AWS CDK infrastructure
-└── tests/          # 🧪 Integration tests
-```
-
-## 📖 Documentation
-
-All project specifications live in the [`docs/`](docs/) directory:
-
-- **[PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)** - Overall architecture
-- **[PLAN.md](docs/PLAN.md)** - Development roadmap
-- **[UI_DESIGN.md](docs/UI_DESIGN.md)** - Complete UI specifications
-- **[BACKEND_API.md](docs/BACKEND_API.md)** - API endpoint definitions
-- **[PWA_FEATURES.md](docs/PWA_FEATURES.md)** - Progressive Web App features
-- **[RECOMMENDATION_ENGINE.md](docs/RECOMMENDATION_ENGINE.md)** - AI recommendation logic
-
-## 🎨 Design Philosophy
-
-**Mobile-First**: Optimized for thumb-friendly navigation on smartphones
-**Accessibility**: WCAG 2.1 compliant with screen reader support
-**Performance**: Fast loading with skeleton screens and caching
-**Simplicity**: Clean, intuitive interface focused on rediscovery
-
-## 🧪 Testing
-
-The project includes comprehensive testing with visual validation:
+### Check LocalStack Health
 
 ```bash
-# Run all E2E tests
-npm run test:e2e
-
-# Run with screenshots for debugging
-npm run test:e2e:screenshots
-
-# Run in interactive mode
-npm run test:e2e:ui
+curl http://localhost:4566/health
 ```
 
-## 🚀 Deployment
-
-### Automated Deployment (Recommended)
-
-The project includes automated CI/CD deployment using GitHub Actions. When code is pushed to the `main` branch, both frontend and backend are automatically deployed to AWS.
-
-**Setup Instructions:**
-
-1. Follow the [Deployment Setup Guide](docs/DEPLOYMENT_SETUP.md) to configure AWS and GitHub
-2. Set up the required GitHub secrets and AWS IAM roles
-3. Push to `main` branch to trigger automatic deployment
-
-**Documentation:**
-
-- **[DEPLOYMENT_PLAN.md](docs/DEPLOYMENT_PLAN.md)** - Complete deployment strategy
-- **[DEPLOYMENT_SETUP.md](docs/DEPLOYMENT_SETUP.md)** - Step-by-step setup guide
-
-### Manual Deployment
-
-For local testing or manual deployments:
+### View LocalStack Logs
 
 ```bash
-# Use the deployment script
-./scripts/deploy.sh
-
-# Or deploy manually with CDK
-cd infra
-npm run deploy
-
-# Build and deploy frontend
-cd frontend
-npm run build
-aws s3 sync dist/ s3://your-bucket-name/ --delete
+localstack logs
 ```
 
-### Deployment Features
+### GitHub Actions Debugging
 
-- ✅ **Automated CI/CD** with GitHub Actions
-- ✅ **Health checks** and rollback on failure
-- ✅ **Environment configuration** with CDK outputs
-- ✅ **CloudFront invalidation** for immediate updates
-- ✅ **Security scanning** and validation
-- ✅ **Cost monitoring** and optimization
+The workflow includes debugging steps:
+
+```yaml
+- name: Verify LocalStack services
+  run: |
+    curl -s http://localhost:4566/health | jq .
+    curl -s http://localhost:4566/health | jq '.services'
+```
+
+## 🏗️ Integration with Your Project
+
+### For Application Testing
+
+1. **Add LocalStack to your test dependencies**:
+   ```bash
+   pip install localstack[runtime]
+   ```
+
+2. **Configure your application for LocalStack**:
+   ```python
+   import os
+   
+   AWS_ENDPOINT_URL = os.getenv('AWS_ENDPOINT_URL', 'http://localhost:4566')
+   AWS_REGION = os.getenv('AWS_DEFAULT_REGION', 'us-east-1')
+   ```
+
+3. **Create test fixtures**:
+   ```python
+   import pytest
+   import boto3
+   
+   @pytest.fixture
+   def s3_client():
+       return boto3.client(
+           's3',
+           endpoint_url='http://localhost:4566',
+           aws_access_key_id='test',
+           aws_secret_access_key='test',
+           region_name='us-east-1'
+       )
+   ```
+
+### For Infrastructure Testing
+
+Use LocalStack to test:
+- CloudFormation templates
+- Terraform configurations
+- CDK applications
+- SAM applications
+
+## 📚 Additional Resources
+
+- [LocalStack Documentation](https://docs.localstack.cloud/)
+- [LocalStack GitHub Repository](https://github.com/localstack/localstack)
+- [AWS CLI Documentation](https://docs.aws.amazon.com/cli/)
+- [Boto3 Documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)
 
 ## 🤝 Contributing
 
-This project demonstrates "documentation-driven development" where specs are written first, then implemented. When contributing:
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass in GitHub Actions
+5. Submit a pull request
 
-1. **Start with docs** - Update relevant documentation first
-2. **Follow the specs** - Implementation should match documented behavior
-3. **Test thoroughly** - Include E2E tests with visual validation
-4. **Maintain consistency** - Follow established patterns and conventions
+## 📄 License
 
-## 📝 License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-MIT License - see [LICENSE](LICENSE) file for details
+## � Troubleshooting
 
-## 🎙️ About
+### Common Issues
 
-Built with ❤️ for podcast lovers who want to rediscover the gems hiding in their episode backlogs.
+1. **LocalStack not starting**: Check Docker daemon is running
+2. **Connection refused**: Wait longer for LocalStack to start
+3. **Service not available**: Check the `SERVICES` environment variable
+4. **Permission errors**: Ensure proper AWS credentials are set
 
----
+### Getting Help
 
-_"The best way to predict the future is to document it first, then code it."_ - The Vibe Coding Manifesto
+- Check the [LocalStack Discussions](https://github.com/localstack/localstack/discussions)
+- Review [GitHub Actions documentation](https://docs.github.com/en/actions)
+- Open an issue in this repository for specific problems
