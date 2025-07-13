@@ -78,7 +78,7 @@ export const getTableName = (tableName: string): string => {
   if (isLocal) {
     return tableName
   }
-  
+
   // In production, use environment-specific table names
   return process.env[`${tableName.toUpperCase()}_TABLE`] || tableName
 }

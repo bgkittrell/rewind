@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import type { Episode } from '../types/episode'
 
 interface EpisodeCardProps {
-  episode: Episode,
+  episode: Episode
   podcastImageUrl?: string
   onPlay?: (_episode: Episode) => void
   onAIExplanation?: (_episode: Episode) => void

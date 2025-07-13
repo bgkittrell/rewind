@@ -8,7 +8,4 @@ export const RESUME_CONSTANTS = {
 } as const
 
 // Export individual constants for convenience
-export const {
-  RESUME_THRESHOLD,
-  COMPLETION_THRESHOLD,
-} = RESUME_CONSTANTS
+export const { RESUME_THRESHOLD, COMPLETION_THRESHOLD } = RESUME_CONSTANTS

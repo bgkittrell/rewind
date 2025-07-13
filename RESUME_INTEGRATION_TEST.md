@@ -1,9 +1,11 @@
 # Resume Functionality Integration Test Guide
 
 ## Overview
+
 This document provides step-by-step integration tests to validate the playback resume functionality.
 
 ## Prerequisites
+
 - Backend deployed with `/resume` endpoint
 - Frontend deployed with resume components
 - Test user account with authentication
@@ -15,6 +17,7 @@ This document provides step-by-step integration tests to validate the playback r
 **Objective**: Verify basic resume functionality works end-to-end
 
 **Steps**:
+
 1. **Login** to the app
 2. **Add a podcast** with episodes
 3. **Start playing an episode** and listen for >30 seconds
@@ -25,6 +28,7 @@ This document provides step-by-step integration tests to validate the playback r
 8. **Verify playback continues** from where you left off
 
 **Expected Results**:
+
 - ✅ Resume bar shows correct episode title and podcast name
 - ✅ Progress bar shows correct percentage
 - ✅ Time display shows current position and total duration
@@ -36,6 +40,7 @@ This document provides step-by-step integration tests to validate the playback r
 **Objective**: Verify progress saves every 30 seconds
 
 **Steps**:
+
 1. **Start playing an episode**
 2. **Wait exactly 30 seconds** during playback
 3. **Pause the episode**
@@ -43,6 +48,7 @@ This document provides step-by-step integration tests to validate the playback r
 5. **Check if resume data includes the 30-second mark**
 
 **Expected Results**:
+
 - ✅ Progress is saved at 30-second intervals
 - ✅ Resume position reflects the 30-second progress
 
@@ -51,6 +57,7 @@ This document provides step-by-step integration tests to validate the playback r
 **Objective**: Verify resume bar auto-dismisses after 10 seconds
 
 **Steps**:
+
 1. **Create resume data** (follow Test 1 steps 1-5)
 2. **Reopen the app**
 3. **Do not interact** with the resume bar
@@ -58,6 +65,7 @@ This document provides step-by-step integration tests to validate the playback r
 5. **Verify resume bar disappears**
 
 **Expected Results**:
+
 - ✅ Countdown shows "Auto-dismissing in 10s", "9s", etc.
 - ✅ Bar automatically disappears after 10 seconds
 - ✅ Resume data is cleared after auto-dismiss
@@ -67,6 +75,7 @@ This document provides step-by-step integration tests to validate the playback r
 **Objective**: Verify manual dismiss functionality
 
 **Steps**:
+
 1. **Create resume data** (follow Test 1 steps 1-5)
 2. **Reopen the app**
 3. **Click the "X" dismiss button**
@@ -75,6 +84,7 @@ This document provides step-by-step integration tests to validate the playback r
 6. **Verify resume bar does not reappear**
 
 **Expected Results**:
+
 - ✅ Resume bar disappears immediately when dismissed
 - ✅ Resume data is cleared after manual dismiss
 - ✅ Resume bar doesn't show again after refresh
@@ -84,6 +94,7 @@ This document provides step-by-step integration tests to validate the playback r
 **Objective**: Verify resume only shows for meaningful progress (>30 seconds)
 
 **Steps**:
+
 1. **Start playing an episode**
 2. **Listen for only 15 seconds**
 3. **Close the app**
@@ -91,6 +102,7 @@ This document provides step-by-step integration tests to validate the playback r
 5. **Verify no resume bar appears**
 
 **Expected Results**:
+
 - ✅ No resume bar shows for <30 seconds of progress
 - ✅ App behaves normally without resume data
 
@@ -99,12 +111,14 @@ This document provides step-by-step integration tests to validate the playback r
 **Objective**: Verify completed episodes don't show in resume
 
 **Steps**:
+
 1. **Play an episode to 95%+ completion**
 2. **Close the app**
 3. **Reopen the app**
 4. **Verify no resume bar appears**
 
 **Expected Results**:
+
 - ✅ Completed episodes (95%+ listened) don't trigger resume
 - ✅ App starts fresh without resume prompt
 
@@ -113,6 +127,7 @@ This document provides step-by-step integration tests to validate the playback r
 **Objective**: Verify resume data syncs across devices
 
 **Steps**:
+
 1. **Device A**: Start playing episode, listen >30 seconds
 2. **Device A**: Close app
 3. **Device B**: Login with same account
@@ -120,6 +135,7 @@ This document provides step-by-step integration tests to validate the playback r
 5. **Device B**: Verify resume bar appears
 
 **Expected Results**:
+
 - ✅ Resume data syncs across devices
 - ✅ Can resume on different device from exact position
 
@@ -128,6 +144,7 @@ This document provides step-by-step integration tests to validate the playback r
 **Objective**: Verify progress saves automatically during playback
 
 **Steps**:
+
 1. **Start playing an episode**
 2. **Play for 2 minutes** (4 save cycles at 30-second intervals)
 3. **Pause the episode**
@@ -135,6 +152,7 @@ This document provides step-by-step integration tests to validate the playback r
 5. **Verify progress matches current position**
 
 **Expected Results**:
+
 - ✅ Progress saves every 30 seconds automatically
 - ✅ Latest progress matches audio player position
 - ✅ No manual intervention required
@@ -144,6 +162,7 @@ This document provides step-by-step integration tests to validate the playback r
 **Objective**: Verify graceful handling of errors
 
 **Steps**:
+
 1. **Disconnect internet**
 2. **Try to fetch resume data** (app startup)
 3. **Verify app doesn't crash**
@@ -151,6 +170,7 @@ This document provides step-by-step integration tests to validate the playback r
 5. **Try again**
 
 **Expected Results**:
+
 - ✅ App handles network errors gracefully
 - ✅ No crashes or broken states
 - ✅ Resume works when connectivity restored
@@ -160,12 +180,14 @@ This document provides step-by-step integration tests to validate the playback r
 **Objective**: Verify behavior when resumed content no longer exists
 
 **Steps**:
+
 1. **Create resume data for an episode**
 2. **Delete the podcast/episode from backend**
 3. **Reopen the app**
 4. **Verify graceful handling**
 
 **Expected Results**:
+
 - ✅ App handles missing content gracefully
 - ✅ No resume bar shows for deleted content
 - ✅ No error states or crashes
@@ -175,6 +197,7 @@ This document provides step-by-step integration tests to validate the playback r
 ### Backend Endpoint Tests
 
 **Test Resume API directly**:
+
 ```bash
 # Get resume data
 curl -H "Authorization: Bearer <token>" \
@@ -188,6 +211,7 @@ curl -H "Authorization: Bearer <token>" \
 ```
 
 **Test Progress Saving**:
+
 ```bash
 # Save progress
 curl -X PUT \
@@ -200,11 +224,13 @@ curl -X PUT \
 ## Performance Testing
 
 ### Load Time Impact
+
 1. **Measure app startup time** without resume feature
 2. **Measure app startup time** with resume feature
 3. **Verify impact is <100ms**
 
 ### Progress Save Performance
+
 1. **Monitor API response times** for progress saves
 2. **Verify saves complete in <500ms**
 3. **Test with poor network conditions**
@@ -212,8 +238,9 @@ curl -X PUT \
 ## Browser Compatibility
 
 Test the resume functionality across:
+
 - ✅ Chrome (desktop & mobile)
-- ✅ Firefox (desktop & mobile)  
+- ✅ Firefox (desktop & mobile)
 - ✅ Safari (desktop & mobile)
 - ✅ Edge (desktop)
 
@@ -227,6 +254,7 @@ Test the resume functionality across:
 ## Success Criteria
 
 All tests must pass with:
+
 - ✅ **Functional Requirements**: Resume works as designed
 - ✅ **Performance**: No significant impact on app startup
 - ✅ **Reliability**: Error handling prevents crashes
@@ -236,6 +264,7 @@ All tests must pass with:
 ## Test Data Cleanup
 
 After testing:
+
 1. **Clear test listening history**
 2. **Remove test podcasts**
 3. **Reset test user data**
@@ -250,7 +279,7 @@ npm test -- --grep "resume"
 # Run backend tests only
 cd backend && npm test
 
-# Run frontend tests only  
+# Run frontend tests only
 cd frontend && npm test
 
 # Run integration tests
@@ -260,17 +289,20 @@ npm run test:e2e
 ## Troubleshooting
 
 **Resume bar doesn't appear**:
+
 - Check if progress >30 seconds
 - Verify episode not completed (>95%)
 - Check network connectivity
 - Verify authentication is valid
 
 **Resume starts from wrong position**:
+
 - Check if progress was saved properly
 - Verify 30-second save intervals working
 - Check browser localStorage backup
 
 **Auto-dismiss not working**:
+
 - Verify timer is running
 - Check if component unmounted early
 - Test with different browser tab focus states
@@ -278,8 +310,9 @@ npm run test:e2e
 ## Results Documentation
 
 For each test scenario, document:
+
 - ✅ **Pass/Fail Status**
-- 📝 **Notes and Observations**  
+- 📝 **Notes and Observations**
 - 🐛 **Issues Found**
 - 🔧 **Fixes Applied**
 - ⚡ **Performance Metrics**

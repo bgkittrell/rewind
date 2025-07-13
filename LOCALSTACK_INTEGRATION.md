@@ -9,6 +9,7 @@ This document summarizes the integration of LocalStack testing into the existing
 The existing `deploy.yml` workflow has been enhanced to include LocalStack testing in the `validate` job:
 
 #### New Steps Added:
+
 - **Set up LocalStack for backend tests**: Uses the existing `npm run localstack:setup` command
 - **Run LocalStack integration tests**: Executes `npm run localstack:test` and backend integration tests
 - **Cleanup LocalStack**: Ensures proper cleanup with `npm run localstack:stop`
@@ -16,14 +17,17 @@ The existing `deploy.yml` workflow has been enhanced to include LocalStack testi
 ### 2. Enhanced Backend Testing
 
 #### Added to `backend/package.json`:
+
 - New script: `test:integration` for running integration tests against LocalStack
 
 #### Created `backend/vitest.integration.config.ts`:
+
 - Vitest configuration for integration tests
 - Environment variables for LocalStack connectivity
 - Test timeout configuration for AWS service calls
 
 #### Updated `.env.local`:
+
 - LocalStack environment configuration
 - AWS credentials for testing
 - Service endpoints configuration
@@ -89,12 +93,14 @@ The integration includes testing of:
 ## 🔧 **Configuration**
 
 ### Environment Variables:
+
 - `AWS_ACCESS_KEY_ID=test`
 - `AWS_SECRET_ACCESS_KEY=test`
 - `AWS_DEFAULT_REGION=us-east-1`
 - `LOCALSTACK_ENDPOINT=http://localhost:4566`
 
 ### Services Enabled:
+
 - dynamodb, lambda, apigateway, cognito-idp, bedrock, events, personalize, sts, iam, logs, s3
 
 ## 📝 **Next Steps**

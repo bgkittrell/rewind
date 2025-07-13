@@ -10,7 +10,7 @@ export default defineConfig({
       AWS_SECRET_ACCESS_KEY: 'test',
       AWS_DEFAULT_REGION: 'us-east-1',
       LOCALSTACK_ENDPOINT: 'http://localhost:4566',
-      NODE_ENV: 'test'
-    }
-  }
+      NODE_ENV: 'test',
+    },
+  },
 })

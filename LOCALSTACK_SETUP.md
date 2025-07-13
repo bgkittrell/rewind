@@ -16,17 +16,20 @@ LocalStack is a cloud service emulator that runs in a single container on your l
 ### Installing Prerequisites
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt-get update
 sudo apt-get install awscli jq curl
 ```
 
 **macOS:**
+
 ```bash
 brew install awscli jq
 ```
 
 **Windows:**
+
 ```bash
 # Using chocolatey
 choco install awscli jq
@@ -75,16 +78,16 @@ npm run dev
 
 ## Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run localstack:start` | Start LocalStack container |
-| `npm run localstack:stop` | Stop LocalStack container |
-| `npm run localstack:restart` | Restart LocalStack container |
-| `npm run localstack:init` | Initialize AWS resources |
-| `npm run localstack:setup` | Start + Initialize in one command |
-| `npm run localstack:test` | Run comprehensive tests |
-| `npm run localstack:logs` | View LocalStack logs |
-| `npm run localstack:reset` | Reset everything and start fresh |
+| Script                       | Description                       |
+| ---------------------------- | --------------------------------- |
+| `npm run localstack:start`   | Start LocalStack container        |
+| `npm run localstack:stop`    | Stop LocalStack container         |
+| `npm run localstack:restart` | Restart LocalStack container      |
+| `npm run localstack:init`    | Initialize AWS resources          |
+| `npm run localstack:setup`   | Start + Initialize in one command |
+| `npm run localstack:test`    | Run comprehensive tests           |
+| `npm run localstack:logs`    | View LocalStack logs              |
+| `npm run localstack:reset`   | Reset everything and start fresh  |
 
 ## Configuration
 
@@ -121,13 +124,13 @@ LocalStack simulates these AWS services for the Rewind project:
 
 ### DynamoDB Tables
 
-| Table Name | Primary Key | GSI | Purpose |
-|------------|-------------|-----|---------|
-| `users` | `id` | - | User profiles |
-| `podcasts` | `id` | - | Podcast metadata |
-| `episodes` | `id` | `podcastId-index` | Episode data |
-| `listeningHistory` | `id` | `userId-index` | User listening history |
-| `shares` | `id` | - | Shared content |
+| Table Name         | Primary Key | GSI               | Purpose                |
+| ------------------ | ----------- | ----------------- | ---------------------- |
+| `users`            | `id`        | -                 | User profiles          |
+| `podcasts`         | `id`        | -                 | Podcast metadata       |
+| `episodes`         | `id`        | `podcastId-index` | Episode data           |
+| `listeningHistory` | `id`        | `userId-index`    | User listening history |
+| `shares`           | `id`        | -                 | Shared content         |
 
 ### Cognito Resources
 
@@ -149,6 +152,7 @@ npm run localstack:test
 ```
 
 The test suite validates:
+
 - ✅ LocalStack is running
 - ✅ DynamoDB tables exist and work
 - ✅ Cognito user pool is configured
@@ -173,6 +177,7 @@ aws s3 ls --endpoint-url http://localhost:4566
 ### Backend Services
 
 The backend automatically detects LocalStack when:
+
 - `NODE_ENV=development`
 - `IS_LOCAL=true`
 
@@ -192,9 +197,10 @@ For frontend testing, configure your API calls to use LocalStack endpoints:
 
 ```javascript
 // In development, API calls will go through LocalStack
-const API_BASE_URL = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:4566/restapis/[API_ID]/prod/_user_request_'
-  : 'https://your-api-gateway-url.com'
+const API_BASE_URL =
+  process.env.NODE_ENV === 'development'
+    ? 'http://localhost:4566/restapis/[API_ID]/prod/_user_request_'
+    : 'https://your-api-gateway-url.com'
 ```
 
 ## Troubleshooting
@@ -202,6 +208,7 @@ const API_BASE_URL = process.env.NODE_ENV === 'development'
 ### Common Issues
 
 **1. LocalStack won't start**
+
 ```bash
 # Check Docker is running
 docker ps
@@ -214,6 +221,7 @@ npm run localstack:reset
 ```
 
 **2. AWS CLI errors**
+
 ```bash
 # Verify AWS CLI configuration
 aws configure list
@@ -224,6 +232,7 @@ export AWS_SECRET_ACCESS_KEY=test
 ```
 
 **3. Permission errors**
+
 ```bash
 # Make scripts executable
 chmod +x scripts/*.sh
@@ -233,6 +242,7 @@ sudo usermod -aG docker $USER
 ```
 
 **4. Services not responding**
+
 ```bash
 # Check LocalStack health
 curl http://localhost:4566/health
@@ -244,6 +254,7 @@ npm run localstack:logs
 ### Debugging
 
 **Enable debug mode:**
+
 ```bash
 # Edit .env.local
 DEBUG=1
@@ -253,6 +264,7 @@ npm run localstack:restart
 ```
 
 **Check service status:**
+
 ```bash
 # LocalStack health endpoint
 curl -s http://localhost:4566/health | jq
@@ -269,19 +281,20 @@ LocalStack is configured with persistence enabled, so your data will survive con
 - **Windows**: Docker volume
 
 To reset all data:
+
 ```bash
 npm run localstack:reset
 ```
 
 ## Production vs Development
 
-| Feature | Development (LocalStack) | Production (AWS) |
-|---------|-------------------------|------------------|
-| Endpoint | `http://localhost:4566` | AWS service endpoints |
-| Credentials | `test/test` | IAM roles/credentials |
-| Data | Local storage | AWS managed storage |
-| Costs | Free | AWS pricing |
-| Performance | Local network | AWS performance |
+| Feature     | Development (LocalStack) | Production (AWS)      |
+| ----------- | ------------------------ | --------------------- |
+| Endpoint    | `http://localhost:4566`  | AWS service endpoints |
+| Credentials | `test/test`              | IAM roles/credentials |
+| Data        | Local storage            | AWS managed storage   |
+| Costs       | Free                     | AWS pricing           |
+| Performance | Local network            | AWS performance       |
 
 ## Best Practices
 
@@ -337,6 +350,7 @@ For issues with LocalStack setup:
 ## Web UI
 
 LocalStack provides a web interface at:
+
 - **URL**: http://localhost:8080
 - **Features**: Resource browser, logs, metrics
 - **Credentials**: No authentication required in development
