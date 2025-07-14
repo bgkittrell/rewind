@@ -157,7 +157,8 @@ describe('Home', () => {
     window.alert = vi.fn()
     console.log = vi.fn()
     console.error = vi.fn()
-    ;(useMediaPlayer as any).mockReturnValue({
+    const mockUseMediaPlayer = useMediaPlayer as any
+    mockUseMediaPlayer.mockReturnValue({
       playEpisode: mockPlayEpisode,
       currentEpisode: null,
       isPlaying: false,
@@ -165,11 +166,13 @@ describe('Home', () => {
   })
 
   it('shows loading state when auth is loading', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: false,
       isLoading: true,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: [],
       loading: true,
       error: null,
@@ -191,11 +194,13 @@ describe('Home', () => {
   })
 
   it('shows login prompt when not authenticated', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: false,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: [],
       loading: false,
       error: null,
@@ -218,11 +223,13 @@ describe('Home', () => {
   })
 
   it('redirects to login when sign in button is clicked', () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: false,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: [],
       loading: false,
       error: null,
@@ -244,11 +251,13 @@ describe('Home', () => {
   })
 
   it('shows recommendations when authenticated', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: mockRecommendations,
       loading: false,
       error: null,
@@ -273,11 +282,13 @@ describe('Home', () => {
   })
 
   it('shows loading state while fetching recommendations', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: [],
       loading: true,
       error: null,
@@ -298,11 +309,13 @@ describe('Home', () => {
   })
 
   it('shows error message when recommendations fail to load', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: [],
       loading: false,
       error: 'Failed to fetch',
@@ -324,11 +337,13 @@ describe('Home', () => {
   })
 
   it('retries loading recommendations when retry button is clicked', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: [],
       loading: false,
       error: 'Failed to fetch',
@@ -350,11 +365,13 @@ describe('Home', () => {
   })
 
   it('shows empty state when no recommendations', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: [],
       loading: false,
       error: null,
@@ -376,11 +393,13 @@ describe('Home', () => {
   })
 
   it('handles filter changes', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: mockRecommendations,
       loading: false,
       error: null,
@@ -406,11 +425,13 @@ describe('Home', () => {
   })
 
   it('plays episode and tracks play event', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: mockRecommendations,
       loading: false,
       error: null,
@@ -453,11 +474,13 @@ describe('Home', () => {
   })
 
   it('shows AI explanation when why this button is clicked', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: mockRecommendations,
       loading: false,
       error: null,
@@ -482,11 +505,13 @@ describe('Home', () => {
   })
 
   it('handles thumbs up feedback', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: mockRecommendations,
       loading: false,
       error: null,
@@ -511,11 +536,13 @@ describe('Home', () => {
   })
 
   it('handles thumbs down feedback', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: mockRecommendations,
       loading: false,
       error: null,
@@ -540,11 +567,13 @@ describe('Home', () => {
   })
 
   it('shows user feedback state', async () => {
-    ;(useAuth as any).mockReturnValue({
+    const mockUseAuth = useAuth as any
+    mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
     })
-    ;(useRecommendations as any).mockReturnValue({
+    const mockUseRecommendations = useRecommendations as any
+    mockUseRecommendations.mockReturnValue({
       recommendations: mockRecommendations,
       loading: false,
       error: null,
