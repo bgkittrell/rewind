@@ -637,6 +637,7 @@ All backend services now use structured JSON logging optimized for CloudWatch In
 - **CloudWatch Integration**: JSON format enables powerful queries and dashboards
 
 **Log Format Example:**
+
 ```json
 {
   "level": "INFO",

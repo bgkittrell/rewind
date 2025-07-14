@@ -8,12 +8,17 @@ import DOMPurify from 'dompurify'
 export function stripHtml(html: string): string {
   if (!html) return ''
 
-  // Sanitize HTML first to prevent XSS
-  const sanitized = DOMPurify.sanitize(html, { ALLOWED_TAGS: [] })
+  // Sanitize HTML and get DOM element to decode entities
+  const sanitized = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [],
+    RETURN_DOM: true,
+  })
 
-  // Since we're stripping all tags, we can use the sanitized text directly
+  // Extract text content which automatically decodes entities
+  const decoded = sanitized.textContent || ''
+
   // Remove extra whitespace and normalize
-  return sanitized.replace(/\s+/g, ' ').trim()
+  return decoded.replace(/\s+/g, ' ').trim()
 }
 
 /**

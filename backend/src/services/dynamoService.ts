@@ -495,10 +495,12 @@ export class DynamoService {
 
     try {
       for (const batch of batches) {
-        const keys = batch.map(podcastId => marshall({
-          podcastId,
-          episodeId,
-        }))
+        const keys = batch.map(podcastId =>
+          marshall({
+            podcastId,
+            episodeId,
+          }),
+        )
 
         const params = {
           RequestItems: {

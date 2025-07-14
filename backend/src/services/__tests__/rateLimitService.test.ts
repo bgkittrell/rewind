@@ -22,7 +22,7 @@ vi.mock('../loggerService', () => ({
     info: vi.fn(),
     debug: vi.fn(),
     warn: vi.fn(),
-  }
+  },
 }))
 
 describe('RateLimitService', () => {

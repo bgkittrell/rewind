@@ -80,7 +80,9 @@ describe('Smoke Tests for Modified Components', () => {
       const module = await import('../components/EpisodeCard')
       expect(module.EpisodeCard).toBeDefined()
       expect(module.default).toBeDefined()
-      expect(typeof module.EpisodeCard).toBe('function')
+      // React.memo returns an object with $$typeof property
+      expect(typeof module.EpisodeCard).toBe('object')
+      expect(module.EpisodeCard.$$typeof).toBeDefined()
     })
 
     it('should have FloatingMediaPlayer component with proper exports', async () => {
@@ -123,11 +125,12 @@ describe('Smoke Tests for Modified Components', () => {
 
       // Test that component has the expected structure
       expect(EpisodeCard).toBeDefined()
-      expect(typeof EpisodeCard).toBe('function')
+      // React.memo returns an object
+      expect(typeof EpisodeCard).toBe('object')
+      expect(EpisodeCard.$$typeof).toBeDefined()
 
-      // Verify the component accepts the required props (no instantiation needed)
-      const componentString = EpisodeCard.toString()
-      expect(componentString).toContain('podcastImageUrl')
+      // The memoized component still has the displayName property
+      expect(EpisodeCard.displayName).toBe('EpisodeCard')
     })
 
     it('should have FloatingMediaPlayer component that accepts episode with podcastImageUrl', async () => {

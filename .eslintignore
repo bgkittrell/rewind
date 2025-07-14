@@ -8,8 +8,9 @@ coverage/
 .parcel-cache/
 cdk.out/
 storybook-static/
+dev-dist/
 *.config.js
 *.config.ts
 vite.config.ts
 tailwind.config.js
-postcss.config.js 
+postcss.config.js

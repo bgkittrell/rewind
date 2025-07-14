@@ -157,4 +157,7 @@ export const EpisodeCard = React.memo(EpisodeCardComponent, (prevProps, nextProp
   )
 })
 
+// Add displayName for better debugging
+EpisodeCard.displayName = 'EpisodeCard'
+
 export default EpisodeCard
