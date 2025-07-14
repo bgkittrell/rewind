@@ -223,7 +223,7 @@ export class RecommendationService {
   /**
    * Generate human-readable reasons for the recommendation
    */
-  private generateRecommendationReasons(factors: any, episode: Episode): string[] {
+  private generateRecommendationReasons(factors: RecommendationScore['factors'], episode: Episode): string[] {
     const reasons: string[] = []
 
     if (factors.recentShowListening > 0.5) {
@@ -461,7 +461,7 @@ export class RecommendationService {
             ? 'ADD listenCount :inc, episodeIds :episodeId SET lastListenDate = :date, updatedAt = :now'
             : 'ADD favoriteCount :inc SET averageRating = if_not_exists(averageRating, :rating), updatedAt = :now'
 
-        const expressionAttributeValues: any = {
+        const expressionAttributeValues: Record<string, any> = {
           ':inc': 1,
           ':now': new Date().toISOString(),
         }

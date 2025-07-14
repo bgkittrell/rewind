@@ -3,6 +3,7 @@ import { SearchService, SearchResult, SearchFilters } from '../services/searchSe
 import { EpisodeCard } from '../components/EpisodeCard'
 import { useAuth } from '../context/AuthContext'
 import { useMediaPlayer } from '../context/MediaPlayerContext'
+import { Episode } from '../types/episode'
 
 const searchService = new SearchService()
 
@@ -117,7 +118,7 @@ export default function Search() {
   }
 
   // Handle play episode
-  const handlePlayEpisode = (episode: any) => {
+  const handlePlayEpisode = (episode: Episode) => {
     playEpisode({
       episodeId: episode.episodeId,
       podcastId: episode.podcastId,
@@ -131,7 +132,7 @@ export default function Search() {
   }
 
   // Handle AI explanation (placeholder)
-  const handleAIExplanation = (episode: any) => {
+  const handleAIExplanation = (episode: Episode) => {
     // TODO: Implement AI explanation functionality
     console.log('AI explanation for:', episode.title)
   }

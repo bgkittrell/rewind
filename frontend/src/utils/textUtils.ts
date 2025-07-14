@@ -1,3 +1,5 @@
+import DOMPurify from 'dompurify'
+
 /**
  * Strips HTML tags from a string and returns clean text
  * @param html The HTML string to clean
@@ -6,15 +8,12 @@
 export function stripHtml(html: string): string {
   if (!html) return ''
 
-  // Create a temporary DOM element to parse HTML
-  const tempDiv = document.createElement('div')
-  tempDiv.innerHTML = html
+  // Sanitize HTML first to prevent XSS
+  const sanitized = DOMPurify.sanitize(html, { ALLOWED_TAGS: [] })
 
-  // Get text content and clean up extra whitespace
-  const textContent = tempDiv.textContent || tempDiv.innerText || ''
-
+  // Since we're stripping all tags, we can use the sanitized text directly
   // Remove extra whitespace and normalize
-  return textContent.replace(/\s+/g, ' ').trim()
+  return sanitized.replace(/\s+/g, ' ').trim()
 }
 
 /**

@@ -56,16 +56,17 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // Return results
     return createSuccessResponse(searchResponse, 200, event.path)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Search handler error:', error)
 
     // Handle specific error types
-    if (error.message?.includes('Search query too long')) {
-      return createErrorResponse(error.message, 'VALIDATION_ERROR', 400, event.path)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    if (errorMessage.includes('Search query too long')) {
+      return createErrorResponse(errorMessage, 'VALIDATION_ERROR', 400, event.path)
     }
 
-    if (error.message?.includes('not found')) {
-      return createErrorResponse(error.message, 'NOT_FOUND', 404, event.path)
+    if (errorMessage.includes('not found')) {
+      return createErrorResponse(errorMessage, 'NOT_FOUND', 404, event.path)
     }
 
     return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500, event.path)

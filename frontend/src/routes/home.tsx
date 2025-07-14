@@ -135,9 +135,9 @@ export default function Home() {
       console.log('Received recommendations:', data)
 
       setRecommendations(data)
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load recommendations:', err)
-      setError(err.message || 'Failed to load recommendations')
+      setError(err instanceof Error ? err.message : 'Failed to load recommendations')
     } finally {
       setLoading(false)
     }
