@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import './index.css'
@@ -7,15 +7,24 @@ import './index.css'
 import { AuthProvider } from './context/AuthContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
-// Import routes
+// Import Root and ErrorPage directly as they're needed immediately
 import Root from './routes/root'
-import Home from './routes/home'
-import Library from './routes/library'
-import Search from './routes/search'
 import ErrorPage from './routes/error-page'
-import PodcastDetail from './routes/podcast-detail'
-import EpisodeDetail from './routes/episode-detail'
-import Auth from './routes/auth'
+
+// Lazy load routes for code splitting
+const Home = lazy(() => import('./routes/home'))
+const Library = lazy(() => import('./routes/library'))
+const Search = lazy(() => import('./routes/search'))
+const PodcastDetail = lazy(() => import('./routes/podcast-detail'))
+const EpisodeDetail = lazy(() => import('./routes/episode-detail'))
+const Auth = lazy(() => import('./routes/auth'))
+
+// Loading component for Suspense fallback
+const RouteLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+)
 
 // Import PWA service
 import { pwaService } from './services/pwaService'
@@ -31,27 +40,51 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Home />,
+        element: (
+          <Suspense fallback={<RouteLoader />}>
+            <Home />
+          </Suspense>
+        ),
       },
       {
         path: 'library',
-        element: <Library />,
+        element: (
+          <Suspense fallback={<RouteLoader />}>
+            <Library />
+          </Suspense>
+        ),
       },
       {
         path: 'library/:podcastId',
-        element: <PodcastDetail />,
+        element: (
+          <Suspense fallback={<RouteLoader />}>
+            <PodcastDetail />
+          </Suspense>
+        ),
       },
       {
         path: 'search',
-        element: <Search />,
+        element: (
+          <Suspense fallback={<RouteLoader />}>
+            <Search />
+          </Suspense>
+        ),
       },
       {
         path: 'episode/:podcastId/:episodeId',
-        element: <EpisodeDetail />,
+        element: (
+          <Suspense fallback={<RouteLoader />}>
+            <EpisodeDetail />
+          </Suspense>
+        ),
       },
       {
         path: 'episode/:episodeId',
-        element: <EpisodeDetail />,
+        element: (
+          <Suspense fallback={<RouteLoader />}>
+            <EpisodeDetail />
+          </Suspense>
+        ),
       },
       {
         path: 'share/:shareId',
@@ -61,11 +94,19 @@ const router = createBrowserRouter([
   },
   {
     path: '/login',
-    element: <Auth />,
+    element: (
+      <Suspense fallback={<RouteLoader />}>
+        <Auth />
+      </Suspense>
+    ),
   },
   {
     path: '/signup',
-    element: <Auth />,
+    element: (
+      <Suspense fallback={<RouteLoader />}>
+        <Auth />
+      </Suspense>
+    ),
   },
 ])
 

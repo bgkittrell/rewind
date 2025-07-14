@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { Podcast } from '../services/podcastService'
 
 interface PodcastCardProps {
@@ -8,27 +8,27 @@ interface PodcastCardProps {
   isDeleting?: boolean
 }
 
-export default function PodcastCard({ podcast, onDelete, onPlay, isDeleting = false }: PodcastCardProps) {
+function PodcastCardComponent({ podcast, onDelete, onPlay, isDeleting = false }: PodcastCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  const handleDeleteClick = () => {
+  const handleDeleteClick = useCallback(() => {
     setShowDeleteConfirm(true)
-  }
+  }, [])
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = useCallback(() => {
     onDelete(podcast.podcastId)
     setShowDeleteConfirm(false)
-  }
+  }, [onDelete, podcast.podcastId])
 
-  const handleCancelDelete = () => {
+  const handleCancelDelete = useCallback(() => {
     setShowDeleteConfirm(false)
-  }
+  }, [])
 
-  const handlePlayClick = () => {
+  const handlePlayClick = useCallback(() => {
     if (onPlay) {
       onPlay(podcast.podcastId)
     }
-  }
+  }, [onPlay, podcast.podcastId])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -150,3 +150,19 @@ export default function PodcastCard({ podcast, onDelete, onPlay, isDeleting = fa
     </div>
   )
 }
+
+// Memoize the component to prevent unnecessary re-renders
+// Only re-render if podcast data, deletion state, or callbacks change
+const PodcastCard = React.memo(PodcastCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.podcast.podcastId === nextProps.podcast.podcastId &&
+    prevProps.podcast.episodeCount === nextProps.podcast.episodeCount &&
+    prevProps.podcast.unreadCount === nextProps.podcast.unreadCount &&
+    prevProps.podcast.lastUpdated === nextProps.podcast.lastUpdated &&
+    prevProps.isDeleting === nextProps.isDeleting &&
+    prevProps.onDelete === nextProps.onDelete &&
+    prevProps.onPlay === nextProps.onPlay
+  )
+})
+
+export default PodcastCard
