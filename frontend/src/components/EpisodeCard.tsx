@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import type { Episode } from '../types/episode'
 
 interface EpisodeCardProps {
-  episode: Episode,
+  episode: Episode
   podcastImageUrl?: string
   onPlay?: (_episode: Episode) => void
   onAIExplanation?: (_episode: Episode) => void
@@ -32,7 +32,9 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
   }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    // Parse the date string and add timezone offset to avoid UTC conversion issues
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',

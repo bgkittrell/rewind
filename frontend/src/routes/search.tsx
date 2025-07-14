@@ -303,6 +303,7 @@ export default function Search() {
             placeholder="Search episodes or podcasts..."
             className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             autoComplete="off"
+            data-testid="search-input"
           />
           <svg
             className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"

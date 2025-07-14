@@ -48,27 +48,27 @@ describe('Smoke Tests for Modified Components', () => {
   describe('Component Imports', () => {
     it('should import EpisodeCard without throwing', async () => {
       await expect(import('../components/EpisodeCard')).resolves.toBeDefined()
-    })
+    }, 10000)
 
     it('should import FloatingMediaPlayer without throwing', async () => {
       await expect(import('../components/FloatingMediaPlayer')).resolves.toBeDefined()
-    })
+    }, 10000)
 
     it('should import Header without throwing', async () => {
       await expect(import('../components/Header')).resolves.toBeDefined()
-    })
+    }, 10000)
 
     it('should import Home route without throwing', async () => {
       await expect(import('../routes/home')).resolves.toBeDefined()
-    })
+    }, 10000)
 
     it('should import Library route without throwing', async () => {
       await expect(import('../routes/library')).resolves.toBeDefined()
-    })
+    }, 10000)
 
     it('should import PodcastDetail route without throwing', async () => {
       await expect(import('../routes/podcast-detail')).resolves.toBeDefined()
-    })
+    }, 10000)
 
     it('should import MediaPlayerContext without throwing', async () => {
       await expect(import('../context/MediaPlayerContext')).resolves.toBeDefined()

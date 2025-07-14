@@ -20,7 +20,9 @@
     "test:e2e:no-server": "playwright test --project='Mobile Chrome' --quiet --workers=1 --reporter=list --max-failures=1",
     "test:e2e:force-screenshots": "CI=true playwright test --project='Mobile Chrome' --quiet --workers=1 --reporter=list --pass-with-no-tests; echo 'Screenshots generated (tests may have failed but screenshots were taken)'",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test:storybook": "playwright test --config=playwright.storybook.config.ts",
+    "test:all": "npm run test && npm run test:e2e"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.11.2",
@@ -64,6 +66,10 @@
     "vite": "^5.2.0",
     "vite-plugin-pwa": "^0.19.0",
     "vitest": "^1.6.1",
-    "workbox-window": "^7.0.0"
+    "workbox-window": "^7.0.0",
+    "storybook": "^9.0.16",
+    "@storybook/addon-docs": "^9.0.16",
+    "@storybook/addon-onboarding": "^9.0.16",
+    "eslint-plugin-storybook": "^9.0.16"
   }
 }

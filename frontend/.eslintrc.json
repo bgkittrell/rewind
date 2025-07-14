@@ -12,7 +12,12 @@
     "comma-dangle": ["error", "always-multiline"],
     "no-trailing-spaces": "error",
     "eol-last": "error",
-    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_"
+      }
+    ]
   },
   "env": {
     "browser": true,
