@@ -129,11 +129,10 @@ const ToastDemo = () => {
 }
 
 export const Default: Story = {
-  render: () => (
-    <ToastProvider>
-      <ToastDemo />
-    </ToastProvider>
-  ),
+  args: {
+    children: <ToastDemo />,
+  },
+  render: args => <ToastProvider>{args.children}</ToastProvider>,
 }
 
 const AutoToastDemo = () => {
@@ -159,11 +158,10 @@ const AutoToastDemo = () => {
 }
 
 export const AutomaticToast: Story = {
-  render: () => (
-    <ToastProvider>
-      <AutoToastDemo />
-    </ToastProvider>
-  ),
+  args: {
+    children: <AutoToastDemo />,
+  },
+  render: args => <ToastProvider>{args.children}</ToastProvider>,
 }
 
 const ApiSimulationDemo = () => {
@@ -202,9 +200,8 @@ const ApiSimulationDemo = () => {
 }
 
 export const ApiSimulation: Story = {
-  render: () => (
-    <ToastProvider>
-      <ApiSimulationDemo />
-    </ToastProvider>
-  ),
+  args: {
+    children: <ApiSimulationDemo />,
+  },
+  render: args => <ToastProvider>{args.children}</ToastProvider>,
 }

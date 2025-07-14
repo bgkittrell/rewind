@@ -1,9 +1,5 @@
 import React from 'react'
 import { render, RenderOptions } from '@testing-library/react'
-import { createMemoryRouter, RouterProvider } from 'react-router'
-import { AuthProvider } from '../../../context/AuthContext'
-import { MediaPlayerProvider } from '../../../context/MediaPlayerContext'
-import { ToastProvider } from '../../../components/ui/Toast'
 
 // Custom render function that includes all providers
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {

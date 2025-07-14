@@ -90,6 +90,8 @@ export const Large: Story = {
 export const WithFooter: Story = {
   render: args => <ModalDemo {...args} />,
   args: {
+    isOpen: true,
+    onClose: () => {},
     title: 'Modal with Footer',
     children: <p>This modal has action buttons in the footer.</p>,
     footer: (
@@ -104,6 +106,8 @@ export const WithFooter: Story = {
 export const NoCloseButton: Story = {
   render: args => <ModalDemo {...args} />,
   args: {
+    isOpen: true,
+    onClose: () => {},
     title: 'Modal without Close Button',
     showCloseButton: false,
     children: <p>This modal doesn't have a close button. Users must click outside or press Escape to close it.</p>,
@@ -113,6 +117,8 @@ export const NoCloseButton: Story = {
 export const NoOverlayClose: Story = {
   render: args => <ModalDemo {...args} />,
   args: {
+    isOpen: true,
+    onClose: () => {},
     title: 'No Overlay Click Close',
     closeOnOverlayClick: false,
     children: <p>Clicking outside this modal won't close it. Users must use the close button or press Escape.</p>,
@@ -120,73 +126,49 @@ export const NoOverlayClose: Story = {
 }
 
 export const FormModal: Story = {
-  render: () => {
-    const [isOpen, setIsOpen] = useState(false)
-
-    return (
-      <>
-        <Button onClick={() => setIsOpen(true)}>Open Form Modal</Button>
-        <Modal
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          title="Edit Profile"
-          footer={
-            <div className="flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setIsOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="primary" onClick={() => setIsOpen(false)}>
-                Save Changes
-              </Button>
-            </div>
-          }
-        >
-          <form className="space-y-4">
-            <Input label="Name" placeholder="John Doe" fullWidth />
-            <Input label="Email" type="email" placeholder="john@example.com" fullWidth />
-            <Input label="Bio" placeholder="Tell us about yourself..." fullWidth />
-          </form>
-        </Modal>
-      </>
-    )
+  args: {
+    isOpen: true,
+    onClose: () => {},
+    title: 'Edit Profile',
+    children: (
+      <form className="space-y-4">
+        <Input label="Name" placeholder="John Doe" fullWidth />
+        <Input label="Email" type="email" placeholder="john@example.com" fullWidth />
+        <Input label="Bio" placeholder="Tell us about yourself..." fullWidth />
+      </form>
+    ),
+    footer: (
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary">Cancel</Button>
+        <Button variant="primary">Save Changes</Button>
+      </div>
+    ),
   },
+  render: args => <ModalDemo {...args} />,
 }
 
 export const ConfirmationModal: Story = {
-  render: () => {
-    const [isOpen, setIsOpen] = useState(false)
-
-    return (
-      <>
-        <Button variant="danger" onClick={() => setIsOpen(true)}>
-          Delete Item
-        </Button>
-        <Modal
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          title="Confirm Deletion"
-          size="small"
-          footer={
-            <div className="flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setIsOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="danger" onClick={() => setIsOpen(false)}>
-                Delete
-              </Button>
-            </div>
-          }
-        >
-          <p>Are you sure you want to delete this item? This action cannot be undone.</p>
-        </Modal>
-      </>
-    )
+  args: {
+    isOpen: true,
+    onClose: () => {},
+    title: 'Confirm Deletion',
+    size: 'small',
+    children: <p>Are you sure you want to delete this item? This action cannot be undone.</p>,
+    footer: (
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary">Cancel</Button>
+        <Button variant="danger">Delete</Button>
+      </div>
+    ),
   },
+  render: args => <ModalDemo {...args} />,
 }
 
 export const LongContent: Story = {
   render: args => <ModalDemo {...args} />,
   args: {
+    isOpen: true,
+    onClose: () => {},
     title: 'Modal with Scrollable Content',
     children: (
       <div className="space-y-4">

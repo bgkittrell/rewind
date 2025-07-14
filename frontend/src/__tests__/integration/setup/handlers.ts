@@ -51,7 +51,7 @@ export const authHandlers = [
 
   // Resend confirmation code
   http.post(`${API_URL}/api/auth/resend`, async ({ request }) => {
-    const body = (await request.json()) as { email: string }
+    await request.json() // Parse request body (not used in mock)
 
     return HttpResponse.json({
       message: 'Confirmation code sent',
@@ -100,7 +100,7 @@ export const podcastHandlers = [
   }),
 
   // Delete podcast
-  http.delete(`${API_URL}/api/podcasts/:podcastId`, ({ request, params }) => {
+  http.delete(`${API_URL}/api/podcasts/:podcastId`, ({ request }) => {
     const authHeader = request.headers.get('Authorization')
 
     if (!authHeader) {
@@ -114,7 +114,7 @@ export const podcastHandlers = [
 // Episode handlers
 export const episodeHandlers = [
   // Get episodes
-  http.get(`${API_URL}/api/episodes/:podcastId`, ({ request, params }) => {
+  http.get(`${API_URL}/api/episodes/:podcastId`, ({ request }) => {
     const authHeader = request.headers.get('Authorization')
 
     if (!authHeader) {
@@ -127,14 +127,14 @@ export const episodeHandlers = [
   }),
 
   // Save progress
-  http.post(`${API_URL}/api/episodes/:episodeId/progress`, async ({ request, params }) => {
+  http.post(`${API_URL}/api/episodes/:episodeId/progress`, async ({ request }) => {
     const authHeader = request.headers.get('Authorization')
 
     if (!authHeader) {
       return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = (await request.json()) as { position: number; duration: number }
+    await request.json() // Parse request body (not used in mock)
 
     return HttpResponse.json({
       message: 'Progress saved',
@@ -165,7 +165,7 @@ export const recommendationHandlers = [
       return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = (await request.json()) as { episodeId: string; feedback: 'up' | 'down' }
+    await request.json() // Parse request body (not used in mock)
 
     return HttpResponse.json({
       message: 'Feedback recorded',
@@ -180,7 +180,7 @@ export const recommendationHandlers = [
       return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = (await request.json()) as { episodeId: string; context: any }
+    await request.json() // Parse request body (not used in mock)
 
     return HttpResponse.json({
       message: 'Play tracked',
@@ -197,10 +197,6 @@ export const searchHandlers = [
     if (!authHeader) {
       return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const url = new URL(request.url)
-    const query = url.searchParams.get('q')
-    const filter = url.searchParams.get('filter')
 
     // Return empty results by default
     return HttpResponse.json({
