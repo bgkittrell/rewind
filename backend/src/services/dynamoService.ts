@@ -8,6 +8,8 @@ import {
   ScanCommand,
   GetItemCommand,
   ReturnValue,
+  AttributeValue,
+  QueryCommandInput,
 } from '@aws-sdk/client-dynamodb'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { Podcast, Episode, EpisodeData, ListeningHistoryItem, LastPlayedEpisode } from '../types'
@@ -64,7 +66,7 @@ export class DynamoService {
         return []
       }
 
-      return result.Items.map((item: any) => unmarshall(item) as Podcast)
+      return result.Items.map((item: Record<string, AttributeValue>) => unmarshall(item) as Podcast)
     } catch (error) {
       console.error('Error getting podcasts:', error)
       throw new Error('Failed to get podcasts')
@@ -83,7 +85,7 @@ export class DynamoService {
 
     try {
       await this.dynamoClient.send(new DeleteItemCommand(params))
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting podcast:', error)
       if (error.name === 'ConditionalCheckFailedException') {
         throw new Error('Podcast not found')
@@ -266,14 +268,16 @@ export class DynamoService {
 
     // Build update expression dynamically based on available data
     const updateExpressions: string[] = []
-    const expressionAttributeValues: any = {
-      ':title': episodeData.title,
-      ':description': episodeData.description,
-      ':audioUrl': episodeData.audioUrl,
-      ':duration': episodeData.duration,
-      ':releaseDate': episodeData.releaseDate,
-      ':naturalKey': naturalKey,
-      ':updatedAt': now,
+    const expressionAttributeValues: Record<string, AttributeValue> = {
+      ...marshall({
+        ':title': episodeData.title,
+        ':description': episodeData.description,
+        ':audioUrl': episodeData.audioUrl,
+        ':duration': episodeData.duration,
+        ':releaseDate': episodeData.releaseDate,
+        ':naturalKey': naturalKey,
+        ':updatedAt': now,
+      }),
     }
 
     updateExpressions.push(
@@ -289,17 +293,17 @@ export class DynamoService {
     // Add optional fields only if they exist and are not undefined
     if (episodeData.imageUrl !== undefined && episodeData.imageUrl !== null) {
       updateExpressions.push('imageUrl = :imageUrl')
-      expressionAttributeValues[':imageUrl'] = episodeData.imageUrl
+      expressionAttributeValues[':imageUrl'] = marshall(episodeData.imageUrl)
     }
 
     if (episodeData.guests && episodeData.guests.length > 0) {
       updateExpressions.push('guests = :guests')
-      expressionAttributeValues[':guests'] = episodeData.guests
+      expressionAttributeValues[':guests'] = marshall(episodeData.guests)
     }
 
     if (episodeData.tags && episodeData.tags.length > 0) {
       updateExpressions.push('tags = :tags')
-      expressionAttributeValues[':tags'] = episodeData.tags
+      expressionAttributeValues[':tags'] = marshall(episodeData.tags)
     }
 
     const params = {
@@ -380,7 +384,7 @@ export class DynamoService {
     limit?: number,
     lastEvaluatedKey?: string,
   ): Promise<{ episodes: Episode[]; lastEvaluatedKey?: string }> {
-    const params: any = {
+    const params: QueryCommandInput = {
       TableName: EPISODES_TABLE,
       KeyConditionExpression: 'podcastId = :podcastId',
       ExpressionAttributeValues: marshall({
@@ -408,7 +412,7 @@ export class DynamoService {
         return { episodes: [] }
       }
 
-      const episodes = result.Items.map((item: any) => unmarshall(item) as Episode)
+      const episodes = result.Items.map((item: Record<string, AttributeValue>) => unmarshall(item) as Episode)
 
       const response: { episodes: Episode[]; lastEvaluatedKey?: string } = { episodes }
 
@@ -431,7 +435,7 @@ export class DynamoService {
           return { episodes: [] }
         }
 
-        const episodes = result.Items.map((item: any) => unmarshall(item) as Episode)
+        const episodes = result.Items.map((item: Record<string, AttributeValue>) => unmarshall(item) as Episode)
 
         // Sort by release date manually since we can't use the index
         episodes.sort((a: Episode, b: Episode) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
@@ -617,7 +621,7 @@ export class DynamoService {
         return []
       }
 
-      return result.Items.map((item: any) => unmarshall(item) as ListeningHistoryItem)
+      return result.Items.map((item: Record<string, AttributeValue>) => unmarshall(item) as ListeningHistoryItem)
     } catch (error) {
       console.error('Error getting listening history:', error)
       throw new Error('Failed to get listening history')
@@ -706,12 +710,22 @@ export class DynamoService {
 
           // If imageUrl is a complex object, extract the actual URL
           if (typeof episode.imageUrl === 'object' && episode.imageUrl !== null) {
-            const imageObj = episode.imageUrl as any
-            if (imageObj.$?.M?.href?.S) {
-              fixedImageUrl = imageObj.$.M.href.S
-            } else if (imageObj.href) {
+            const imageObj = episode.imageUrl as Record<string, unknown>
+            // Check for DynamoDB-style nested object
+            if (imageObj.$ && typeof imageObj.$ === 'object') {
+              const dollarObj = imageObj.$ as Record<string, unknown>
+              if (dollarObj.M && typeof dollarObj.M === 'object') {
+                const mObj = dollarObj.M as Record<string, unknown>
+                if (mObj.href && typeof mObj.href === 'object') {
+                  const hrefObj = mObj.href as Record<string, unknown>
+                  if (typeof hrefObj.S === 'string') {
+                    fixedImageUrl = hrefObj.S
+                  }
+                }
+              }
+            } else if (typeof imageObj.href === 'string') {
               fixedImageUrl = imageObj.href
-            } else if (imageObj.url) {
+            } else if (typeof imageObj.url === 'string') {
               fixedImageUrl = imageObj.url
             }
           }
