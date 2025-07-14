@@ -624,6 +624,33 @@ _These endpoints are implemented but have different deployment status:_
   - Method: `POST`
   - Authorization: Required
 
+## Logging & Monitoring
+
+### Structured Logging Implementation ✅
+
+All backend services now use structured JSON logging optimized for CloudWatch Insights:
+
+- **Correlation IDs**: Every request is assigned a unique correlation ID for distributed tracing
+- **Request/Response Logging**: Automatic logging of all API requests and responses with timing
+- **Log Levels**: DEBUG, INFO, WARN, ERROR with environment-based filtering
+- **Sensitive Data Redaction**: Auth headers and API keys are automatically redacted
+- **CloudWatch Integration**: JSON format enables powerful queries and dashboards
+
+**Log Format Example:**
+```json
+{
+  "level": "INFO",
+  "message": "Request completed",
+  "correlationId": "550e8400-e29b-41d4-a716-446655440000",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "method": "GET",
+  "path": "/podcasts",
+  "statusCode": 200,
+  "duration": 125,
+  "userId": "user123"
+}
+```
+
 ## Error Handling
 
 - **Common Errors**:

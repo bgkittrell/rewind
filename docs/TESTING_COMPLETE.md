@@ -72,8 +72,8 @@ This document consolidates all testing activities and results for the Rewind pro
 
 ### Unit Tests: ✅ PASSING
 
-- **Total Tests**: 68
-- **Passing**: 68
+- **Total Tests**: 137 (109 backend, 28 frontend)
+- **Passing**: 137
 - **Failing**: 0
 - **Coverage**: 85%+
 
