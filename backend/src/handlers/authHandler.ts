@@ -1,4 +1,4 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 import {
   CognitoIdentityProviderClient,
   SignUpCommand,
@@ -12,6 +12,8 @@ import { DynamoDBClient, PutItemCommand, GetItemCommand } from '@aws-sdk/client-
 import { marshall } from '@aws-sdk/util-dynamodb'
 import { createResponse } from '../utils/response'
 import { User } from '../types'
+import { logger } from '../services/loggerService'
+import { withLogging } from '../utils/middleware'
 
 // Request body interfaces
 interface SignUpRequestBody {
@@ -54,8 +56,8 @@ const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION || 'us-
 const USER_POOL_CLIENT_ID = process.env.USER_POOL_CLIENT_ID!
 const USERS_TABLE = process.env.USERS_TABLE!
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  console.log('Auth request:', JSON.stringify(event, null, 2))
+const authHandler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
+  logger.debug('Processing auth request', { path: event.path, method: event.httpMethod })
 
   try {
     const path = event.path
@@ -81,10 +83,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         return createResponse(404, { error: 'Endpoint not found' })
     }
   } catch (error) {
-    console.error('Auth error:', error)
+    logger.error('Auth handler error', error)
     return createResponse(500, { error: 'Internal server error' })
   }
 }
+
+export const handler = withLogging(authHandler)
 
 async function handleSignUp(body: SignUpRequestBody): Promise<APIGatewayProxyResult> {
   const { email, password, name } = body
@@ -113,7 +117,7 @@ async function handleSignUp(body: SignUpRequestBody): Promise<APIGatewayProxyRes
       emailVerificationRequired: !signUpResult.UserConfirmed,
     })
   } catch (error) {
-    console.error('SignUp error:', error)
+    logger.error('SignUp error', error, { email })
 
     const errorInfo = getErrorInfo(error)
 
@@ -177,7 +181,7 @@ async function handleSignIn(body: SignInRequestBody): Promise<APIGatewayProxyRes
       return createResponse(400, { error: 'Authentication failed' })
     }
   } catch (error) {
-    console.error('SignIn error:', error)
+    logger.error('SignIn error', error, { email })
 
     const errorInfo = getErrorInfo(error)
 
@@ -211,7 +215,7 @@ async function handleConfirmSignUp(body: ConfirmSignUpRequestBody): Promise<APIG
 
     return createResponse(200, { message: 'Email verified successfully' })
   } catch (error) {
-    console.error('Confirmation error:', error)
+    logger.error('Confirmation error', error, { email })
 
     const errorInfo = getErrorInfo(error)
 
@@ -244,7 +248,7 @@ async function handleResendConfirmation(body: ResendConfirmationRequestBody): Pr
 
     return createResponse(200, { message: 'Confirmation code sent successfully' })
   } catch (error) {
-    console.error('Resend confirmation error:', error)
+    logger.error('Resend confirmation error', error, { email })
     const errorInfo = getErrorInfo(error)
     return createResponse(400, { error: errorInfo.message || 'Failed to resend confirmation code' })
   }
@@ -285,12 +289,12 @@ async function createUserInDynamoDB(userId: string, email: string, userAttribute
       })
 
       await dynamoClient.send(putCommand)
-      console.log('User created in DynamoDB:', userId)
+      logger.info('User created in DynamoDB', { userId })
     } else {
-      console.log('User already exists in DynamoDB:', userId)
+      logger.debug('User already exists in DynamoDB', { userId })
     }
   } catch (error) {
-    console.error('Error creating user in DynamoDB:', error)
+    logger.error('Error creating user in DynamoDB', error, { userId })
     // Don't throw error - authentication should still succeed even if DynamoDB fails
   }
 }

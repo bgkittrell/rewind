@@ -1,9 +1,11 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 import { createSuccessResponse, createErrorResponse, createCorsHeaders } from '../utils/response'
 import { rssService } from '../services/rssService'
 import { dynamoService } from '../services/dynamoService'
+import { logger } from '../services/loggerService'
+import { withLogging } from '../utils/middleware'
 
-export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+const podcastHandler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const headers = createCorsHeaders()
 
   try {
@@ -50,7 +52,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
         return createErrorResponse('Method not allowed', 'METHOD_NOT_ALLOWED', 405, path)
     }
   } catch (error) {
-    console.error('Handler error:', error)
+    logger.error('Handler error:', error)
     return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500, event.path)
   }
 }
@@ -67,7 +69,7 @@ async function getPodcasts(userId: string, path: string): Promise<APIGatewayProx
 
     return createSuccessResponse(response, 200, path)
   } catch (error) {
-    console.error('Error getting podcasts:', error)
+    logger.error('Error getting podcasts:', error)
     return createErrorResponse('Failed to get podcasts', 'DATABASE_ERROR', 500, path)
   }
 }
@@ -112,7 +114,7 @@ async function addPodcast(event: APIGatewayProxyEvent, userId: string, path: str
 
     return createSuccessResponse(response, 201, path)
   } catch (error) {
-    console.error('Error adding podcast:', error)
+    logger.error('Error adding podcast:', error)
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     if (errorMessage.includes('Failed to parse RSS feed')) {
@@ -139,7 +141,7 @@ async function deletePodcast(
 
     return createSuccessResponse({ message: 'Podcast deleted successfully' }, 200, path)
   } catch (error) {
-    console.error('Error deleting podcast:', error)
+    logger.error('Error deleting podcast:', error)
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     if (errorMessage === 'Podcast not found') {
@@ -149,3 +151,5 @@ async function deletePodcast(
     return createErrorResponse('Failed to delete podcast', 'INTERNAL_ERROR', 500, path)
   }
 }
+
+export const handler = withLogging(podcastHandler)

@@ -1,4 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import { logger } from '../services/loggerService'
 import { APIResponse, RecommendationFilters, GuestExtractionRequest } from '../types'
 import { recommendationService } from '../services/recommendationService'
 import { bedrockService } from '../services/bedrockService'
@@ -70,7 +71,7 @@ export const getRecommendations = async (event: APIGatewayProxyEvent): Promise<A
       body: JSON.stringify(response),
     }
   } catch (error) {
-    console.error('Error getting recommendations:', error)
+    logger.error('Error getting recommendations:', error)
 
     const response: APIResponse = {
       error: {
@@ -173,7 +174,7 @@ export const extractGuests = async (event: APIGatewayProxyEvent): Promise<APIGat
       body: JSON.stringify(response),
     }
   } catch (error) {
-    console.error('Error extracting guests:', error)
+    logger.error('Error extracting guests:', error)
 
     const response: APIResponse = {
       error: {
@@ -314,7 +315,7 @@ export const batchExtractGuests = async (event: APIGatewayProxyEvent): Promise<A
       body: JSON.stringify(response),
     }
   } catch (error) {
-    console.error('Error batch extracting guests:', error)
+    logger.error('Error batch extracting guests:', error)
 
     const response: APIResponse = {
       error: {
@@ -451,7 +452,7 @@ export const updateGuestAnalytics = async (event: APIGatewayProxyEvent): Promise
       body: JSON.stringify(response),
     }
   } catch (error) {
-    console.error('Error updating guest analytics:', error)
+    logger.error('Error updating guest analytics:', error)
 
     const response: APIResponse = {
       error: {

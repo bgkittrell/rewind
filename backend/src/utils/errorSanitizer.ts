@@ -1,5 +1,6 @@
 import { APIResponse } from '../types'
 import { createCorsHeaders } from './response'
+import { logger } from '../services/loggerService'
 
 export interface SanitizedError {
   message: string
@@ -106,7 +107,7 @@ export const sanitizeError = (error: unknown, path?: string): SanitizedError => 
   }
 
   // Log the actual error for debugging (but don't expose it)
-  console.error('Sanitized error:', error)
+  logger.error('Sanitized error', error)
 
   return defaultError
 }

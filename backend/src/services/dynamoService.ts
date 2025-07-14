@@ -16,6 +16,7 @@ import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { Podcast, Episode, EpisodeData, ListeningHistoryItem, LastPlayedEpisode } from '../types'
 import { RESUME_THRESHOLD, COMPLETION_THRESHOLD } from '../constants/resume'
 import { v4 as uuidv4 } from 'uuid'
+import { logger } from './loggerService'
 
 const crypto = require('crypto')
 
@@ -46,7 +47,7 @@ export class DynamoService {
       await this.dynamoClient.send(new PutItemCommand(params))
       return podcast
     } catch (error) {
-      console.error('Error saving podcast:', error)
+      logger.error('Error saving podcast:', error)
       throw new Error('Failed to save podcast')
     }
   }
@@ -69,7 +70,7 @@ export class DynamoService {
 
       return result.Items.map((item: Record<string, AttributeValue>) => unmarshall(item) as Podcast)
     } catch (error) {
-      console.error('Error getting podcasts:', error)
+      logger.error('Error getting podcasts:', error)
       throw new Error('Failed to get podcasts')
     }
   }
@@ -87,7 +88,7 @@ export class DynamoService {
     try {
       await this.dynamoClient.send(new DeleteItemCommand(params))
     } catch (error) {
-      console.error('Error deleting podcast:', error)
+      logger.error('Error deleting podcast:', error)
       if (error.name === 'ConditionalCheckFailedException') {
         throw new Error('Podcast not found')
       }
@@ -110,7 +111,7 @@ export class DynamoService {
       const result = await this.dynamoClient.send(new QueryCommand(params))
       return !!(result.Items && result.Items.length > 0)
     } catch (error) {
-      console.error('Error checking podcast existence:', error)
+      logger.error('Error checking podcast existence:', error)
       return false
     }
   }
@@ -132,7 +133,7 @@ export class DynamoService {
         try {
           // Skip completely null/undefined or invalid episodes
           if (!episodeData || typeof episodeData !== 'object') {
-            console.warn('Skipping invalid episode data:', episodeData)
+            logger.warn('Skipping invalid episode data:', episodeData)
             continue
           }
 
@@ -169,7 +170,7 @@ export class DynamoService {
             savedEpisodes.push(newEpisode)
           }
         } catch (error) {
-          console.error('Error processing episode:', error)
+          logger.error('Error processing episode:', error)
           // Continue processing other episodes even if one fails
         }
       }
@@ -220,7 +221,7 @@ export class DynamoService {
         }
       }
     } catch (error) {
-      console.warn('Error parsing release date:', episode?.releaseDate, error)
+      logger.warn('Error parsing release date:', episode?.releaseDate, error)
       releaseDate = '1900-01-01'
     }
 
@@ -253,7 +254,7 @@ export class DynamoService {
 
       return unmarshall(result.Items[0]) as Episode
     } catch (error) {
-      console.error('Error finding existing episode:', error)
+      logger.error('Error finding existing episode:', error)
       return null
     }
   }
@@ -329,7 +330,7 @@ export class DynamoService {
 
       return unmarshall(result.Attributes) as Episode
     } catch (error) {
-      console.error('Error updating episode:', error)
+      logger.error('Error updating episode:', error)
       throw new Error('Failed to update episode')
     }
   }
@@ -375,7 +376,7 @@ export class DynamoService {
       await this.dynamoClient.send(new PutItemCommand(params))
       return episode
     } catch (error) {
-      console.error('Error creating episode:', error)
+      logger.error('Error creating episode:', error)
       throw new Error('Failed to create episode')
     }
   }
@@ -423,7 +424,7 @@ export class DynamoService {
 
       return response
     } catch (error) {
-      console.warn('ReleaseDateIndex not available, falling back to main table:', error)
+      logger.warn('ReleaseDateIndex not available, falling back to main table:', error)
 
       // Fallback to main table without index
       delete params.IndexName
@@ -449,7 +450,7 @@ export class DynamoService {
 
         return response
       } catch (fallbackError) {
-        console.error('Error getting episodes from main table:', fallbackError)
+        logger.error('Error getting episodes from main table:', fallbackError)
         throw new Error('Failed to get episodes')
       }
     }
@@ -473,7 +474,7 @@ export class DynamoService {
 
       return unmarshall(result.Item) as Episode
     } catch (error) {
-      console.error('Error getting episode by ID:', error)
+      logger.error('Error getting episode by ID:', error)
       throw new Error('Failed to get episode')
     }
   }
@@ -522,7 +523,7 @@ export class DynamoService {
 
       return null
     } catch (error) {
-      console.error('Error batch getting episode by ID:', error)
+      logger.error('Error batch getting episode by ID:', error)
       throw new Error('Failed to batch get episode')
     }
   }
@@ -565,7 +566,7 @@ export class DynamoService {
         lastEvaluatedKey = result.lastEvaluatedKey
       } while (lastEvaluatedKey)
     } catch (error) {
-      console.error('Error deleting episodes:', error)
+      logger.error('Error deleting episodes:', error)
       throw new Error('Failed to delete episodes')
     }
   }
@@ -615,7 +616,7 @@ export class DynamoService {
     try {
       await this.dynamoClient.send(new PutItemCommand(params))
     } catch (error) {
-      console.error('Error saving playback progress:', error)
+      logger.error('Error saving playback progress:', error)
       throw new Error('Failed to save playback progress')
     }
   }
@@ -638,7 +639,7 @@ export class DynamoService {
 
       return unmarshall(result.Item) as ListeningHistoryItem
     } catch (error) {
-      console.error('Error getting listening history item:', error)
+      logger.error('Error getting listening history item:', error)
       return null
     }
   }
@@ -655,7 +656,7 @@ export class DynamoService {
         duration: history.duration,
       }
     } catch (error) {
-      console.error('Error getting playback progress:', error)
+      logger.error('Error getting playback progress:', error)
       return null
     }
   }
@@ -680,7 +681,7 @@ export class DynamoService {
 
       return result.Items.map((item: Record<string, AttributeValue>) => unmarshall(item) as ListeningHistoryItem)
     } catch (error) {
-      console.error('Error getting listening history:', error)
+      logger.error('Error getting listening history:', error)
       throw new Error('Failed to get listening history')
     }
   }
@@ -743,7 +744,7 @@ export class DynamoService {
         podcastImageUrl: podcast.imageUrl,
       }
     } catch (error) {
-      console.error('Error getting last played episode:', error)
+      logger.error('Error getting last played episode:', error)
       return null
     }
   }
@@ -816,7 +817,7 @@ export class DynamoService {
         lastEvaluatedKey = result.lastEvaluatedKey
       } while (lastEvaluatedKey)
     } catch (error) {
-      console.error('Error fixing episode image URLs:', error)
+      logger.error('Error fixing episode image URLs:', error)
       throw new Error('Failed to fix episode image URLs')
     }
   }

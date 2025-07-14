@@ -1,5 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
+import { logger } from './loggerService'
 
 export interface RateLimitRule {
   endpoint: string
@@ -141,7 +142,7 @@ export class RateLimitService {
         resetTime: record.windowStart + rule.windowMinutes * 60 * 1000,
       }
     } catch (error) {
-      console.error('Error checking rate limit:', error)
+      logger.error('Error checking rate limit:', error)
       // On error, allow the request but log it
       return {
         allowed: true,
@@ -300,7 +301,7 @@ export class RateLimitService {
         windowMinutes: rule.windowMinutes,
       }
     } catch (error) {
-      console.error('Error getting rate limit status:', error)
+      logger.error('Error getting rate limit status:', error)
       return null
     }
   }

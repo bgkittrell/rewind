@@ -16,6 +16,21 @@ vi.mock('../../services/bedrockService', () => ({
   },
 }))
 
+vi.mock('../../services/loggerService', () => ({
+  logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    logRequest: vi.fn(),
+    logResponse: vi.fn(),
+    setCorrelationId: vi.fn(),
+    generateCorrelationId: vi.fn().mockReturnValue('test-correlation-id'),
+    setDefaultContext: vi.fn(),
+    extractRequestContext: vi.fn().mockReturnValue({}),
+  },
+}))
+
 // Import handlers and services after mocks are set
 import { getRecommendations, extractGuests, batchExtractGuests, updateGuestAnalytics } from '../recommendationHandler'
 import { recommendationService } from '../../services/recommendationService'

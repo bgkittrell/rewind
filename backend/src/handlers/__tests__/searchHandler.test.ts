@@ -5,6 +5,21 @@ import * as searchService from '../../services/searchService'
 
 vi.mock('../../services/searchService')
 
+vi.mock('../../services/loggerService', () => ({
+  logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    logRequest: vi.fn(),
+    logResponse: vi.fn(),
+    setCorrelationId: vi.fn(),
+    generateCorrelationId: vi.fn().mockReturnValue('test-correlation-id'),
+    setDefaultContext: vi.fn(),
+    extractRequestContext: vi.fn().mockReturnValue({}),
+  },
+}))
+
 describe('searchHandler', () => {
   const mockSearchService = searchService.searchService as any
 

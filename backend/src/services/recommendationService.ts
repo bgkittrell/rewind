@@ -8,6 +8,7 @@ import {
   RecommendationScore,
   RecommendationFilters,
 } from '../types'
+import { logger } from './loggerService'
 
 export class RecommendationService {
   private client: DynamoDBDocumentClient
@@ -64,7 +65,7 @@ export class RecommendationService {
       // Sort by score and return top recommendations
       return filteredEpisodes.sort((a, b) => b.score - a.score).slice(0, limit)
     } catch (error) {
-      console.error('Error generating recommendations:', error)
+      logger.error('Error generating recommendations:', error)
       return []
     }
   }
@@ -314,7 +315,7 @@ export class RecommendationService {
       const result = await this.client.send(command)
       return (result.Items as ListeningHistory[]) || []
     } catch (error) {
-      console.error('Error fetching listening history:', error)
+      logger.error('Error fetching listening history:', error)
       return []
     }
   }
@@ -335,7 +336,7 @@ export class RecommendationService {
       const result = await this.client.send(command)
       return (result.Items as UserFavorites[]) || []
     } catch (error) {
-      console.error('Error fetching user favorites:', error)
+      logger.error('Error fetching user favorites:', error)
       return []
     }
   }
@@ -356,7 +357,7 @@ export class RecommendationService {
       const result = await this.client.send(command)
       return (result.Items as GuestAnalytics[]) || []
     } catch (error) {
-      console.error('Error fetching guest analytics:', error)
+      logger.error('Error fetching guest analytics:', error)
       return []
     }
   }
@@ -391,7 +392,7 @@ export class RecommendationService {
 
       return allEpisodes
     } catch (error) {
-      console.error('Error fetching user episodes:', error)
+      logger.error('Error fetching user episodes:', error)
       return []
     }
   }
@@ -413,7 +414,7 @@ export class RecommendationService {
       const result = await this.client.send(command)
       return (result.Items as Array<{ podcastId: string; title: string }>) || []
     } catch (error) {
-      console.error('Error fetching user podcasts:', error)
+      logger.error('Error fetching user podcasts:', error)
       return []
     }
   }
@@ -437,7 +438,7 @@ export class RecommendationService {
       const result = await this.client.send(command)
       return (result.Items as Episode[]) || []
     } catch (error) {
-      console.error(`Error fetching episodes for podcast ${podcastId}:`, error)
+      logger.error(`Error fetching episodes for podcast ${podcastId}:`, error)
       return []
     }
   }
@@ -485,7 +486,7 @@ export class RecommendationService {
 
         await this.client.send(command)
       } catch (error) {
-        console.error(`Error updating guest analytics for ${guest}:`, error)
+        logger.error(`Error updating guest analytics for ${guest}:`, error)
       }
     }
   }

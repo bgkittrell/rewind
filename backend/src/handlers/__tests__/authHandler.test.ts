@@ -55,6 +55,21 @@ vi.mock('@aws-sdk/util-dynamodb', () => ({
   unmarshall: vi.fn(item => item),
 }))
 
+vi.mock('../../services/loggerService', () => ({
+  logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    logRequest: vi.fn(),
+    logResponse: vi.fn(),
+    setCorrelationId: vi.fn(),
+    generateCorrelationId: vi.fn().mockReturnValue('test-correlation-id'),
+    setDefaultContext: vi.fn(),
+    extractRequestContext: vi.fn().mockReturnValue({}),
+  },
+}))
+
 vi.mock('../../utils/response')
 
 // Import handler and mocked response after all mocks are set
