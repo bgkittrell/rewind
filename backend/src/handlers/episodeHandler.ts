@@ -183,11 +183,12 @@ async function syncEpisodes(
     }
 
     return createSuccessResponse(response, 201, path)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error syncing episodes:', error)
 
-    if (error.message.includes('Failed to parse episodes from RSS feed')) {
-      return createErrorResponse(error.message, 'RSS_PARSE_ERROR', 400, path)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    if (errorMessage.includes('Failed to parse episodes from RSS feed')) {
+      return createErrorResponse(errorMessage, 'RSS_PARSE_ERROR', 400, path)
     }
 
     return createErrorResponse('Failed to sync episodes', 'INTERNAL_ERROR', 500, path)
@@ -235,7 +236,7 @@ async function saveProgress(
     }
 
     return createSuccessResponse(response, 200, path)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error saving progress:', error)
 
     if (error instanceof SyntaxError) {
