@@ -96,7 +96,7 @@ describe('DynamoService', () => {
 
       await dynamoService.fixEpisodeImageUrls('podcast-1')
 
-      expect(dynamoService.getEpisodesByPodcast).toHaveBeenCalledWith('podcast-1')
+      expect(dynamoService.getEpisodesByPodcast).toHaveBeenCalledWith('podcast-1', 100, undefined)
       expect(mockDynamoClient.send).toHaveBeenCalledWith(expect.any(BatchWriteItemCommand))
 
       // Verify the marshalled data contains fixed imageUrl

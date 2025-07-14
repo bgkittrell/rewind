@@ -139,11 +139,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         success: true,
         message: isSignUpComplete ? 'Account created successfully' : 'Please check your email for verification code',
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Sign up error:', error)
       return {
         success: false,
-        message: error.message || 'Failed to create account',
+        message: error instanceof Error ? error.message : 'Failed to create account',
       }
     }
   }
@@ -167,11 +167,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         success: false,
         message: 'Sign in failed',
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Sign in error:', error)
       return {
         success: false,
-        message: error.message || 'Failed to sign in',
+        message: error instanceof Error ? error.message : 'Failed to sign in',
       }
     }
   }
@@ -198,11 +198,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         success: isSignUpComplete,
         message: isSignUpComplete ? 'Email verified successfully' : 'Verification failed',
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Confirmation error:', error)
       return {
         success: false,
-        message: error.message || 'Failed to verify email',
+        message: error instanceof Error ? error.message : 'Failed to verify email',
       }
     }
   }
@@ -214,11 +214,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         success: true,
         message: 'Verification code sent',
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Resend code error:', error)
       return {
         success: false,
-        message: error.message || 'Failed to resend code',
+        message: error instanceof Error ? error.message : 'Failed to resend code',
       }
     }
   }

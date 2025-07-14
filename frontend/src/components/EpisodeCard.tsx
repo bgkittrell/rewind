@@ -1,38 +1,46 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import type { Episode } from '../types/episode'
 
 interface EpisodeCardProps {
-  episode: Episode,
+  episode: Episode
   podcastImageUrl?: string
   onPlay?: (_episode: Episode) => void
   onAIExplanation?: (_episode: Episode) => void
 }
 
-export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation }: EpisodeCardProps) {
+function EpisodeCardComponent({ episode, podcastImageUrl, onPlay, onAIExplanation }: EpisodeCardProps) {
   const [imageError, setImageError] = useState(false)
   const navigate = useNavigate()
 
-  const handlePlay = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onPlay?.(episode)
-  }
+  const handlePlay = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      onPlay?.(episode)
+    },
+    [onPlay, episode],
+  )
 
-  const handleAIExplanation = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onAIExplanation?.(episode)
-  }
+  const handleAIExplanation = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      onAIExplanation?.(episode)
+    },
+    [onAIExplanation, episode],
+  )
 
-  const handleCardClick = () => {
+  const handleCardClick = useCallback(() => {
     if (episode.podcastId) {
       navigate(`/episode/${episode.podcastId}/${episode.episodeId}`)
     } else {
       navigate(`/episode/${episode.episodeId}`)
     }
-  }
+  }, [navigate, episode.podcastId, episode.episodeId])
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    // Parse the date string and add timezone offset to avoid UTC conversion issues
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -136,5 +144,20 @@ export function EpisodeCard({ episode, podcastImageUrl, onPlay, onAIExplanation 
     </div>
   )
 }
+
+// Memoize the component to prevent unnecessary re-renders
+// Only re-render if episode data, image URL, or callbacks change
+export const EpisodeCard = React.memo(EpisodeCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.episode.episodeId === nextProps.episode.episodeId &&
+    prevProps.episode.playbackPosition === nextProps.episode.playbackPosition &&
+    prevProps.podcastImageUrl === nextProps.podcastImageUrl &&
+    prevProps.onPlay === nextProps.onPlay &&
+    prevProps.onAIExplanation === nextProps.onAIExplanation
+  )
+})
+
+// Add displayName for better debugging
+EpisodeCard.displayName = 'EpisodeCard'
 
 export default EpisodeCard

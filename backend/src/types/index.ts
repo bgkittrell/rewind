@@ -122,12 +122,12 @@ export interface UserFeedback {
   createdAt: string
 }
 
-export interface APIResponse<T = any> {
+export interface APIResponse<T = unknown> {
   data?: T
   error?: {
     message: string
     code: string
-    details?: any
+    details?: unknown
   }
   timestamp: string
   path?: string

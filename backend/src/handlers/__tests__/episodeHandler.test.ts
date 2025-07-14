@@ -6,6 +6,20 @@ import { dynamoService } from '../../services/dynamoService'
 // Mock dependencies
 vi.mock('../../services/rssService')
 vi.mock('../../services/dynamoService')
+vi.mock('../../services/loggerService', () => ({
+  logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    logRequest: vi.fn(),
+    logResponse: vi.fn(),
+    setCorrelationId: vi.fn(),
+    generateCorrelationId: vi.fn().mockReturnValue('test-correlation-id'),
+    setDefaultContext: vi.fn(),
+    extractRequestContext: vi.fn().mockReturnValue({}),
+  },
+}))
 
 const mockRssService = vi.mocked(rssService)
 const mockDynamoService = vi.mocked(dynamoService)
@@ -463,8 +477,8 @@ describe('EpisodeHandler', () => {
       }
 
       mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
-      // First podcast returns null, second podcast returns the episode
-      mockDynamoService.getEpisodeById.mockResolvedValueOnce(null).mockResolvedValueOnce(mockEpisode)
+      // batchGetEpisodeById returns the episode
+      mockDynamoService.batchGetEpisodeById = vi.fn().mockResolvedValue(mockEpisode)
 
       const event = createMockEvent('GET', '/episodes/episode123', { episodeId: 'episode123' })
       const result = await handler(event as any)
@@ -473,9 +487,7 @@ describe('EpisodeHandler', () => {
       const body = JSON.parse(result.body)
       expect(body.data).toEqual(mockEpisode)
       expect(mockDynamoService.getPodcastsByUser).toHaveBeenCalledWith('test-user-id')
-      expect(mockDynamoService.getEpisodeById).toHaveBeenCalledTimes(2)
-      expect(mockDynamoService.getEpisodeById).toHaveBeenCalledWith('podcast1', 'episode123')
-      expect(mockDynamoService.getEpisodeById).toHaveBeenCalledWith('podcast2', 'episode123')
+      expect(mockDynamoService.batchGetEpisodeById).toHaveBeenCalledWith(['podcast1', 'podcast2'], 'episode123')
     })
 
     it('should return 404 when episode not found in any podcast', async () => {
@@ -494,7 +506,7 @@ describe('EpisodeHandler', () => {
       ]
 
       mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
-      mockDynamoService.getEpisodeById.mockResolvedValue(null)
+      mockDynamoService.batchGetEpisodeById = vi.fn().mockResolvedValue(null)
 
       const event = createMockEvent('GET', '/episodes/episode123', { episodeId: 'episode123' })
       const result = await handler(event as any)

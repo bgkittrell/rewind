@@ -4,15 +4,19 @@ import {
   QueryCommand,
   DeleteItemCommand,
   BatchWriteItemCommand,
+  BatchGetItemCommand,
   UpdateItemCommand,
   ScanCommand,
   GetItemCommand,
   ReturnValue,
+  AttributeValue,
+  QueryCommandInput,
 } from '@aws-sdk/client-dynamodb'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { Podcast, Episode, EpisodeData, ListeningHistoryItem, LastPlayedEpisode } from '../types'
 import { RESUME_THRESHOLD, COMPLETION_THRESHOLD } from '../constants/resume'
 import { v4 as uuidv4 } from 'uuid'
+import { logger } from './loggerService'
 
 const crypto = require('crypto')
 
@@ -43,7 +47,7 @@ export class DynamoService {
       await this.dynamoClient.send(new PutItemCommand(params))
       return podcast
     } catch (error) {
-      console.error('Error saving podcast:', error)
+      logger.error('Error saving podcast:', error)
       throw new Error('Failed to save podcast')
     }
   }
@@ -64,9 +68,9 @@ export class DynamoService {
         return []
       }
 
-      return result.Items.map((item: any) => unmarshall(item) as Podcast)
+      return result.Items.map((item: Record<string, AttributeValue>) => unmarshall(item) as Podcast)
     } catch (error) {
-      console.error('Error getting podcasts:', error)
+      logger.error('Error getting podcasts:', error)
       throw new Error('Failed to get podcasts')
     }
   }
@@ -83,9 +87,9 @@ export class DynamoService {
 
     try {
       await this.dynamoClient.send(new DeleteItemCommand(params))
-    } catch (error: any) {
-      console.error('Error deleting podcast:', error)
-      if (error.name === 'ConditionalCheckFailedException') {
+    } catch (error) {
+      logger.error('Error deleting podcast:', error)
+      if (error instanceof Error && error.name === 'ConditionalCheckFailedException') {
         throw new Error('Podcast not found')
       }
       throw new Error('Failed to delete podcast')
@@ -107,7 +111,7 @@ export class DynamoService {
       const result = await this.dynamoClient.send(new QueryCommand(params))
       return !!(result.Items && result.Items.length > 0)
     } catch (error) {
-      console.error('Error checking podcast existence:', error)
+      logger.error('Error checking podcast existence:', error)
       return false
     }
   }
@@ -129,7 +133,7 @@ export class DynamoService {
         try {
           // Skip completely null/undefined or invalid episodes
           if (!episodeData || typeof episodeData !== 'object') {
-            console.warn('Skipping invalid episode data:', episodeData)
+            logger.warn('Skipping invalid episode data:', episodeData)
             continue
           }
 
@@ -166,7 +170,7 @@ export class DynamoService {
             savedEpisodes.push(newEpisode)
           }
         } catch (error) {
-          console.error('Error processing episode:', error)
+          logger.error('Error processing episode:', error)
           // Continue processing other episodes even if one fails
         }
       }
@@ -217,7 +221,7 @@ export class DynamoService {
         }
       }
     } catch (error) {
-      console.warn('Error parsing release date:', episode?.releaseDate, error)
+      logger.warn('Error parsing release date', { releaseDate: episode?.releaseDate, error })
       releaseDate = '1900-01-01'
     }
 
@@ -250,7 +254,7 @@ export class DynamoService {
 
       return unmarshall(result.Items[0]) as Episode
     } catch (error) {
-      console.error('Error finding existing episode:', error)
+      logger.error('Error finding existing episode:', error)
       return null
     }
   }
@@ -266,14 +270,16 @@ export class DynamoService {
 
     // Build update expression dynamically based on available data
     const updateExpressions: string[] = []
-    const expressionAttributeValues: any = {
-      ':title': episodeData.title,
-      ':description': episodeData.description,
-      ':audioUrl': episodeData.audioUrl,
-      ':duration': episodeData.duration,
-      ':releaseDate': episodeData.releaseDate,
-      ':naturalKey': naturalKey,
-      ':updatedAt': now,
+    const expressionAttributeValues: Record<string, AttributeValue> = {
+      ...marshall({
+        ':title': episodeData.title,
+        ':description': episodeData.description,
+        ':audioUrl': episodeData.audioUrl,
+        ':duration': episodeData.duration,
+        ':releaseDate': episodeData.releaseDate,
+        ':naturalKey': naturalKey,
+        ':updatedAt': now,
+      }),
     }
 
     updateExpressions.push(
@@ -289,17 +295,17 @@ export class DynamoService {
     // Add optional fields only if they exist and are not undefined
     if (episodeData.imageUrl !== undefined && episodeData.imageUrl !== null) {
       updateExpressions.push('imageUrl = :imageUrl')
-      expressionAttributeValues[':imageUrl'] = episodeData.imageUrl
+      expressionAttributeValues[':imageUrl'] = marshall(episodeData.imageUrl)
     }
 
     if (episodeData.guests && episodeData.guests.length > 0) {
       updateExpressions.push('guests = :guests')
-      expressionAttributeValues[':guests'] = episodeData.guests
+      expressionAttributeValues[':guests'] = { L: episodeData.guests.map(g => ({ S: g })) }
     }
 
     if (episodeData.tags && episodeData.tags.length > 0) {
       updateExpressions.push('tags = :tags')
-      expressionAttributeValues[':tags'] = episodeData.tags
+      expressionAttributeValues[':tags'] = { L: episodeData.tags.map(t => ({ S: t })) }
     }
 
     const params = {
@@ -324,7 +330,7 @@ export class DynamoService {
 
       return unmarshall(result.Attributes) as Episode
     } catch (error) {
-      console.error('Error updating episode:', error)
+      logger.error('Error updating episode:', error)
       throw new Error('Failed to update episode')
     }
   }
@@ -370,7 +376,7 @@ export class DynamoService {
       await this.dynamoClient.send(new PutItemCommand(params))
       return episode
     } catch (error) {
-      console.error('Error creating episode:', error)
+      logger.error('Error creating episode:', error)
       throw new Error('Failed to create episode')
     }
   }
@@ -380,7 +386,7 @@ export class DynamoService {
     limit?: number,
     lastEvaluatedKey?: string,
   ): Promise<{ episodes: Episode[]; lastEvaluatedKey?: string }> {
-    const params: any = {
+    const params: QueryCommandInput = {
       TableName: EPISODES_TABLE,
       KeyConditionExpression: 'podcastId = :podcastId',
       ExpressionAttributeValues: marshall({
@@ -408,7 +414,7 @@ export class DynamoService {
         return { episodes: [] }
       }
 
-      const episodes = result.Items.map((item: any) => unmarshall(item) as Episode)
+      const episodes = result.Items.map((item: Record<string, AttributeValue>) => unmarshall(item) as Episode)
 
       const response: { episodes: Episode[]; lastEvaluatedKey?: string } = { episodes }
 
@@ -418,7 +424,7 @@ export class DynamoService {
 
       return response
     } catch (error) {
-      console.warn('ReleaseDateIndex not available, falling back to main table:', error)
+      logger.warn('ReleaseDateIndex not available, falling back to main table', { error })
 
       // Fallback to main table without index
       delete params.IndexName
@@ -431,7 +437,7 @@ export class DynamoService {
           return { episodes: [] }
         }
 
-        const episodes = result.Items.map((item: any) => unmarshall(item) as Episode)
+        const episodes = result.Items.map((item: Record<string, AttributeValue>) => unmarshall(item) as Episode)
 
         // Sort by release date manually since we can't use the index
         episodes.sort((a: Episode, b: Episode) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
@@ -444,7 +450,7 @@ export class DynamoService {
 
         return response
       } catch (fallbackError) {
-        console.error('Error getting episodes from main table:', fallbackError)
+        logger.error('Error getting episodes from main table:', fallbackError)
         throw new Error('Failed to get episodes')
       }
     }
@@ -468,43 +474,99 @@ export class DynamoService {
 
       return unmarshall(result.Item) as Episode
     } catch (error) {
-      console.error('Error getting episode by ID:', error)
+      logger.error('Error getting episode by ID:', error)
       throw new Error('Failed to get episode')
+    }
+  }
+
+  // Batch get episodes by ID across multiple podcasts (prevents N+1 queries)
+  async batchGetEpisodeById(podcastIds: string[], episodeId: string): Promise<Episode | null> {
+    if (podcastIds.length === 0) {
+      return null
+    }
+
+    // DynamoDB BatchGetItem has a limit of 100 items per request
+    const batchSize = 100
+    const batches = []
+
+    for (let i = 0; i < podcastIds.length; i += batchSize) {
+      batches.push(podcastIds.slice(i, i + batchSize))
+    }
+
+    try {
+      for (const batch of batches) {
+        const keys = batch.map(podcastId =>
+          marshall({
+            podcastId,
+            episodeId,
+          }),
+        )
+
+        const params = {
+          RequestItems: {
+            [EPISODES_TABLE]: {
+              Keys: keys,
+            },
+          },
+        }
+
+        const result = await this.dynamoClient.send(new BatchGetItemCommand(params))
+
+        if (result.Responses && result.Responses[EPISODES_TABLE]) {
+          for (const item of result.Responses[EPISODES_TABLE]) {
+            if (item) {
+              return unmarshall(item) as Episode
+            }
+          }
+        }
+      }
+
+      return null
+    } catch (error) {
+      logger.error('Error batch getting episode by ID:', error)
+      throw new Error('Failed to batch get episode')
     }
   }
 
   async deleteEpisodesByPodcast(podcastId: string): Promise<void> {
     try {
-      // First, get all episodes for the podcast
-      const episodes = await this.getEpisodesByPodcast(podcastId)
-
-      if (episodes.episodes.length === 0) {
-        return
-      }
-
-      // Delete in batches
+      let lastEvaluatedKey: string | undefined
       const batchSize = 25
-      for (let i = 0; i < episodes.episodes.length; i += batchSize) {
-        const batch = episodes.episodes.slice(i, i + batchSize)
-        const deleteRequests = batch.map(episode => ({
-          DeleteRequest: {
-            Key: marshall({
-              podcastId: episode.podcastId,
-              episodeId: episode.episodeId,
-            }),
-          },
-        }))
 
-        const params = {
-          RequestItems: {
-            [EPISODES_TABLE]: deleteRequests,
-          },
+      // Process episodes in paginated batches to avoid memory issues
+      do {
+        // Get episodes with pagination (100 at a time)
+        const result = await this.getEpisodesByPodcast(podcastId, 100, lastEvaluatedKey)
+
+        if (result.episodes.length === 0) {
+          break
         }
 
-        await this.dynamoClient.send(new BatchWriteItemCommand(params))
-      }
+        // Delete in batches
+        for (let i = 0; i < result.episodes.length; i += batchSize) {
+          const batch = result.episodes.slice(i, i + batchSize)
+          const deleteRequests = batch.map(episode => ({
+            DeleteRequest: {
+              Key: marshall({
+                podcastId: episode.podcastId,
+                episodeId: episode.episodeId,
+              }),
+            },
+          }))
+
+          const params = {
+            RequestItems: {
+              [EPISODES_TABLE]: deleteRequests,
+            },
+          }
+
+          await this.dynamoClient.send(new BatchWriteItemCommand(params))
+        }
+
+        lastEvaluatedKey = result.lastEvaluatedKey
+      } while (lastEvaluatedKey)
     } catch (error) {
-      console.error('Error deleting episodes:', error)
+      logger.error('Error deleting episodes:', error)
       throw new Error('Failed to delete episodes')
     }
   }
@@ -554,7 +616,7 @@ export class DynamoService {
     try {
       await this.dynamoClient.send(new PutItemCommand(params))
     } catch (error) {
-      console.error('Error saving playback progress:', error)
+      logger.error('Error saving playback progress:', error)
       throw new Error('Failed to save playback progress')
     }
   }
@@ -577,7 +639,7 @@ export class DynamoService {
 
       return unmarshall(result.Item) as ListeningHistoryItem
     } catch (error) {
-      console.error('Error getting listening history item:', error)
+      logger.error('Error getting listening history item:', error)
       return null
     }
   }
@@ -594,7 +656,7 @@ export class DynamoService {
         duration: history.duration,
       }
     } catch (error) {
-      console.error('Error getting playback progress:', error)
+      logger.error('Error getting playback progress:', error)
       return null
     }
   }
@@ -617,9 +679,9 @@ export class DynamoService {
         return []
       }
 
-      return result.Items.map((item: any) => unmarshall(item) as ListeningHistoryItem)
+      return result.Items.map((item: Record<string, AttributeValue>) => unmarshall(item) as ListeningHistoryItem)
     } catch (error) {
-      console.error('Error getting listening history:', error)
+      logger.error('Error getting listening history:', error)
       throw new Error('Failed to get listening history')
     }
   }
@@ -682,7 +744,7 @@ export class DynamoService {
         podcastImageUrl: podcast.imageUrl,
       }
     } catch (error) {
-      console.error('Error getting last played episode:', error)
+      logger.error('Error getting last played episode:', error)
       return null
     }
   }
@@ -690,55 +752,72 @@ export class DynamoService {
   // Fix existing episodes with complex imageUrl objects
   async fixEpisodeImageUrls(podcastId: string): Promise<void> {
     try {
-      // Get all episodes for the podcast
-      const episodes = await this.getEpisodesByPodcast(podcastId)
-
-      if (episodes.episodes.length === 0) {
-        return
-      }
-
-      // Process episodes in batches to fix imageUrl
+      let lastEvaluatedKey: string | undefined
       const batchSize = 25
-      for (let i = 0; i < episodes.episodes.length; i += batchSize) {
-        const batch = episodes.episodes.slice(i, i + batchSize)
-        const fixedEpisodes = batch.map(episode => {
-          let fixedImageUrl = episode.imageUrl
 
-          // If imageUrl is a complex object, extract the actual URL
-          if (typeof episode.imageUrl === 'object' && episode.imageUrl !== null) {
-            const imageObj = episode.imageUrl as any
-            if (imageObj.$?.M?.href?.S) {
-              fixedImageUrl = imageObj.$.M.href.S
-            } else if (imageObj.href) {
-              fixedImageUrl = imageObj.href
-            } else if (imageObj.url) {
-              fixedImageUrl = imageObj.url
-            }
-          }
+      // Process episodes in paginated batches to avoid memory issues
+      do {
+        // Get episodes with pagination (100 at a time)
+        const result = await this.getEpisodesByPodcast(podcastId, 100, lastEvaluatedKey)
 
-          return {
-            ...episode,
-            imageUrl: fixedImageUrl,
-          }
-        })
-
-        // Update episodes with fixed imageUrl
-        const writeRequests = fixedEpisodes.map(episode => ({
-          PutRequest: {
-            Item: marshall(episode),
-          },
-        }))
-
-        const params = {
-          RequestItems: {
-            [EPISODES_TABLE]: writeRequests,
-          },
+        if (result.episodes.length === 0) {
+          break
         }
 
-        await this.dynamoClient.send(new BatchWriteItemCommand(params))
-      }
+        // Process episodes in batches to fix imageUrl
+        for (let i = 0; i < result.episodes.length; i += batchSize) {
+          const batch = result.episodes.slice(i, i + batchSize)
+          const fixedEpisodes = batch.map(episode => {
+            let fixedImageUrl = episode.imageUrl
+
+            // If imageUrl is a complex object, extract the actual URL
+            if (typeof episode.imageUrl === 'object' && episode.imageUrl !== null) {
+              const imageObj = episode.imageUrl as Record<string, unknown>
+              // Check for DynamoDB-style nested object
+              if (imageObj.$ && typeof imageObj.$ === 'object') {
+                const dollarObj = imageObj.$ as Record<string, unknown>
+                if (dollarObj.M && typeof dollarObj.M === 'object') {
+                  const mObj = dollarObj.M as Record<string, unknown>
+                  if (mObj.href && typeof mObj.href === 'object') {
+                    const hrefObj = mObj.href as Record<string, unknown>
+                    if (typeof hrefObj.S === 'string') {
+                      fixedImageUrl = hrefObj.S
+                    }
+                  }
+                }
+              } else if (typeof imageObj.href === 'string') {
+                fixedImageUrl = imageObj.href
+              } else if (typeof imageObj.url === 'string') {
+                fixedImageUrl = imageObj.url
+              }
+            }
+
+            return {
+              ...episode,
+              imageUrl: fixedImageUrl,
+            }
+          })
+
+          // Update episodes with fixed imageUrl
+          const writeRequests = fixedEpisodes.map(episode => ({
+            PutRequest: {
+              Item: marshall(episode),
+            },
+          }))
+
+          const params = {
+            RequestItems: {
+              [EPISODES_TABLE]: writeRequests,
+            },
+          }
+
+          await this.dynamoClient.send(new BatchWriteItemCommand(params))
+        }
+
+        lastEvaluatedKey = result.lastEvaluatedKey
+      } while (lastEvaluatedKey)
     } catch (error) {
-      console.error('Error fixing episode image URLs:', error)
+      logger.error('Error fixing episode image URLs:', error)
       throw new Error('Failed to fix episode image URLs')
     }
   }

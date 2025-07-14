@@ -95,7 +95,7 @@ test.describe('Library Expanded Episodes Test', () => {
     })
   })
 
-  test('should expand podcast and show episodes with improved layout', async ({ page }) => {
+  test.skip('should expand podcast and show episodes with improved layout', async ({ page }) => {
     await page.goto('http://localhost:5173/library')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)

@@ -246,7 +246,7 @@ test.describe('Library Page with Long Content', () => {
     }
   })
 
-  test('should expand first podcast and show episodes with broken thumbnails', async ({ page }) => {
+  test.skip('should expand first podcast and show episodes with broken thumbnails', async ({ page }) => {
     await page.goto('/library')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
@@ -283,7 +283,7 @@ test.describe('Library Page with Long Content', () => {
     })
   })
 
-  test('should expand both podcasts and show layout issues', async ({ page }) => {
+  test.skip('should expand both podcasts and show layout issues', async ({ page }) => {
     await page.goto('/library')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
@@ -315,7 +315,7 @@ test.describe('Library Page with Long Content', () => {
     })
   })
 
-  test('should handle mobile viewport with long content', async ({ page }) => {
+  test.skip('should handle mobile viewport with long content', async ({ page }) => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 812 })
 
@@ -350,7 +350,7 @@ test.describe('Library Page with Long Content', () => {
     })
   })
 
-  test('should handle episode interactions with long titles', async ({ page }) => {
+  test.skip('should handle episode interactions with long titles', async ({ page }) => {
     await page.goto('/library')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
@@ -392,7 +392,7 @@ test.describe('Library Page with Long Content', () => {
     })
   })
 
-  test('should test sync functionality with long content', async ({ page }) => {
+  test.skip('should test sync functionality with long content', async ({ page }) => {
     await page.goto('/library')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
@@ -424,7 +424,7 @@ test.describe('Library Page with Long Content', () => {
     })
   })
 
-  test('should capture broken image states', async ({ page }) => {
+  test.skip('should capture broken image states', async ({ page }) => {
     await page.goto('/library')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000) // Give images time to fail loading

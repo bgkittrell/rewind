@@ -1,10 +1,14 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 import { createSuccessResponse, createErrorResponse, createCorsHeaders } from '../utils/response'
 import { searchService } from '../services/searchService'
 import { SearchQuery } from '../types/search'
+import { logger } from '../services/loggerService'
+import { withLogging } from '../utils/middleware'
 
-export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+const searchHandler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const headers = createCorsHeaders()
+  let userId: string | undefined
+  let queryParams: Record<string, string | undefined> = {}
 
   try {
     // Handle CORS preflight
@@ -22,13 +26,13 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     // Extract user ID from JWT claims (API Gateway populates this)
-    const userId = event.requestContext.authorizer?.claims?.sub
+    userId = event.requestContext.authorizer?.claims?.sub
     if (!userId) {
       return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401, event.path)
     }
 
     // Extract and validate query parameters
-    const queryParams = event.queryStringParameters || {}
+    queryParams = event.queryStringParameters || {}
 
     if (!queryParams.q) {
       return createErrorResponse('Search query is required', 'VALIDATION_ERROR', 400, event.path)
@@ -56,18 +60,21 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // Return results
     return createSuccessResponse(searchResponse, 200, event.path)
-  } catch (error: any) {
-    console.error('Search handler error:', error)
+  } catch (error) {
+    logger.error('Search handler error', error, { userId, query: queryParams?.q })
 
     // Handle specific error types
-    if (error.message?.includes('Search query too long')) {
-      return createErrorResponse(error.message, 'VALIDATION_ERROR', 400, event.path)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    if (errorMessage.includes('Search query too long')) {
+      return createErrorResponse(errorMessage, 'VALIDATION_ERROR', 400, event.path)
     }
 
-    if (error.message?.includes('not found')) {
-      return createErrorResponse(error.message, 'NOT_FOUND', 404, event.path)
+    if (errorMessage.includes('not found')) {
+      return createErrorResponse(errorMessage, 'NOT_FOUND', 404, event.path)
     }
 
     return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500, event.path)
   }
 }
+
+export const handler = withLogging(searchHandler)

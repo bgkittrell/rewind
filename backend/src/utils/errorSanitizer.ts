@@ -1,4 +1,6 @@
 import { APIResponse } from '../types'
+import { createCorsHeaders } from './response'
+import { logger } from '../services/loggerService'
 
 export interface SanitizedError {
   message: string
@@ -105,7 +107,7 @@ export const sanitizeError = (error: unknown, path?: string): SanitizedError => 
   }
 
   // Log the actual error for debugging (but don't expose it)
-  console.error('Sanitized error:', error)
+  logger.error('Sanitized error', error)
 
   return defaultError
 }
@@ -132,12 +134,7 @@ export const createErrorResponse = (
 
   return {
     statusCode,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-      'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-    },
+    headers: createCorsHeaders(),
     body: JSON.stringify(response),
   }
 }
@@ -277,10 +274,7 @@ export const createRateLimitResponse = (
   return {
     statusCode: 429,
     headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-      'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+      ...createCorsHeaders(),
       'Retry-After': retryAfter.toString(),
     },
     body: JSON.stringify(response),

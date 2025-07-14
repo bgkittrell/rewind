@@ -4,8 +4,8 @@ import { SearchQuery, SearchResponse, SearchResult, SearchableEpisode, SEARCH_CO
 import { createSearchContext, calculateEpisodeScore, sortByScore } from '../utils/searchUtils'
 
 // Simple in-memory cache for episode data
-interface CacheEntry {
-  data: any
+interface CacheEntry<T = unknown> {
+  data: T
   timestamp: number
 }
 
@@ -188,7 +188,7 @@ export class SearchService {
   /**
    * Set data in cache
    */
-  private setCache(key: string, data: any): void {
+  private setCache<T>(key: string, data: T): void {
     cache.set(key, {
       data,
       timestamp: Date.now(),

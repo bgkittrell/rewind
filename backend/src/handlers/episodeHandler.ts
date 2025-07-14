@@ -1,9 +1,11 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 import { createSuccessResponse, createErrorResponse, createCorsHeaders } from '../utils/response'
 import { rssService } from '../services/rssService'
 import { dynamoService } from '../services/dynamoService'
+import { logger } from '../services/loggerService'
+import { withLogging } from '../utils/middleware'
 
-export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+const episodeHandler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const headers = createCorsHeaders()
 
   try {
@@ -76,7 +78,7 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     return createErrorResponse('Not found', 'NOT_FOUND', 404, path)
   } catch (error) {
-    console.error('Episode handler error:', error)
+    logger.error('Episode handler error:', error)
     return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500, event.path)
   }
 }
@@ -111,7 +113,7 @@ async function getEpisodes(
 
     return createSuccessResponse(response, 200, path)
   } catch (error) {
-    console.error('Error getting episodes:', error)
+    logger.error('Error getting episodes:', error)
     return createErrorResponse('Failed to get episodes', 'DATABASE_ERROR', 500, path)
   }
 }
@@ -183,11 +185,12 @@ async function syncEpisodes(
     }
 
     return createSuccessResponse(response, 201, path)
-  } catch (error: any) {
-    console.error('Error syncing episodes:', error)
+  } catch (error) {
+    logger.error('Error syncing episodes:', error)
 
-    if (error.message.includes('Failed to parse episodes from RSS feed')) {
-      return createErrorResponse(error.message, 'RSS_PARSE_ERROR', 400, path)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    if (errorMessage.includes('Failed to parse episodes from RSS feed')) {
+      return createErrorResponse(errorMessage, 'RSS_PARSE_ERROR', 400, path)
     }
 
     return createErrorResponse('Failed to sync episodes', 'INTERNAL_ERROR', 500, path)
@@ -235,8 +238,8 @@ async function saveProgress(
     }
 
     return createSuccessResponse(response, 200, path)
-  } catch (error: any) {
-    console.error('Error saving progress:', error)
+  } catch (error) {
+    logger.error('Error saving progress:', error)
 
     if (error instanceof SyntaxError) {
       return createErrorResponse('Invalid JSON in request body', 'VALIDATION_ERROR', 400, path)
@@ -280,7 +283,7 @@ async function getProgress(
 
     return createSuccessResponse(response, 200, path)
   } catch (error) {
-    console.error('Error getting progress:', error)
+    logger.error('Error getting progress:', error)
     return createErrorResponse('Failed to get progress', 'INTERNAL_ERROR', 500, path)
   }
 }
@@ -306,7 +309,7 @@ async function getListeningHistory(
 
     return createSuccessResponse(response, 200, path)
   } catch (error) {
-    console.error('Error getting listening history:', error)
+    logger.error('Error getting listening history:', error)
     return createErrorResponse('Failed to get listening history', 'INTERNAL_ERROR', 500, path)
   }
 }
@@ -321,7 +324,7 @@ async function getResumeData(userId: string, path: string): Promise<APIGatewayPr
 
     return createSuccessResponse(lastPlayedEpisode, 200, path)
   } catch (error) {
-    console.error('Error getting resume data:', error)
+    logger.error('Error getting resume data:', error)
     return createErrorResponse('Failed to get resume data', 'INTERNAL_ERROR', 500, path)
   }
 }
@@ -346,7 +349,7 @@ async function deleteEpisodes(podcastId: string, userId: string, path: string): 
       path,
     )
   } catch (error) {
-    console.error('Error deleting episodes:', error)
+    logger.error('Error deleting episodes:', error)
     return createErrorResponse('Failed to delete episodes', 'INTERNAL_ERROR', 500, path)
   }
 }
@@ -380,39 +383,38 @@ async function fixEpisodeImages(
       path,
     )
   } catch (error) {
-    console.error('Error fixing episode image URLs:', error)
+    logger.error('Error fixing episode image URLs:', error)
     return createErrorResponse('Failed to fix episode image URLs', 'INTERNAL_ERROR', 500, path)
   }
 }
 
 async function getEpisodeById(episodeId: string, userId: string, path: string): Promise<APIGatewayProxyResult> {
-  console.log(`Getting episode by ID: ${episodeId} for user: ${userId}`)
+  logger.debug(`Getting episode by ID: ${episodeId} for user: ${userId}`)
 
   try {
-    // First, get all user podcasts to find which podcast this episode belongs to
+    // First, get all user podcasts
     const userPodcasts = await dynamoService.getPodcastsByUser(userId)
-    console.log(`Found ${userPodcasts.length} podcasts for user`)
+    logger.debug(`Found ${userPodcasts.length} podcasts for user`)
 
-    // Try to find the episode in each podcast
-    for (const podcast of userPodcasts) {
-      console.log(`Checking podcast: ${podcast.podcastId} - ${podcast.title}`)
-      try {
-        const episode = await dynamoService.getEpisodeById(podcast.podcastId, episodeId)
-        if (episode) {
-          console.log(`Found episode: ${episode.title} in podcast: ${podcast.title}`)
-          return createSuccessResponse(episode, 200, path)
-        }
-      } catch (error) {
-        console.log(`Episode not found in podcast ${podcast.podcastId}:`, error)
-        // Continue to next podcast if episode not found in this one
-        continue
-      }
+    if (userPodcasts.length === 0) {
+      return createErrorResponse('No podcasts found for user', 'NOT_FOUND', 404, path)
     }
 
-    console.error(`Episode ${episodeId} not found in any of the user's podcasts`)
+    // Extract podcast IDs for batch lookup
+    const podcastIds = userPodcasts.map(podcast => podcast.podcastId)
+
+    // Use batch get to find the episode efficiently (prevents N+1 queries)
+    const episode = await dynamoService.batchGetEpisodeById(podcastIds, episodeId)
+
+    if (episode) {
+      logger.debug(`Found episode: ${episode.title}`)
+      return createSuccessResponse(episode, 200, path)
+    }
+
+    logger.error(`Episode ${episodeId} not found in any of the user's podcasts`)
     return createErrorResponse('Episode not found or access denied', 'NOT_FOUND', 404, path)
   } catch (error) {
-    console.error('Error getting episode:', error)
+    logger.error('Error getting episode:', error)
     return createErrorResponse('Failed to get episode', 'INTERNAL_ERROR', 500, path)
   }
 }
@@ -423,7 +425,7 @@ async function getEpisodeByIdWithPodcast(
   userId: string,
   path: string,
 ): Promise<APIGatewayProxyResult> {
-  console.log(`Getting episode by ID: ${episodeId} for user: ${userId} and podcast: ${podcastId}`)
+  logger.debug(`Getting episode by ID: ${episodeId} for user: ${userId} and podcast: ${podcastId}`)
 
   try {
     // First, verify the episode belongs to the user
@@ -438,14 +440,21 @@ async function getEpisodeByIdWithPodcast(
     const episode = await dynamoService.getEpisodeById(podcastId, episodeId)
 
     if (episode) {
-      console.log(`Found episode: ${episode.title} in podcast: ${podcast.title}`)
+      logger.info('Found episode in podcast', {
+        episodeId,
+        title: episode.title,
+        podcastId,
+        podcastTitle: podcast.title,
+      })
       return createSuccessResponse(episode, 200, path)
     }
 
-    console.error(`Episode ${episodeId} not found in podcast ${podcastId}`)
+    logger.warn('Episode not found in podcast', { episodeId, podcastId })
     return createErrorResponse('Episode not found or access denied', 'NOT_FOUND', 404, path)
   } catch (error) {
-    console.error('Error getting episode:', error)
+    logger.error('Error getting episode:', error)
     return createErrorResponse('Failed to get episode', 'INTERNAL_ERROR', 500, path)
   }
 }
+
+export const handler = withLogging(episodeHandler)

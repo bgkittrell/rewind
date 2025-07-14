@@ -2,12 +2,12 @@
 import { rumService } from './rumService'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
-export interface APIResponse<T = any> {
+export interface APIResponse<T> {
   data?: T
   error?: {
     message: string
     code: string
-    details?: any
+    details?: Record<string, unknown>
   }
   timestamp: string
   path?: string
@@ -18,7 +18,7 @@ export class APIError extends Error {
     message: string,
     public code: string,
     public statusCode: number,
-    public details?: any,
+    public details?: Record<string, unknown>,
   ) {
     super(message)
     this.name = 'APIError'
@@ -216,14 +216,14 @@ class APIClient {
     }
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     })
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<T> {
+  async put<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,

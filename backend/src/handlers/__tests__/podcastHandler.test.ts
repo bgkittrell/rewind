@@ -18,6 +18,21 @@ vi.mock('../../services/dynamoService', () => ({
   },
 }))
 
+vi.mock('../../services/loggerService', () => ({
+  logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    logRequest: vi.fn(),
+    logResponse: vi.fn(),
+    setCorrelationId: vi.fn(),
+    generateCorrelationId: vi.fn().mockReturnValue('test-correlation-id'),
+    setDefaultContext: vi.fn(),
+    extractRequestContext: vi.fn().mockReturnValue({}),
+  },
+}))
+
 vi.mock('../../utils/response', () => ({
   createSuccessResponse: vi.fn((data, statusCode) => ({
     statusCode,

@@ -1,5 +1,6 @@
 import { BedrockRuntimeClient, InvokeModelCommand, InvokeModelCommandInput } from '@aws-sdk/client-bedrock-runtime'
 import { GuestExtractionRequest, GuestExtractionResult } from '../types'
+import { logger } from './loggerService'
 
 export class BedrockService {
   private client: BedrockRuntimeClient
@@ -47,7 +48,7 @@ export class BedrockService {
 
       return this.parseGuestExtractionResponse(rawResponse)
     } catch (error) {
-      console.error('Error extracting guests with Bedrock:', error)
+      logger.error('Error extracting guests with Bedrock:', error)
       return {
         guests: [],
         confidence: 0,
@@ -123,7 +124,7 @@ Respond only with the JSON object, no additional text.`
         rawResponse,
       }
     } catch (error) {
-      console.error('Error parsing guest extraction response:', error)
+      logger.error('Error parsing guest extraction response:', error)
       return {
         guests: [],
         confidence: 0,
@@ -164,7 +165,7 @@ Respond only with the JSON object, no additional text.`
           await new Promise(resolve => setTimeout(resolve, 1000))
         }
       } catch (error) {
-        console.error(`Error processing batch starting at index ${i}:`, error)
+        logger.error(`Error processing batch starting at index ${i}:`, error)
         // Add empty results for failed batch
         results.push(
           ...batch.map(() => ({

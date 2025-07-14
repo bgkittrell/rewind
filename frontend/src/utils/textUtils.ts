@@ -1,3 +1,5 @@
+import DOMPurify from 'dompurify'
+
 /**
  * Strips HTML tags from a string and returns clean text
  * @param html The HTML string to clean
@@ -6,15 +8,17 @@
 export function stripHtml(html: string): string {
   if (!html) return ''
 
-  // Create a temporary DOM element to parse HTML
-  const tempDiv = document.createElement('div')
-  tempDiv.innerHTML = html
+  // Sanitize HTML and get DOM element to decode entities
+  const sanitized = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [],
+    RETURN_DOM: true,
+  })
 
-  // Get text content and clean up extra whitespace
-  const textContent = tempDiv.textContent || tempDiv.innerText || ''
+  // Extract text content which automatically decodes entities
+  const decoded = sanitized.textContent || ''
 
   // Remove extra whitespace and normalize
-  return textContent.replace(/\s+/g, ' ').trim()
+  return decoded.replace(/\s+/g, ' ').trim()
 }
 
 /**

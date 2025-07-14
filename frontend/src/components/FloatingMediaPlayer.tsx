@@ -1,16 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react'
-import {
-  IconPlayerPlay,
-  IconPlayerPause,
-  IconPlayerSkipBack,
-  IconPlayerSkipForward,
-  IconVolume,
-  IconChevronDown,
-  IconX,
-  IconMusic,
-  IconChevronUp,
-} from '@tabler/icons-react'
-import { PROGRESS_SAVE_INTERVAL } from '../constants/resume'
+import { useState, useEffect, useCallback } from 'react'
+import { IconChevronDown, IconX, IconChevronUp } from '@tabler/icons-react'
+import { useAudioPlayer } from '../hooks/useAudioPlayer'
+import { useProgressSaving } from '../hooks/useProgressSaving'
+import { mediaSessionService } from '../services/mediaSessionService'
+import { MediaControls } from './MediaPlayer/MediaControls'
+import { ProgressBar } from './MediaPlayer/ProgressBar'
+import { VolumeControl } from './MediaPlayer/VolumeControl'
+import { MediaInfo } from './MediaPlayer/MediaInfo'
+import { PlaybackRateControl } from './MediaPlayer/PlaybackRateControl'
 import type { Episode } from '../types/episode'
 
 interface FloatingMediaPlayerProps {
@@ -30,21 +27,135 @@ export function FloatingMediaPlayer({
   onClose,
   onSeek,
 }: FloatingMediaPlayerProps) {
-  // ALL HOOKS MUST BE CALLED FIRST - BEFORE ANY EARLY RETURNS
   const [isExpanded, setIsExpanded] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [playbackRate, setPlaybackRate] = useState(1)
   const [volume, setVolume] = useState(1)
-  const audioRef = useRef<HTMLAudioElement>(null)
+
+  const {
+    audioRef,
+    play,
+    pause,
+    seek,
+    setVolume: setAudioVolume,
+    setPlaybackRate: setAudioPlaybackRate,
+  } = useAudioPlayer({
+    episode,
+    onTimeUpdate: time => {
+      setCurrentTime(time)
+      onSeek(time)
+    },
+    onDurationChange: setDuration,
+    onEnded: () => {
+      onPause()
+      seek(0)
+    },
+  })
+
+  // Use progress saving hook
+  useProgressSaving({
+    episode,
+    currentTime,
+    duration,
+    isPlaying,
+  })
+
+  // Setup MediaSession API
+  useEffect(() => {
+    if (!episode) return
+
+    mediaSessionService.setMetadata(episode)
+    mediaSessionService.setActionHandlers({
+      play: onPlay,
+      pause: onPause,
+      seekbackward: () => {
+        const newTime = Math.max(0, currentTime - 15)
+        seek(newTime)
+        onSeek(newTime)
+      },
+      seekforward: () => {
+        const newTime = Math.min(duration, currentTime + 15)
+        seek(newTime)
+        onSeek(newTime)
+      },
+    })
+
+    return () => {
+      mediaSessionService.clearActionHandlers()
+    }
+  }, [episode, onPlay, onPause, currentTime, duration, seek, onSeek])
+
+  // Update MediaSession position state
+  useEffect(() => {
+    if (episode && duration > 0) {
+      mediaSessionService.setPositionState(duration, currentTime, playbackRate)
+    }
+  }, [episode, duration, currentTime, playbackRate])
+
+  // Initialize audio position on episode change
+  useEffect(() => {
+    if (episode && episode.playbackPosition) {
+      seek(episode.playbackPosition)
+      setCurrentTime(episode.playbackPosition)
+    }
+  }, [episode, seek])
+
+  // Handle play/pause state
+  useEffect(() => {
+    if (isPlaying) {
+      play()
+    } else {
+      pause()
+    }
+  }, [isPlaying, play, pause])
+
+  // Handle volume changes
+  const handleVolumeChange = useCallback(
+    (newVolume: number) => {
+      setVolume(newVolume)
+      setAudioVolume(newVolume)
+    },
+    [setAudioVolume],
+  )
+
+  // Handle playback rate changes
+  const handlePlaybackRateChange = useCallback(
+    (newRate: number) => {
+      setPlaybackRate(newRate)
+      setAudioPlaybackRate(newRate)
+    },
+    [setAudioPlaybackRate],
+  )
+
+  // Handle skip controls
+  const handleSkipBack = useCallback(() => {
+    const newTime = Math.max(0, currentTime - 15)
+    seek(newTime)
+    onSeek(newTime)
+  }, [currentTime, seek, onSeek])
+
+  const handleSkipForward = useCallback(() => {
+    const newTime = Math.min(duration, currentTime + 15)
+    seek(newTime)
+    onSeek(newTime)
+  }, [currentTime, duration, seek, onSeek])
+
+  // Handle seek from progress bar
+  const handleSeek = useCallback(
+    (time: number) => {
+      seek(time)
+      onSeek(time)
+    },
+    [seek, onSeek],
+  )
 
   // Handle visibility change for background audio support
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (audioRef.current && episode && isPlaying) {
-        // Resume audio if it was paused when returning to foreground
         if (document.visibilityState === 'visible' && audioRef.current.paused) {
-          audioRef.current.play().catch((error: unknown) => {
+          play().catch(error => {
             console.warn('Failed to resume audio playback:', error)
           })
         }
@@ -55,193 +166,14 @@ export function FloatingMediaPlayer({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [episode, isPlaying])
+  }, [audioRef, episode, isPlaying, play])
 
-  // Setup MediaSession API for lock screen controls
-  useEffect(() => {
-    if (!episode || !('mediaSession' in navigator)) return
-
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: episode.title,
-      artist: episode.podcastName,
-      album: 'Rewind',
-      artwork: episode.imageUrl
-        ? [
-            { src: episode.imageUrl, sizes: '96x96', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '128x128', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '192x192', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '256x256', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '384x384', type: 'image/png' },
-            { src: episode.imageUrl, sizes: '512x512', type: 'image/png' },
-          ]
-        : undefined,
-    })
-
-    navigator.mediaSession.setActionHandler('play', onPlay)
-    navigator.mediaSession.setActionHandler('pause', onPause)
-    navigator.mediaSession.setActionHandler('seekbackward', () => {
-      if (audioRef.current) {
-        const newTime = Math.max(0, audioRef.current.currentTime - 15)
-        audioRef.current.currentTime = newTime
-        onSeek(newTime)
-      }
-    })
-    navigator.mediaSession.setActionHandler('seekforward', () => {
-      if (audioRef.current) {
-        const newTime = Math.min(duration, audioRef.current.currentTime + 15)
-        audioRef.current.currentTime = newTime
-        onSeek(newTime)
-      }
-    })
-  }, [episode, onPlay, onPause, onSeek, duration])
-
-  // Update audio element when episode changes
-  useEffect(() => {
-    if (audioRef.current && episode?.audioUrl) {
-      audioRef.current.src = episode.audioUrl
-      audioRef.current.currentTime = episode.playbackPosition || 0
-      audioRef.current.playbackRate = playbackRate
-      audioRef.current.volume = volume
-    }
-  }, [episode, playbackRate, volume])
-
-  // Handle play/pause state
-  useEffect(() => {
-    if (!audioRef.current) return
-
-    if (isPlaying) {
-      audioRef.current.play()
-    } else {
-      audioRef.current.pause()
-    }
-  }, [isPlaying])
-
-  // Save progress every 30 seconds when playing
-  useEffect(() => {
-    if (!isPlaying || !episode || !audioRef.current) return
-
-    const saveProgress = async () => {
-      if (audioRef.current && episode) {
-        try {
-          // Import episodeService dynamically to avoid circular dependencies
-          const { episodeService } = await import('../services/episodeService')
-          await episodeService.saveProgress(
-            episode.episodeId,
-            audioRef.current.currentTime,
-            duration,
-            episode.podcastId, // Use explicit podcastId field instead of brittle extraction
-          )
-        } catch (error) {
-          console.error('Error saving progress:', error)
-        }
-      }
-    }
-
-    const interval = setInterval(saveProgress, PROGRESS_SAVE_INTERVAL) // Save every 30 seconds
-
-    return () => clearInterval(interval)
-  }, [isPlaying, episode, duration])
-
-  // Save progress on pause/stop
-  useEffect(() => {
-    if (!episode || !audioRef.current) return
-
-    const saveProgressOnPause = async () => {
-      if (!isPlaying && currentTime > 0) {
-        try {
-          const { episodeService } = await import('../services/episodeService')
-          await episodeService.saveProgress(
-            episode.episodeId,
-            currentTime,
-            duration,
-            episode.podcastId, // Use explicit podcastId field
-          )
-        } catch (error) {
-          console.error('Error saving progress on pause:', error)
-        }
-      }
-    }
-
-    saveProgressOnPause()
-  }, [isPlaying, episode, currentTime, duration])
-
-  // Save progress on component unmount
-  useEffect(() => {
-    return () => {
-      if (episode && audioRef.current && audioRef.current.currentTime > 0) {
-        // Save progress before unmounting
-        import('../services/episodeService').then(({ episodeService }) => {
-          episodeService
-            .saveProgress(episode.episodeId, audioRef.current?.currentTime || 0, duration, episode.podcastId)
-            .catch(error => console.error('Error saving progress on unmount:', error))
-        })
-      }
-    }
-  }, [episode, duration])
-
-  // EARLY RETURN AFTER ALL HOOKS - THIS FIXES THE HOOKS ERROR
   if (!episode) return null
-
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime)
-      onSeek(audioRef.current.currentTime)
-    }
-  }
-
-  const handleLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration)
-    }
-  }
-
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!audioRef.current) return
-
-    const rect = e.currentTarget.getBoundingClientRect()
-    const clickX = e.clientX - rect.left
-    const percentage = clickX / rect.width
-    const newTime = percentage * duration
-
-    audioRef.current.currentTime = newTime
-    onSeek(newTime)
-  }
-
-  const handleSkipBack = () => {
-    if (audioRef.current) {
-      const newTime = Math.max(0, audioRef.current.currentTime - 15)
-      audioRef.current.currentTime = newTime
-      onSeek(newTime)
-    }
-  }
-
-  const handleSkipForward = () => {
-    if (audioRef.current) {
-      const newTime = Math.min(duration, audioRef.current.currentTime + 15)
-      audioRef.current.currentTime = newTime
-      onSeek(newTime)
-    }
-  }
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0
 
   return (
     <>
       {/* Hidden audio element */}
-      <audio
-        ref={audioRef}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        preload="metadata"
-        playsInline
-        data-testid="audio-element"
-      />
+      <audio ref={audioRef} preload="metadata" playsInline data-testid="audio-element" />
 
       {/* Overlay for expanded view */}
       {isExpanded && <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setIsExpanded(false)} />}
@@ -271,143 +203,41 @@ export function FloatingMediaPlayer({
 
             {/* Center Content */}
             <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-              {/* Large Album Art */}
-              <div className="w-48 h-48 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden">
-                {episode?.imageUrl || episode?.podcastImageUrl ? (
-                  <img
-                    src={episode?.imageUrl || episode?.podcastImageUrl}
-                    alt={`${episode.podcastName} artwork`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                    <IconMusic />
-                  </div>
-                )}
-              </div>
+              <MediaInfo episode={episode} size="full" />
 
-              {/* Episode Info */}
-              <div className="text-center">
-                <h2 className="text-lg font-semibold text-white mb-1">{episode?.title}</h2>
-                <p className="text-sm text-white text-opacity-80">{episode?.podcastName}</p>
-              </div>
+              <ProgressBar currentTime={currentTime} duration={duration} onSeek={handleSeek} size="full" />
 
-              {/* Progress Bar */}
-              <div className="w-full max-w-md">
-                <div
-                  className="w-full h-2 bg-white bg-opacity-30 rounded-full cursor-pointer"
-                  onClick={handleProgressClick}
-                >
-                  <div
-                    className="h-2 bg-white rounded-full transition-all"
-                    style={{ width: `${progressPercentage}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-white text-opacity-80 mt-2">
-                  <span>{formatTime(currentTime)}</span>
-                  <span>{formatTime(duration)}</span>
-                </div>
-              </div>
-
-              {/* Main Controls */}
-              <div className="flex items-center space-x-6">
-                <button
-                  onClick={handleSkipBack}
-                  className="p-3 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
-                  aria-label="Skip back 15 seconds"
-                  data-testid="skip-back-button"
-                >
-                  <IconPlayerSkipBack />
-                </button>
-
-                <button
-                  onClick={isPlaying ? onPause : onPlay}
-                  className="p-4 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-colors"
-                  aria-label={isPlaying ? 'Pause' : 'Play'}
-                  data-testid="main-play-pause-button"
-                >
-                  {isPlaying ? <IconPlayerPause /> : <IconPlayerPlay />}
-                </button>
-
-                <button
-                  onClick={handleSkipForward}
-                  className="p-3 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
-                  aria-label="Skip forward 15 seconds"
-                  data-testid="skip-forward-button"
-                >
-                  <IconPlayerSkipForward />
-                </button>
-              </div>
+              <MediaControls
+                isPlaying={isPlaying}
+                onPlay={onPlay}
+                onPause={onPause}
+                onSkipBack={handleSkipBack}
+                onSkipForward={handleSkipForward}
+                size="full"
+              />
 
               {/* Secondary Controls */}
               <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <IconVolume />
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={volume}
-                    onChange={e => setVolume(parseFloat(e.target.value))}
-                    className="w-20 h-1 bg-white bg-opacity-30 rounded-full appearance-none slider"
-                    aria-label="Volume"
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-white text-opacity-80">Speed:</span>
-                  <select
-                    value={playbackRate}
-                    onChange={e => setPlaybackRate(parseFloat(e.target.value))}
-                    className="bg-white bg-opacity-20 text-white text-sm rounded px-2 py-1 appearance-none"
-                    aria-label="Playback speed"
-                  >
-                    <option value="0.5">0.5x</option>
-                    <option value="0.75">0.75x</option>
-                    <option value="1">1x</option>
-                    <option value="1.25">1.25x</option>
-                    <option value="1.5">1.5x</option>
-                    <option value="2">2x</option>
-                  </select>
-                </div>
+                <VolumeControl volume={volume} onVolumeChange={handleVolumeChange} />
+                <PlaybackRateControl playbackRate={playbackRate} onPlaybackRateChange={handlePlaybackRateChange} />
               </div>
             </div>
           </div>
         ) : (
           /* Mini Player */
           <div className="h-full flex items-center px-2">
-            {/* Small Album Art */}
-            <div className="w-12 h-12 bg-gray-300 rounded-lg flex-shrink-0 overflow-hidden mr-3">
-              {episode?.imageUrl || episode?.podcastImageUrl ? (
-                <img
-                  src={episode?.imageUrl || episode?.podcastImageUrl}
-                  alt={`${episode.podcastName} artwork`}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                  <IconMusic />
-                </div>
-              )}
-            </div>
-
-            {/* Episode Info */}
-            <div className="flex-1 min-w-0 mr-2">
-              <p className="text-sm font-medium text-white truncate">{episode?.title}</p>
-              <p className="text-xs text-white text-opacity-80 truncate">{episode?.podcastName}</p>
-            </div>
+            <MediaInfo episode={episode} size="mini" />
 
             {/* Controls */}
             <div className="flex items-center space-x-1 flex-shrink-0">
-              <button
-                onClick={isPlaying ? onPause : onPlay}
-                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
-                aria-label={isPlaying ? 'Pause' : 'Play'}
-                data-testid="mini-play-pause-button"
-              >
-                {isPlaying ? <IconPlayerPause /> : <IconPlayerPlay />}
-              </button>
+              <MediaControls
+                isPlaying={isPlaying}
+                onPlay={onPlay}
+                onPause={onPause}
+                onSkipBack={handleSkipBack}
+                onSkipForward={handleSkipForward}
+                size="mini"
+              />
 
               <button
                 onClick={() => setIsExpanded(true)}
@@ -428,10 +258,7 @@ export function FloatingMediaPlayer({
               </button>
             </div>
 
-            {/* Progress Bar */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-white bg-opacity-30">
-              <div className="h-1 bg-white transition-all" style={{ width: `${progressPercentage}%` }} />
-            </div>
+            <ProgressBar currentTime={currentTime} duration={duration} onSeek={handleSeek} size="mini" />
           </div>
         )}
       </div>
