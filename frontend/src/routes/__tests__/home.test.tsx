@@ -1,5 +1,5 @@
-import React from 'react'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+// React import removed - not needed for JSX in modern React
+import { render, screen, fireEvent } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import Home from '../home'
@@ -100,13 +100,14 @@ Object.defineProperty(window, 'location', {
 const mockRecommendations: RecommendationScore[] = [
   {
     episodeId: 'ep1',
-    podcastId: 'pod1',
     score: 0.95,
     reasons: ['Based on your listening history', 'Similar to episodes you enjoyed'],
     factors: {
-      content_similarity: 0.9,
-      listening_history: 0.8,
-      popularity: 0.7,
+      recentShowListening: 0.9,
+      newEpisodeBonus: 0.8,
+      rediscoveryBonus: 0.7,
+      guestMatchBonus: 0.6,
+      favoriteBonus: 0.5,
     },
     episode: {
       episodeId: 'ep1',
@@ -123,13 +124,14 @@ const mockRecommendations: RecommendationScore[] = [
   },
   {
     episodeId: 'ep2',
-    podcastId: 'pod2',
     score: 0.85,
     reasons: ['Popular in your genres', 'Trending this week'],
     factors: {
-      content_similarity: 0.7,
-      listening_history: 0.6,
-      popularity: 0.9,
+      recentShowListening: 0.7,
+      newEpisodeBonus: 0.6,
+      rediscoveryBonus: 0.9,
+      guestMatchBonus: 0.5,
+      favoriteBonus: 0.4,
     },
     episode: {
       episodeId: 'ep2',
