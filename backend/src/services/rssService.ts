@@ -20,6 +20,39 @@ export interface EpisodeData {
   tags?: string[]
 }
 
+// RSS feed types
+interface RSSFeedItem {
+  title?: string
+  content?: string
+  summary?: string
+  description?: string
+  enclosure?: { url?: string }
+  link?: string
+  duration?: string
+  'itunes:duration'?: string
+  pubDate?: string
+  isoDate?: string
+  categories?: string[]
+}
+
+interface RSSFeed {
+  items?: RSSFeedItem[]
+  image?: {
+    url?: string
+    link?: string
+  }
+  itunes?: {
+    image?:
+      | string
+      | {
+          href?: string
+          url?: string
+          $?: { href?: string }
+        }
+  }
+  'itunes:image'?: { href?: string }
+}
+
 export class RSSService {
   private parser: Parser
 
@@ -70,7 +103,7 @@ export class RSSService {
     }
   }
 
-  private extractImageUrl(feed: any): string | undefined {
+  private extractImageUrl(feed: RSSFeed): string | undefined {
     // Try different ways to get the podcast image
     if (feed.image?.url) {
       return feed.image.url
@@ -122,7 +155,7 @@ export class RSSService {
       // Process episodes (limit to most recent)
       const episodes = feed.items
         .slice(0, limit)
-        .map((item: any): EpisodeData | null => {
+        .map((item: RSSFeedItem): EpisodeData | null => {
           const audioUrl = this.extractAudioUrl(item)
           if (!audioUrl) {
             return null // Skip episodes without audio
@@ -158,7 +191,7 @@ export class RSSService {
     }
   }
 
-  private extractAudioUrl(item: any): string | null {
+  private extractAudioUrl(item: RSSFeedItem): string | null {
     // Try different ways to get the audio URL
     if (item.enclosure?.url && this.isAudioFile(item.enclosure.url)) {
       return item.enclosure.url
@@ -225,7 +258,7 @@ export class RSSService {
     }
   }
 
-  private extractEpisodeImage(item: any): string | undefined {
+  private extractEpisodeImage(item: RSSFeedItem): string | undefined {
     // Try to get episode-specific image
     if (item.image?.url) {
       return item.image.url
@@ -277,7 +310,7 @@ export class RSSService {
     return [...new Set(guests)].slice(0, 5)
   }
 
-  private extractTags(categories: any[]): string[] {
+  private extractTags(categories: string[] | undefined): string[] {
     if (!Array.isArray(categories)) return []
 
     return categories

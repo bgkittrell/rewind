@@ -25,10 +25,10 @@
    - ✅ authHandler.ts - 6 instances fixed
    - ✅ episodeHandler.ts - 2 instances fixed
    - ✅ dynamoService.ts - 6 instances fixed
-   - [ ] podcastHandler.ts - 2 instances
-   - [ ] searchHandler.ts - 1 instance
-   - [ ] bedrockService.ts - 2 instances
-   - [ ] recommendationService.ts - 2 instances
+   - ✅ podcastHandler.ts - 2 instances fixed
+   - ✅ searchHandler.ts - 1 instance fixed
+   - ✅ bedrockService.ts - 1 instance fixed (other was in comment)
+   - ✅ recommendationService.ts - 2 instances fixed
    - [ ] rssService.ts - 6 instances
    - [ ] searchService.ts - 2 instances
 
