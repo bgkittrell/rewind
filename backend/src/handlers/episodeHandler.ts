@@ -390,24 +390,23 @@ async function getEpisodeById(episodeId: string, userId: string, path: string): 
   console.log(`Getting episode by ID: ${episodeId} for user: ${userId}`)
 
   try {
-    // First, get all user podcasts to find which podcast this episode belongs to
+    // First, get all user podcasts
     const userPodcasts = await dynamoService.getPodcastsByUser(userId)
     console.log(`Found ${userPodcasts.length} podcasts for user`)
 
-    // Try to find the episode in each podcast
-    for (const podcast of userPodcasts) {
-      console.log(`Checking podcast: ${podcast.podcastId} - ${podcast.title}`)
-      try {
-        const episode = await dynamoService.getEpisodeById(podcast.podcastId, episodeId)
-        if (episode) {
-          console.log(`Found episode: ${episode.title} in podcast: ${podcast.title}`)
-          return createSuccessResponse(episode, 200, path)
-        }
-      } catch (error) {
-        console.log(`Episode not found in podcast ${podcast.podcastId}:`, error)
-        // Continue to next podcast if episode not found in this one
-        continue
-      }
+    if (userPodcasts.length === 0) {
+      return createErrorResponse('No podcasts found for user', 'NOT_FOUND', 404, path)
+    }
+
+    // Extract podcast IDs for batch lookup
+    const podcastIds = userPodcasts.map(podcast => podcast.podcastId)
+
+    // Use batch get to find the episode efficiently (prevents N+1 queries)
+    const episode = await dynamoService.batchGetEpisodeById(podcastIds, episodeId)
+
+    if (episode) {
+      console.log(`Found episode: ${episode.title}`)
+      return createSuccessResponse(episode, 200, path)
     }
 
     console.error(`Episode ${episodeId} not found in any of the user's podcasts`)

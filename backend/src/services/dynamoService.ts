@@ -4,6 +4,7 @@ import {
   QueryCommand,
   DeleteItemCommand,
   BatchWriteItemCommand,
+  BatchGetItemCommand,
   UpdateItemCommand,
   ScanCommand,
   GetItemCommand,
@@ -477,36 +478,92 @@ export class DynamoService {
     }
   }
 
-  async deleteEpisodesByPodcast(podcastId: string): Promise<void> {
+  // Batch get episodes by ID across multiple podcasts (prevents N+1 queries)
+  async batchGetEpisodeById(podcastIds: string[], episodeId: string): Promise<Episode | null> {
+    if (podcastIds.length === 0) {
+      return null
+    }
+
+    // DynamoDB BatchGetItem has a limit of 100 items per request
+    const batchSize = 100
+    const batches = []
+
+    for (let i = 0; i < podcastIds.length; i += batchSize) {
+      batches.push(podcastIds.slice(i, i + batchSize))
+    }
+
     try {
-      // First, get all episodes for the podcast
-      const episodes = await this.getEpisodesByPodcast(podcastId)
-
-      if (episodes.episodes.length === 0) {
-        return
-      }
-
-      // Delete in batches
-      const batchSize = 25
-      for (let i = 0; i < episodes.episodes.length; i += batchSize) {
-        const batch = episodes.episodes.slice(i, i + batchSize)
-        const deleteRequests = batch.map(episode => ({
-          DeleteRequest: {
-            Key: marshall({
-              podcastId: episode.podcastId,
-              episodeId: episode.episodeId,
-            }),
-          },
+      for (const batch of batches) {
+        const keys = batch.map(podcastId => ({
+          M: marshall({
+            podcastId,
+            episodeId,
+          }),
         }))
 
         const params = {
           RequestItems: {
-            [EPISODES_TABLE]: deleteRequests,
+            [EPISODES_TABLE]: {
+              Keys: keys,
+            },
           },
         }
 
-        await this.dynamoClient.send(new BatchWriteItemCommand(params))
+        const result = await this.dynamoClient.send(new BatchGetItemCommand(params))
+
+        if (result.Responses && result.Responses[EPISODES_TABLE]) {
+          for (const item of result.Responses[EPISODES_TABLE]) {
+            if (item) {
+              return unmarshall(item) as Episode
+            }
+          }
+        }
       }
+
+      return null
+    } catch (error) {
+      console.error('Error batch getting episode by ID:', error)
+      throw new Error('Failed to batch get episode')
+    }
+  }
+
+  async deleteEpisodesByPodcast(podcastId: string): Promise<void> {
+    try {
+      let lastEvaluatedKey: string | undefined
+      const batchSize = 25
+
+      // Process episodes in paginated batches to avoid memory issues
+      do {
+        // Get episodes with pagination (100 at a time)
+        const result = await this.getEpisodesByPodcast(podcastId, 100, lastEvaluatedKey)
+
+        if (result.episodes.length === 0) {
+          break
+        }
+
+        // Delete in batches
+        for (let i = 0; i < result.episodes.length; i += batchSize) {
+          const batch = result.episodes.slice(i, i + batchSize)
+          const deleteRequests = batch.map(episode => ({
+            DeleteRequest: {
+              Key: marshall({
+                podcastId: episode.podcastId,
+                episodeId: episode.episodeId,
+              }),
+            },
+          }))
+
+          const params = {
+            RequestItems: {
+              [EPISODES_TABLE]: deleteRequests,
+            },
+          }
+
+          await this.dynamoClient.send(new BatchWriteItemCommand(params))
+        }
+
+        lastEvaluatedKey = result.lastEvaluatedKey
+      } while (lastEvaluatedKey)
     } catch (error) {
       console.error('Error deleting episodes:', error)
       throw new Error('Failed to delete episodes')
@@ -694,63 +751,70 @@ export class DynamoService {
   // Fix existing episodes with complex imageUrl objects
   async fixEpisodeImageUrls(podcastId: string): Promise<void> {
     try {
-      // Get all episodes for the podcast
-      const episodes = await this.getEpisodesByPodcast(podcastId)
-
-      if (episodes.episodes.length === 0) {
-        return
-      }
-
-      // Process episodes in batches to fix imageUrl
+      let lastEvaluatedKey: string | undefined
       const batchSize = 25
-      for (let i = 0; i < episodes.episodes.length; i += batchSize) {
-        const batch = episodes.episodes.slice(i, i + batchSize)
-        const fixedEpisodes = batch.map(episode => {
-          let fixedImageUrl = episode.imageUrl
 
-          // If imageUrl is a complex object, extract the actual URL
-          if (typeof episode.imageUrl === 'object' && episode.imageUrl !== null) {
-            const imageObj = episode.imageUrl as Record<string, unknown>
-            // Check for DynamoDB-style nested object
-            if (imageObj.$ && typeof imageObj.$ === 'object') {
-              const dollarObj = imageObj.$ as Record<string, unknown>
-              if (dollarObj.M && typeof dollarObj.M === 'object') {
-                const mObj = dollarObj.M as Record<string, unknown>
-                if (mObj.href && typeof mObj.href === 'object') {
-                  const hrefObj = mObj.href as Record<string, unknown>
-                  if (typeof hrefObj.S === 'string') {
-                    fixedImageUrl = hrefObj.S
-                  }
-                }
-              }
-            } else if (typeof imageObj.href === 'string') {
-              fixedImageUrl = imageObj.href
-            } else if (typeof imageObj.url === 'string') {
-              fixedImageUrl = imageObj.url
-            }
-          }
+      // Process episodes in paginated batches to avoid memory issues
+      do {
+        // Get episodes with pagination (100 at a time)
+        const result = await this.getEpisodesByPodcast(podcastId, 100, lastEvaluatedKey)
 
-          return {
-            ...episode,
-            imageUrl: fixedImageUrl,
-          }
-        })
-
-        // Update episodes with fixed imageUrl
-        const writeRequests = fixedEpisodes.map(episode => ({
-          PutRequest: {
-            Item: marshall(episode),
-          },
-        }))
-
-        const params = {
-          RequestItems: {
-            [EPISODES_TABLE]: writeRequests,
-          },
+        if (result.episodes.length === 0) {
+          break
         }
 
-        await this.dynamoClient.send(new BatchWriteItemCommand(params))
-      }
+        // Process episodes in batches to fix imageUrl
+        for (let i = 0; i < result.episodes.length; i += batchSize) {
+          const batch = result.episodes.slice(i, i + batchSize)
+          const fixedEpisodes = batch.map(episode => {
+            let fixedImageUrl = episode.imageUrl
+
+            // If imageUrl is a complex object, extract the actual URL
+            if (typeof episode.imageUrl === 'object' && episode.imageUrl !== null) {
+              const imageObj = episode.imageUrl as Record<string, unknown>
+              // Check for DynamoDB-style nested object
+              if (imageObj.$ && typeof imageObj.$ === 'object') {
+                const dollarObj = imageObj.$ as Record<string, unknown>
+                if (dollarObj.M && typeof dollarObj.M === 'object') {
+                  const mObj = dollarObj.M as Record<string, unknown>
+                  if (mObj.href && typeof mObj.href === 'object') {
+                    const hrefObj = mObj.href as Record<string, unknown>
+                    if (typeof hrefObj.S === 'string') {
+                      fixedImageUrl = hrefObj.S
+                    }
+                  }
+                }
+              } else if (typeof imageObj.href === 'string') {
+                fixedImageUrl = imageObj.href
+              } else if (typeof imageObj.url === 'string') {
+                fixedImageUrl = imageObj.url
+              }
+            }
+
+            return {
+              ...episode,
+              imageUrl: fixedImageUrl,
+            }
+          })
+
+          // Update episodes with fixed imageUrl
+          const writeRequests = fixedEpisodes.map(episode => ({
+            PutRequest: {
+              Item: marshall(episode),
+            },
+          }))
+
+          const params = {
+            RequestItems: {
+              [EPISODES_TABLE]: writeRequests,
+            },
+          }
+
+          await this.dynamoClient.send(new BatchWriteItemCommand(params))
+        }
+
+        lastEvaluatedKey = result.lastEvaluatedKey
+      } while (lastEvaluatedKey)
     } catch (error) {
       console.error('Error fixing episode image URLs:', error)
       throw new Error('Failed to fix episode image URLs')
