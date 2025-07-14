@@ -262,7 +262,7 @@ describe.skip('Episode Integration Tests', () => {
 
       render(<App />)
 
-      const episodeTitle = await screen.findByText('Playable Episode')
+      await screen.findByText('Playable Episode')
       const playButton = screen.getByRole('button', { name: /play/i })
 
       await user.click(playButton)

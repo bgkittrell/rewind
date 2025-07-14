@@ -63,50 +63,65 @@ export const Elevated: Story = {
 }
 
 export const WithHeaderAndFooter: Story = {
-  render: () => (
-    <Card className="w-96">
-      <CardHeader
-        title="Card with Header"
-        subtitle="Supporting text for the card"
-        action={
-          <button className="text-gray-400 hover:text-gray-600">
-            <IconDots size={20} />
-          </button>
-        }
-      />
-      <CardBody>
-        <p>
-          This card demonstrates the use of CardHeader, CardBody, and CardFooter components to create a well-structured
-          card layout.
-        </p>
-      </CardBody>
-      <CardFooter>
-        <div className="flex gap-2">
-          <Button variant="primary" size="small">
-            Action
-          </Button>
-          <Button variant="secondary" size="small">
-            Cancel
-          </Button>
-        </div>
-      </CardFooter>
+  args: {
+    children: (
+      <>
+        <CardHeader
+          title="Card with Header"
+          subtitle="Supporting text for the card"
+          action={
+            <button className="text-gray-400 hover:text-gray-600">
+              <IconDots size={20} />
+            </button>
+          }
+        />
+        <CardBody>
+          <p>
+            This card demonstrates the use of CardHeader, CardBody, and CardFooter components to create a
+            well-structured card layout.
+          </p>
+        </CardBody>
+        <CardFooter>
+          <div className="flex gap-2">
+            <Button variant="primary" size="small">
+              Action
+            </Button>
+            <Button variant="secondary" size="small">
+              Cancel
+            </Button>
+          </div>
+        </CardFooter>
+      </>
+    ),
+  },
+  render: args => (
+    <Card className="w-96" {...args}>
+      {args.children}
     </Card>
   ),
 }
 
 export const MediaCard: Story = {
-  render: () => (
-    <Card padding="none" className="w-80 overflow-hidden">
-      <img src="https://via.placeholder.com/320x180" alt="Placeholder" className="w-full h-48 object-cover" />
-      <div className="p-6">
-        <CardHeader title="Media Card" subtitle="With image header" />
-        <CardBody>
-          <p>Cards can include images and other media content.</p>
-        </CardBody>
-        <CardFooter>
-          <Button fullWidth>Learn More</Button>
-        </CardFooter>
-      </div>
+  args: {
+    padding: 'none',
+    children: (
+      <>
+        <img src="https://via.placeholder.com/320x180" alt="Placeholder" className="w-full h-48 object-cover" />
+        <div className="p-6">
+          <CardHeader title="Media Card" subtitle="With image header" />
+          <CardBody>
+            <p>Cards can include images and other media content.</p>
+          </CardBody>
+          <CardFooter>
+            <Button fullWidth>Learn More</Button>
+          </CardFooter>
+        </div>
+      </>
+    ),
+  },
+  render: args => (
+    <Card className="w-80 overflow-hidden" {...args}>
+      {args.children}
     </Card>
   ),
 }
@@ -142,32 +157,35 @@ export const NoPadding: Story = {
 }
 
 export const CardGrid: Story = {
-  render: () => (
-    <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
-      <Card>
-        <CardHeader title="Card 1" />
-        <CardBody>
-          <p>First card in a grid layout</p>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardHeader title="Card 2" />
-        <CardBody>
-          <p>Second card in a grid layout</p>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardHeader title="Card 3" />
-        <CardBody>
-          <p>Third card in a grid layout</p>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardHeader title="Card 4" />
-        <CardBody>
-          <p>Fourth card in a grid layout</p>
-        </CardBody>
-      </Card>
-    </div>
-  ),
+  args: {
+    children: (
+      <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
+        <Card>
+          <CardHeader title="Card 1" />
+          <CardBody>
+            <p>First card in a grid layout</p>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardHeader title="Card 2" />
+          <CardBody>
+            <p>Second card in a grid layout</p>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardHeader title="Card 3" />
+          <CardBody>
+            <p>Third card in a grid layout</p>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardHeader title="Card 4" />
+          <CardBody>
+            <p>Fourth card in a grid layout</p>
+          </CardBody>
+        </Card>
+      </div>
+    ),
+  },
+  render: args => <div>{args.children}</div>,
 }

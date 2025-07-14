@@ -91,7 +91,7 @@ export const authHandlers = [
 
   // Token refresh (placeholder - implement when needed)
   http.post(`${API_BASE_URL}/api/auth/refresh`, async ({ request }) => {
-    const body = await request.json()
+    const body = (await request.json()) as { refreshToken: string }
 
     // Check if refresh token is expired
     if (body.refreshToken === 'expired-refresh-token') {
@@ -240,13 +240,13 @@ export const episodeHandlers = [
   }),
 
   // Save progress
-  http.post(`${API_BASE_URL}/api/episodes/:episodeId/progress`, async ({ request, params }) => {
+  http.post(`${API_BASE_URL}/api/episodes/:episodeId/progress`, async ({ request }) => {
     const authHeader = request.headers.get('Authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const body = (await request.json()) as { position: number; duration: number }
 
     // Validate request
     if (typeof body.position !== 'number' || typeof body.duration !== 'number') {
@@ -310,7 +310,7 @@ export const recommendationHandlers = [
       return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const body = (await request.json()) as { episodeId: string; feedback: 'up' | 'down' }
 
     if (!body.episodeId || !['up', 'down'].includes(body.feedback)) {
       return HttpResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -340,7 +340,6 @@ export const searchHandlers = [
 
     const url = new URL(request.url)
     const query = url.searchParams.get('q')
-    const filter = url.searchParams.get('filter')
 
     // No query provided
     if (!query) {
