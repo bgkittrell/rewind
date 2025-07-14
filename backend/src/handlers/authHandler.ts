@@ -6,11 +6,47 @@ import {
   ConfirmSignUpCommand,
   ResendConfirmationCodeCommand,
   GetUserCommand,
+  AttributeType,
 } from '@aws-sdk/client-cognito-identity-provider'
 import { DynamoDBClient, PutItemCommand, GetItemCommand } from '@aws-sdk/client-dynamodb'
 import { marshall } from '@aws-sdk/util-dynamodb'
 import { createResponse } from '../utils/response'
 import { User } from '../types'
+
+// Request body interfaces
+interface SignUpRequestBody {
+  email: string
+  password: string
+  name: string
+}
+
+interface SignInRequestBody {
+  email: string
+  password: string
+}
+
+interface ConfirmSignUpRequestBody {
+  email: string
+  confirmationCode: string
+}
+
+interface ResendConfirmationRequestBody {
+  email: string
+}
+
+// Helper function to safely get error message and name
+function getErrorInfo(error: unknown): { message: string; name?: string } {
+  if (error instanceof Error) {
+    return { message: error.message, name: error.name }
+  }
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return {
+      message: String((error as { message: unknown }).message),
+      name: 'name' in error ? String((error as { name: unknown }).name) : undefined,
+    }
+  }
+  return { message: 'An unknown error occurred' }
+}
 
 const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION || 'us-east-1' })
 const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' })
@@ -50,7 +86,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   }
 }
 
-async function handleSignUp(body: any): Promise<APIGatewayProxyResult> {
+async function handleSignUp(body: SignUpRequestBody): Promise<APIGatewayProxyResult> {
   const { email, password, name } = body
 
   if (!email || !password || !name) {
@@ -76,22 +112,24 @@ async function handleSignUp(body: any): Promise<APIGatewayProxyResult> {
       userSub: signUpResult.UserSub,
       emailVerificationRequired: !signUpResult.UserConfirmed,
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('SignUp error:', error)
 
-    if (error.name === 'UsernameExistsException') {
+    const errorInfo = getErrorInfo(error)
+
+    if (errorInfo.name === 'UsernameExistsException') {
       return createResponse(409, { error: 'User already exists' })
     }
 
-    if (error.name === 'InvalidPasswordException') {
+    if (errorInfo.name === 'InvalidPasswordException') {
       return createResponse(400, { error: 'Password does not meet requirements' })
     }
 
-    return createResponse(400, { error: error.message || 'Failed to create user' })
+    return createResponse(400, { error: errorInfo.message || 'Failed to create user' })
   }
 }
 
-async function handleSignIn(body: any): Promise<APIGatewayProxyResult> {
+async function handleSignIn(body: SignInRequestBody): Promise<APIGatewayProxyResult> {
   const { email, password } = body
 
   if (!email || !password) {
@@ -138,22 +176,24 @@ async function handleSignIn(body: any): Promise<APIGatewayProxyResult> {
     } else {
       return createResponse(400, { error: 'Authentication failed' })
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('SignIn error:', error)
 
-    if (error.name === 'NotAuthorizedException') {
+    const errorInfo = getErrorInfo(error)
+
+    if (errorInfo.name === 'NotAuthorizedException') {
       return createResponse(401, { error: 'Invalid credentials' })
     }
 
-    if (error.name === 'UserNotConfirmedException') {
+    if (errorInfo.name === 'UserNotConfirmedException') {
       return createResponse(400, { error: 'Email not verified. Please check your email for verification code.' })
     }
 
-    return createResponse(400, { error: error.message || 'Sign in failed' })
+    return createResponse(400, { error: errorInfo.message || 'Sign in failed' })
   }
 }
 
-async function handleConfirmSignUp(body: any): Promise<APIGatewayProxyResult> {
+async function handleConfirmSignUp(body: ConfirmSignUpRequestBody): Promise<APIGatewayProxyResult> {
   const { email, confirmationCode } = body
 
   if (!email || !confirmationCode) {
@@ -170,22 +210,24 @@ async function handleConfirmSignUp(body: any): Promise<APIGatewayProxyResult> {
     await cognitoClient.send(confirmCommand)
 
     return createResponse(200, { message: 'Email verified successfully' })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Confirmation error:', error)
 
-    if (error.name === 'CodeMismatchException') {
+    const errorInfo = getErrorInfo(error)
+
+    if (errorInfo.name === 'CodeMismatchException') {
       return createResponse(400, { error: 'Invalid confirmation code' })
     }
 
-    if (error.name === 'ExpiredCodeException') {
+    if (errorInfo.name === 'ExpiredCodeException') {
       return createResponse(400, { error: 'Confirmation code has expired' })
     }
 
-    return createResponse(400, { error: error.message || 'Email verification failed' })
+    return createResponse(400, { error: errorInfo.message || 'Email verification failed' })
   }
 }
 
-async function handleResendConfirmation(body: any): Promise<APIGatewayProxyResult> {
+async function handleResendConfirmation(body: ResendConfirmationRequestBody): Promise<APIGatewayProxyResult> {
   const { email } = body
 
   if (!email) {
@@ -201,13 +243,14 @@ async function handleResendConfirmation(body: any): Promise<APIGatewayProxyResul
     await cognitoClient.send(resendCommand)
 
     return createResponse(200, { message: 'Confirmation code sent successfully' })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Resend confirmation error:', error)
-    return createResponse(400, { error: error.message || 'Failed to resend confirmation code' })
+    const errorInfo = getErrorInfo(error)
+    return createResponse(400, { error: errorInfo.message || 'Failed to resend confirmation code' })
   }
 }
 
-async function createUserInDynamoDB(userId: string, email: string, userAttributes: any[]): Promise<void> {
+async function createUserInDynamoDB(userId: string, email: string, userAttributes: AttributeType[]): Promise<void> {
   const name = userAttributes.find(attr => attr.Name === 'name')?.Value || ''
 
   const user: User = {
