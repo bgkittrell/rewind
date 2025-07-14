@@ -1,4 +1,4 @@
-import React from 'react'
+// React import removed - not needed for JSX in modern React
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { FloatingMediaPlayer } from '../FloatingMediaPlayer'
@@ -92,22 +92,16 @@ const mockAudioPlayer = {
 }
 
 const mockEpisode: Episode = {
-  id: '123',
+  episodeId: '123',
   podcastId: 'podcast-1',
   title: 'Test Episode',
   description: 'Test Description',
   audioUrl: 'https://example.com/audio.mp3',
-  duration: 3600,
-  publishedAt: '2024-01-01',
+  duration: '3600',
+  releaseDate: '2024-01-01',
   imageUrl: 'https://example.com/image.jpg',
   playbackPosition: 100,
-  podcast: {
-    id: 'podcast-1',
-    title: 'Test Podcast',
-    description: 'Test Podcast Description',
-    rssFeedUrl: 'https://example.com/rss',
-    imageUrl: 'https://example.com/podcast.jpg',
-  },
+  podcastName: 'Test Podcast',
 }
 
 describe('FloatingMediaPlayer', () => {

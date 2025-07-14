@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { MemoryRouter } from 'react-router-dom'
+import { createMemoryRouter, RouterProvider } from 'react-router'
 import { AuthProvider } from '../context/AuthContext'
 import Header from './Header'
 
@@ -10,13 +10,19 @@ const meta = {
     layout: 'fullscreen',
   },
   decorators: [
-    Story => (
-      <AuthProvider>
-        <MemoryRouter>
-          <Story />
-        </MemoryRouter>
-      </AuthProvider>
-    ),
+    Story => {
+      const router = createMemoryRouter([
+        {
+          path: '*',
+          element: <Story />,
+        },
+      ])
+      return (
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      )
+    },
   ],
   tags: ['autodocs'],
 } satisfies Meta<typeof Header>
@@ -30,12 +36,23 @@ export const Default: Story = {
 
 export const WithDifferentRoutes: Story = {
   decorators: [
-    Story => (
-      <AuthProvider>
-        <MemoryRouter initialEntries={['/library']}>
-          <Story />
-        </MemoryRouter>
-      </AuthProvider>
-    ),
+    Story => {
+      const router = createMemoryRouter(
+        [
+          {
+            path: '/library',
+            element: <Story />,
+          },
+        ],
+        {
+          initialEntries: ['/library'],
+        },
+      )
+      return (
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      )
+    },
   ],
 }

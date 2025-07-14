@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { IconChevronDown, IconX, IconChevronUp } from '@tabler/icons-react'
 import { useAudioPlayer } from '../hooks/useAudioPlayer'
 import { useProgressSaving } from '../hooks/useProgressSaving'

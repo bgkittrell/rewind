@@ -45,6 +45,8 @@ const ModalDemo = (args: any) => {
 export const Default: Story = {
   render: args => <ModalDemo {...args} />,
   args: {
+    isOpen: true,
+    onClose: () => {},
     title: 'Modal Title',
     children: (
       <p>This is the modal content. You can put any content here including forms, images, or other components.</p>
@@ -55,6 +57,8 @@ export const Default: Story = {
 export const Small: Story = {
   render: args => <ModalDemo {...args} />,
   args: {
+    isOpen: true,
+    onClose: () => {},
     title: 'Small Modal',
     size: 'small',
     children: <p>This is a small modal with limited width.</p>,
@@ -64,6 +68,8 @@ export const Small: Story = {
 export const Large: Story = {
   render: args => <ModalDemo {...args} />,
   args: {
+    isOpen: true,
+    onClose: () => {},
     title: 'Large Modal',
     size: 'large',
     children: (
