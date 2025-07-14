@@ -1,6 +1,15 @@
 // Setup for vitest testing environment
 import { vi } from 'vitest'
 import '@testing-library/jest-dom/vitest'
+import { afterAll, afterEach, beforeAll } from 'vitest'
+
+// Import MSW server for integration tests
+import { server } from './__tests__/integration/setup/mswServer'
+
+// Enable API mocking for integration tests
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
 // Mock global fetch for tests
 global.fetch = vi.fn()
