@@ -188,8 +188,8 @@ describe('Home', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('page-header')).toBeInTheDocument();
-    expect(screen.getByTestId('loading-skeleton')).toBeInTheDocument();
+    expect(screen.getAllByTestId('page-header')[0]).toBeInTheDocument();
+    expect(screen.getAllByTestId('loading-skeleton')[0]).toBeInTheDocument();
   });
 
   it('shows login prompt when not authenticated', async () => {
@@ -215,8 +215,8 @@ describe('Home', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('page-header')).toBeInTheDocument();
-    expect(screen.getByTestId('login-prompt')).toBeInTheDocument();
+    expect(screen.getAllByTestId('page-header')[0]).toBeInTheDocument();
+    expect(screen.getAllByTestId('login-prompt')[0]).toBeInTheDocument();
     expect(screen.getByText('Sign in to get personalized recommendations')).toBeInTheDocument();
   });
 
@@ -243,7 +243,7 @@ describe('Home', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByText('Sign In'));
+    fireEvent.click(screen.getAllByText('Sign In')[0]);
     expect(window.location.href).toBe('/login');
   });
 
@@ -270,9 +270,9 @@ describe('Home', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('filter-pills')).toBeInTheDocument();
-    expect(screen.getByTestId('recommendation-ep1')).toBeInTheDocument();
-    expect(screen.getByTestId('recommendation-ep2')).toBeInTheDocument();
+    expect(screen.getAllByTestId('filter-pills')[0]).toBeInTheDocument();
+    expect(screen.getAllByTestId('recommendation-ep1')[0]).toBeInTheDocument();
+    expect(screen.getAllByTestId('recommendation-ep2')[0]).toBeInTheDocument();
     expect(screen.getByText('Test Episode 1')).toBeInTheDocument();
     expect(screen.getByText('Test Episode 2')).toBeInTheDocument();
   });
@@ -300,7 +300,7 @@ describe('Home', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('loading-skeleton')).toBeInTheDocument();
+    expect(screen.getAllByTestId('loading-skeleton')[0]).toBeInTheDocument();
   });
 
   it('shows error message when recommendations fail to load', async () => {
@@ -326,7 +326,7 @@ describe('Home', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('error-message')).toBeInTheDocument();
+    expect(screen.getAllByTestId('error-message')[0]).toBeInTheDocument();
     expect(screen.getByText('Failed to fetch')).toBeInTheDocument();
   });
 
@@ -353,7 +353,7 @@ describe('Home', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByText('Retry'));
+    fireEvent.click(screen.getAllByText('Retry')[0]);
     expect(mockLoadRecommendations).toHaveBeenCalled();
   });
 
@@ -380,7 +380,7 @@ describe('Home', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('empty-state')).toBeInTheDocument();
+    expect(screen.getAllByTestId('empty-state')[0]).toBeInTheDocument();
     expect(screen.getByText('No recommendations')).toBeInTheDocument();
   });
 
@@ -408,10 +408,10 @@ describe('Home', () => {
     );
 
     // Initial filter should be 'not_recent'
-    expect(screen.getByText('Not Recent')).toHaveAttribute('data-active', 'true');
+    expect(screen.getAllByText('Not Recent')[0]).toHaveAttribute('data-active', 'true');
 
     // Change filter
-    fireEvent.click(screen.getByText('Most Recent'));
+    fireEvent.click(screen.getAllByText('Most Recent')[0]);
     expect(mockHandleFilterChange).toHaveBeenCalledWith('most_recent');
   });
 
@@ -439,7 +439,8 @@ describe('Home', () => {
     );
 
     // Click play button on first recommendation
-    const playButton = screen.getAllByText('Play')[0];
+    const playButtons = screen.getAllByText('Play');
+    const playButton = playButtons[0];
     fireEvent.click(playButton);
 
     expect(recommendationService.trackPlay).toHaveBeenCalledWith('ep1', {

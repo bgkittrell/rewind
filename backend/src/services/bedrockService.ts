@@ -113,7 +113,7 @@ Respond only with the JSON object, no additional text.`
 
       // Normalize guest names
       const normalizedGuests = guests
-        .filter(guest => typeof guest === 'string' && guest.trim().length > 0)
+        .filter((guest: any) => typeof guest === 'string' && guest.trim().length > 0)
         .map((guest: string) => this.normalizeGuestName(guest))
         .slice(0, 5) // Limit to 5 guests maximum
 

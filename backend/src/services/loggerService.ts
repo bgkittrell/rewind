@@ -150,7 +150,7 @@ class Logger {
       ...context,
       queryParams: event.queryStringParameters,
       pathParams: event.pathParameters,
-      headers: this.sanitizeHeaders(event.headers),
+      headers: this.sanitizeHeaders(event.headers as Record<string, string> | null),
     })
   }
 

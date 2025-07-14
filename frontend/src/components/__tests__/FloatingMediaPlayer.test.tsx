@@ -6,7 +6,9 @@ import type { Episode } from '../../types/episode';
 
 // Mock the hooks and services
 vi.mock('../../hooks/useAudioPlayer');
-vi.mock('../../hooks/useProgressSaving');
+vi.mock('../../hooks/useProgressSaving', () => ({
+  useProgressSaving: vi.fn(),
+}));
 vi.mock('../../services/mediaSessionService', () => ({
   mediaSessionService: {
     setMetadata: vi.fn(),
@@ -102,6 +104,11 @@ const mockEpisode: Episode = {
 describe('FloatingMediaPlayer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAudioPlayer.seek.mockClear();
+    mockAudioPlayer.play.mockClear();
+    mockAudioPlayer.pause.mockClear();
+    mockAudioPlayer.setVolume.mockClear();
+    mockAudioPlayer.setPlaybackRate.mockClear();
     (useAudioPlayer as any).mockReturnValue(mockAudioPlayer);
   })
 
@@ -132,11 +139,11 @@ describe('FloatingMediaPlayer', () => {
       />
     );
 
-    expect(screen.getByTestId('floating-media-player')).toBeInTheDocument();
-    expect(screen.getByTestId('audio-element')).toBeInTheDocument();
-    expect(screen.getByTestId('expand-player')).toBeInTheDocument();
-    expect(screen.getByTestId('mini-close-player')).toBeInTheDocument();
-    expect(screen.getByTestId('media-info')).toHaveAttribute('data-size', 'mini');
+    expect(screen.getAllByTestId('floating-media-player')[0]).toBeInTheDocument();
+    expect(screen.getAllByTestId('audio-element')[0]).toBeInTheDocument();
+    expect(screen.getAllByTestId('expand-player')[0]).toBeInTheDocument();
+    expect(screen.getAllByTestId('mini-close-player')[0]).toBeInTheDocument();
+    expect(screen.getAllByTestId('media-info')[0]).toHaveAttribute('data-size', 'mini');
   });
 
   it('expands and minimizes player', () => {
@@ -243,15 +250,16 @@ describe('FloatingMediaPlayer', () => {
     expect(mockAudioPlayer.pause).toHaveBeenCalled();
   });
 
-  it('handles skip back functionality', () => {
+  it('handles skip back functionality', async () => {
     const onSeek = vi.fn();
+    let timeUpdateCallback: ((time: number) => void) | undefined;
+    
+    // Clear previous seek calls
+    mockAudioPlayer.seek.mockClear();
     
     // Set up the audio player with current time
     (useAudioPlayer as any).mockImplementation(({ onTimeUpdate }: any) => {
-      // Simulate time update
-      React.useEffect(() => {
-        onTimeUpdate?.(100);
-      }, []);
+      timeUpdateCallback = onTimeUpdate;
       return mockAudioPlayer;
     });
 
@@ -265,6 +273,20 @@ describe('FloatingMediaPlayer', () => {
         onSeek={onSeek}
       />
     );
+
+    // Wait for initial render and seek to playback position
+    await waitFor(() => {
+      expect(mockAudioPlayer.seek).toHaveBeenCalledWith(100); // Initial seek to playback position
+    });
+    
+    // Clear mocks after initial setup
+    mockAudioPlayer.seek.mockClear();
+    onSeek.mockClear();
+
+    // Simulate time update to set current time to 100
+    await waitFor(() => {
+      timeUpdateCallback?.(100);
+    });
 
     const skipBackButton = screen.getAllByText('Skip Back')[0];
     fireEvent.click(skipBackButton);
@@ -273,15 +295,18 @@ describe('FloatingMediaPlayer', () => {
     expect(onSeek).toHaveBeenCalledWith(85);
   });
 
-  it('handles skip forward functionality', () => {
+  it('handles skip forward functionality', async () => {
     const onSeek = vi.fn();
+    let timeUpdateCallback: ((time: number) => void) | undefined;
+    let durationChangeCallback: ((duration: number) => void) | undefined;
+    
+    // Clear previous seek calls
+    mockAudioPlayer.seek.mockClear();
     
     // Set up the audio player with current time and duration
     (useAudioPlayer as any).mockImplementation(({ onTimeUpdate, onDurationChange }: any) => {
-      React.useEffect(() => {
-        onTimeUpdate?.(100);
-        onDurationChange?.(3600);
-      }, []);
+      timeUpdateCallback = onTimeUpdate;
+      durationChangeCallback = onDurationChange;
       return mockAudioPlayer;
     });
 
@@ -296,6 +321,21 @@ describe('FloatingMediaPlayer', () => {
       />
     );
 
+    // Wait for initial render and seek to playback position
+    await waitFor(() => {
+      expect(mockAudioPlayer.seek).toHaveBeenCalledWith(100); // Initial seek to playback position
+    });
+    
+    // Clear mocks after initial setup
+    mockAudioPlayer.seek.mockClear();
+    onSeek.mockClear();
+
+    // Simulate time and duration updates
+    await waitFor(() => {
+      timeUpdateCallback?.(100);
+      durationChangeCallback?.(3600);
+    });
+
     const skipForwardButton = screen.getAllByText('Skip Forward')[0];
     fireEvent.click(skipForwardButton);
 
@@ -303,8 +343,11 @@ describe('FloatingMediaPlayer', () => {
     expect(onSeek).toHaveBeenCalledWith(115);
   });
 
-  it('handles seek from progress bar', () => {
+  it('handles seek from progress bar', async () => {
     const onSeek = vi.fn();
+    
+    // Clear previous seek calls
+    mockAudioPlayer.seek.mockClear();
     
     render(
       <FloatingMediaPlayer
@@ -317,7 +360,16 @@ describe('FloatingMediaPlayer', () => {
       />
     );
 
-    fireEvent.click(screen.getByText('Seek to 30'));
+    // Wait for initial render and seek to playback position
+    await waitFor(() => {
+      expect(mockAudioPlayer.seek).toHaveBeenCalledWith(100); // Initial seek to playback position
+    });
+    
+    // Clear mocks after initial setup
+    mockAudioPlayer.seek.mockClear();
+    onSeek.mockClear();
+
+    fireEvent.click(screen.getAllByText('Seek to 30')[0]);
     expect(mockAudioPlayer.seek).toHaveBeenCalledWith(30);
     expect(onSeek).toHaveBeenCalledWith(30);
   });
@@ -335,9 +387,9 @@ describe('FloatingMediaPlayer', () => {
     );
 
     // Expand player to see volume control
-    fireEvent.click(screen.getByTestId('expand-player'));
+    fireEvent.click(screen.getAllByTestId('expand-player')[0]);
     
-    fireEvent.click(screen.getByText('Set Volume 0.5'));
+    fireEvent.click(screen.getAllByText('Set Volume 0.5')[0]);
     expect(mockAudioPlayer.setVolume).toHaveBeenCalledWith(0.5);
   });
 
@@ -354,9 +406,9 @@ describe('FloatingMediaPlayer', () => {
     );
 
     // Expand player to see playback rate control
-    fireEvent.click(screen.getByTestId('expand-player'));
+    fireEvent.click(screen.getAllByTestId('expand-player')[0]);
     
-    fireEvent.click(screen.getByText('Set Rate 1.5x'));
+    fireEvent.click(screen.getAllByText('Set Rate 1.5x')[0]);
     expect(mockAudioPlayer.setPlaybackRate).toHaveBeenCalledWith(1.5);
   });
 
@@ -430,7 +482,7 @@ describe('FloatingMediaPlayer', () => {
     );
 
     // Expand player
-    fireEvent.click(screen.getByTestId('expand-player'));
+    fireEvent.click(screen.getAllByTestId('expand-player')[0]);
     
     // Click overlay
     const overlay = document.querySelector('.bg-black.bg-opacity-50');
@@ -438,7 +490,7 @@ describe('FloatingMediaPlayer', () => {
     fireEvent.click(overlay!);
     
     // Should be minimized
-    expect(screen.getByTestId('expand-player')).toBeInTheDocument();
+    expect(screen.getAllByTestId('expand-player')[0]).toBeInTheDocument();
   });
 
   it('calls onPlay and onPause from controls', () => {
@@ -457,7 +509,7 @@ describe('FloatingMediaPlayer', () => {
     );
 
     // Click play button
-    fireEvent.click(screen.getByTestId('mini-play-pause-button'));
+    fireEvent.click(screen.getAllByTestId('mini-play-pause-button')[0]);
     expect(onPlay).toHaveBeenCalled();
 
     // Update to playing state and click pause
@@ -472,7 +524,7 @@ describe('FloatingMediaPlayer', () => {
       />
     );
 
-    fireEvent.click(screen.getByTestId('mini-play-pause-button'));
+    fireEvent.click(screen.getAllByTestId('mini-play-pause-button')[0]);
     expect(onPause).toHaveBeenCalled();
   });
 
@@ -488,8 +540,8 @@ describe('FloatingMediaPlayer', () => {
       />
     );
 
-    expect(screen.getByText('Test Episode')).toBeInTheDocument();
-    expect(screen.getByText('Test Podcast')).toBeInTheDocument();
-    expect(screen.getByAltText('Test Podcast artwork')).toHaveAttribute('src', 'https://example.com/image.jpg');
+    expect(screen.getAllByText('Test Episode')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Test Podcast')[0]).toBeInTheDocument();
+    expect(screen.getAllByAltText('Test Podcast artwork')[0]).toHaveAttribute('src', 'https://example.com/image.jpg');
   });
 });

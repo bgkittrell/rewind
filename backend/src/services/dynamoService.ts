@@ -89,7 +89,7 @@ export class DynamoService {
       await this.dynamoClient.send(new DeleteItemCommand(params))
     } catch (error) {
       logger.error('Error deleting podcast:', error)
-      if (error.name === 'ConditionalCheckFailedException') {
+      if (error instanceof Error && error.name === 'ConditionalCheckFailedException') {
         throw new Error('Podcast not found')
       }
       throw new Error('Failed to delete podcast')
@@ -221,7 +221,7 @@ export class DynamoService {
         }
       }
     } catch (error) {
-      logger.warn('Error parsing release date:', episode?.releaseDate, error)
+      logger.warn('Error parsing release date', { releaseDate: episode?.releaseDate, error })
       releaseDate = '1900-01-01'
     }
 
@@ -300,12 +300,12 @@ export class DynamoService {
 
     if (episodeData.guests && episodeData.guests.length > 0) {
       updateExpressions.push('guests = :guests')
-      expressionAttributeValues[':guests'] = marshall(episodeData.guests)
+      expressionAttributeValues[':guests'] = { L: episodeData.guests.map(g => ({ S: g })) }
     }
 
     if (episodeData.tags && episodeData.tags.length > 0) {
       updateExpressions.push('tags = :tags')
-      expressionAttributeValues[':tags'] = marshall(episodeData.tags)
+      expressionAttributeValues[':tags'] = { L: episodeData.tags.map(t => ({ S: t })) }
     }
 
     const params = {
@@ -424,7 +424,7 @@ export class DynamoService {
 
       return response
     } catch (error) {
-      logger.warn('ReleaseDateIndex not available, falling back to main table:', error)
+      logger.warn('ReleaseDateIndex not available, falling back to main table', { error })
 
       // Fallback to main table without index
       delete params.IndexName
@@ -495,11 +495,9 @@ export class DynamoService {
 
     try {
       for (const batch of batches) {
-        const keys = batch.map(podcastId => ({
-          M: marshall({
-            podcastId,
-            episodeId,
-          }),
+        const keys = batch.map(podcastId => marshall({
+          podcastId,
+          episodeId,
         }))
 
         const params = {

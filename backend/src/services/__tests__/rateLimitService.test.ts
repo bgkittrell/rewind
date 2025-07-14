@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import { RateLimitService, RateLimitRule, RateLimitRecord } from '../rateLimitService'
+import { logger } from '../loggerService'
 
 // Mock AWS SDK
 vi.mock('@aws-sdk/lib-dynamodb', () => ({
@@ -14,17 +15,24 @@ vi.mock('@aws-sdk/lib-dynamodb', () => ({
   UpdateCommand: vi.fn(),
 }))
 
+// Mock logger
+vi.mock('../loggerService', () => ({
+  logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+  }
+}))
+
 describe('RateLimitService', () => {
   let service: RateLimitService
   let mockSend: ReturnType<typeof vi.fn>
   let originalEnv: typeof process.env
-  let consoleErrorSpy: ReturnType<typeof vi.spyOn>
-
   beforeEach(() => {
     vi.clearAllMocks()
     originalEnv = process.env
     process.env = { ...originalEnv, RATE_LIMIT_TABLE: 'test-rate-limit-table' }
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     // Create new service instance
     service = new RateLimitService()
@@ -35,7 +43,6 @@ describe('RateLimitService', () => {
 
   afterEach(() => {
     process.env = originalEnv
-    consoleErrorSpy.mockRestore()
   })
 
   describe('isRequestAllowed', () => {
@@ -182,7 +189,7 @@ describe('RateLimitService', () => {
 
       expect(result.allowed).toBe(true) // Allow on error
       expect(result.remaining).toBe(100)
-      expect(console.error).toHaveBeenCalledWith('Error checking rate limit:', expect.any(Error))
+      expect(logger.error).toHaveBeenCalledWith('Error checking rate limit:', expect.any(Error))
     })
   })
 
@@ -251,7 +258,7 @@ describe('RateLimitService', () => {
       const status = await service.getRateLimitStatus(userId, endpoint)
 
       expect(status).toBeNull()
-      expect(console.error).toHaveBeenCalledWith('Error getting rate limit status:', expect.any(Error))
+      expect(logger.error).toHaveBeenCalledWith('Error getting rate limit status:', expect.any(Error))
     })
   })
 

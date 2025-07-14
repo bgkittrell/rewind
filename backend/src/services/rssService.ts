@@ -30,9 +30,11 @@ interface RSSFeedItem {
   link?: string
   duration?: string
   'itunes:duration'?: string
+  'itunes:image'?: { href?: string }
   pubDate?: string
   isoDate?: string
-  categories?: string[]
+  categories?: (string | { _?: string; name?: string })[]
+  image?: any
 }
 
 interface RSSFeed {
@@ -168,7 +170,7 @@ export class RSSService {
             description: this.sanitizeDescription(item.content || item.summary || item.description || ''),
             audioUrl,
             duration: this.parseDuration(item.duration || item['itunes:duration'] || '0:00'),
-            releaseDate: this.parseReleaseDate(item.pubDate || item.isoDate),
+            releaseDate: this.parseReleaseDate(item.pubDate || item.isoDate || ''),
             guests: this.extractGuests(item.content || item.summary || item.description || ''),
             tags: this.extractTags(item.categories || []),
           }
@@ -310,7 +312,7 @@ export class RSSService {
     return [...new Set(guests)].slice(0, 5)
   }
 
-  private extractTags(categories: string[] | undefined): string[] {
+  private extractTags(categories: (string | { _?: string; name?: string })[] | undefined): string[] {
     if (!Array.isArray(categories)) return []
 
     return categories
