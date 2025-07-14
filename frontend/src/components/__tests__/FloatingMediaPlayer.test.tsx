@@ -61,9 +61,9 @@ vi.mock('../MediaPlayer/VolumeControl', () => ({
 vi.mock('../MediaPlayer/MediaInfo', () => ({
   MediaInfo: ({ episode, size }: any) => (
     <div data-testid="media-info" data-size={size}>
-      <span>{episode.title}</span>
-      <span>{episode.podcast.title}</span>
-      <img src={episode.imageUrl || episode.podcast.imageUrl} alt={`${episode.podcast.title} artwork`} />
+      <span>{episode?.title || ''}</span>
+      <span>{episode?.podcastName || ''}</span>
+      <img src={episode?.imageUrl || episode?.podcastImageUrl || ''} alt={`${episode?.podcastName || ''} artwork`} />
     </div>
   ),
 }))
