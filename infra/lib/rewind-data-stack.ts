@@ -244,7 +244,7 @@ export class RewindDataStack extends cdk.Stack {
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
     })
 
-    // Rate limit table for API throttling
+    // RateLimit table for API rate limiting
     this.tables.rateLimit = new dynamodb.Table(this, 'RewindRateLimit', {
       tableName: 'RewindRateLimit',
       partitionKey: { name: 'key', type: dynamodb.AttributeType.STRING },

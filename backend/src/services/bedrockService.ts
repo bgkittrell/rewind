@@ -4,7 +4,7 @@ import { logger } from './loggerService'
 
 export class BedrockService {
   private client: BedrockRuntimeClient
-  private modelId = 'anthropic.claude-3-haiku-20240307-v1:0' // Cost-effective model for guest extraction
+  private modelId = 'anthropic.claude-3-haiku-20240307-v1:0' // Using Claude 3 Haiku for reliable guest extraction
 
   constructor() {
     this.client = new BedrockRuntimeClient({

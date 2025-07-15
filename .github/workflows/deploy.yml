@@ -93,28 +93,29 @@ jobs:
           USER_POOL_ID=$(aws cloudformation describe-stacks --stack-name RewindDataStack --query "Stacks[0].Outputs[?OutputKey=='UserPoolId'].OutputValue" --output text)
           USER_POOL_CLIENT_ID=$(aws cloudformation describe-stacks --stack-name RewindDataStack --query "Stacks[0].Outputs[?OutputKey=='UserPoolClientId'].OutputValue" --output text)
           IDENTITY_POOL_ID=$(aws cloudformation describe-stacks --stack-name RewindDataStack --query "Stacks[0].Outputs[?OutputKey=='IdentityPoolId'].OutputValue" --output text)
+          RUM_APPLICATION_ID=$(aws cloudformation describe-stacks --stack-name RewindMonitoringStack --query "Stacks[0].Outputs[?OutputKey=='RumApplicationId'].OutputValue" --output text)
+          RUM_IDENTITY_POOL_ID=$(aws cloudformation describe-stacks --stack-name RewindMonitoringStack --query "Stacks[0].Outputs[?OutputKey=='RumIdentityPoolId'].OutputValue" --output text)
+          RUM_REGION=$(aws cloudformation describe-stacks --stack-name RewindMonitoringStack --query "Stacks[0].Outputs[?OutputKey=='RumRegion'].OutputValue" --output text)
 
           echo "frontend-bucket=$FRONTEND_BUCKET" >> $GITHUB_OUTPUT
           echo "distribution-id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
           echo "api-url=$API_URL" >> $GITHUB_OUTPUT
-          echo "user-pool-id=$USER_POOL_ID" >> $GITHUB_OUTPUT
-          echo "user-pool-client-id=$USER_POOL_CLIENT_ID" >> $GITHUB_OUTPUT
-          echo "identity-pool-id=$IDENTITY_POOL_ID" >> $GITHUB_OUTPUT
+          echo "rum-application-id=$RUM_APPLICATION_ID" >> $GITHUB_OUTPUT
+          echo "rum-identity-pool-id=$RUM_IDENTITY_POOL_ID" >> $GITHUB_OUTPUT
+          echo "rum-region=$RUM_REGION" >> $GITHUB_OUTPUT
 
       - name: Build frontend with environment variables
         run: |
           cd frontend
           cat > .env.production << EOF
-          VITE_API_BASE_URL=${{ steps.cdk-outputs.outputs.api-url }}
-          VITE_AWS_REGION=${{ env.AWS_REGION }}
-          VITE_USER_POOL_ID=${{ steps.cdk-outputs.outputs.user-pool-id }}
-          VITE_USER_POOL_CLIENT_ID=${{ steps.cdk-outputs.outputs.user-pool-client-id }}
-          VITE_IDENTITY_POOL_ID=${{ steps.cdk-outputs.outputs.identity-pool-id }}
-          VITE_RUM_APPLICATION_ID=prod-application-id
-          VITE_RUM_IDENTITY_POOL_ID=prod-identity-pool-id
-          VITE_RUM_REGION=us-east-1
-          VITE_VAPID_PUBLIC_KEY=placeholder-prod-vapid-key
-
+            VITE_API_BASE_URL=${{ steps.cdk-outputs.outputs.api-url }}
+            VITE_AWS_REGION=${{ env.AWS_REGION }}
+            VITE_USER_POOL_ID=us-east-1_jfT5M1vfA
+            VITE_USER_POOL_CLIENT_ID=7viflgadalnplcvo49fmv45i3c
+            VITE_IDENTITY_POOL_ID=us-east-1:c3628a89-eca7-4d8d-af50-05652fd048bf
+            VITE_RUM_APPLICATION_ID=${{ steps.cdk-outputs.outputs.rum-application-id }}
+            VITE_RUM_IDENTITY_POOL_ID=${{ steps.cdk-outputs.outputs.rum-identity-pool-id }}
+            VITE_RUM_REGION=${{ steps.cdk-outputs.outputs.rum-region }}
           EOF
           npm run build
 
