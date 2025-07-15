@@ -249,6 +249,7 @@ export default function Search() {
               podcastImageUrl={result.podcast.imageUrl}
               onPlay={handlePlayEpisode}
               onAIExplanation={handleAIExplanation}
+              referrer="search"
             />
           ))}
         </div>

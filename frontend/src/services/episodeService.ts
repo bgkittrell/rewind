@@ -118,6 +118,17 @@ export class EpisodeService {
     podcastId: string,
   ): Promise<ProgressResponse> {
     try {
+      // Validate values before sending to backend
+      if (typeof position !== 'number' || typeof duration !== 'number') {
+        console.warn('Invalid progress data types:', { position, duration })
+        throw new Error('Position and duration must be numbers')
+      }
+
+      if (position < 0 || duration <= 0) {
+        console.warn('Invalid progress values:', { position, duration })
+        throw new Error('Invalid position or duration values')
+      }
+
       const response = await apiClient.put<ProgressResponse>(`/episodes/${episodeId}/progress`, {
         position,
         duration,

@@ -535,6 +535,7 @@ export default function PodcastDetail() {
                     podcastImageUrl={podcast.imageUrl}
                     onPlay={() => handlePlayEpisode(episode)}
                     onAIExplanation={() => handleAIExplanation(episode)}
+                    referrer="library"
                   />
                 </div>
               )

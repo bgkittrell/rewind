@@ -86,6 +86,17 @@ vi.mock('../../components/Home/RecommendationCard', () => ({
   ),
 }))
 
+vi.mock('../../components/AIExplanationModal', () => ({
+  AIExplanationModal: ({ isOpen, onClose, recommendation }: any) =>
+    isOpen ? (
+      <div data-testid="ai-explanation-modal">
+        <h2>AI Explanation</h2>
+        <p>Score: {recommendation ? (recommendation.score * 100).toFixed(0) : 0}%</p>
+        <button onClick={onClose}>Close</button>
+      </div>
+    ) : null,
+}))
+
 import { useAuth } from '../../context/AuthContext'
 import { useMediaPlayer } from '../../context/MediaPlayerContext'
 import { recommendationService } from '../../services/recommendationService'
@@ -503,7 +514,9 @@ describe('Home', () => {
     const whyButton = screen.getAllByText('Why this?')[0]
     fireEvent.click(whyButton)
 
-    expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Why this episode?\n\nScore: 95%'))
+    // Check if modal is opened
+    expect(screen.getByTestId('ai-explanation-modal')).toBeInTheDocument()
+    expect(screen.getByText('Score: 95%')).toBeInTheDocument()
   })
 
   it('handles thumbs up feedback', async () => {
