@@ -114,6 +114,7 @@ jobs:
           VITE_RUM_IDENTITY_POOL_ID=prod-identity-pool-id
           VITE_RUM_REGION=us-east-1
           VITE_VAPID_PUBLIC_KEY=placeholder-prod-vapid-key
+
           EOF
           npm run build
 

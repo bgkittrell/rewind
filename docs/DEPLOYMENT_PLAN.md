@@ -55,9 +55,9 @@ This document outlines the complete deployment strategy for the Rewind podcast a
 ```
 VITE_API_BASE_URL=https://bds33eqtv5.execute-api.us-east-1.amazonaws.com/prod
 VITE_AWS_REGION=us-east-1
-VITE_COGNITO_USER_POOL_ID=[FROM_CDK_OUTPUT]
-VITE_COGNITO_USER_POOL_CLIENT_ID=[FROM_CDK_OUTPUT]
-VITE_COGNITO_IDENTITY_POOL_ID=[FROM_CDK_OUTPUT]
+VITE_USER_POOL_ID=[FROM_CDK_OUTPUT]
+VITE_USER_POOL_CLIENT_ID=[FROM_CDK_OUTPUT]
+VITE_IDENTITY_POOL_ID=[FROM_CDK_OUTPUT]
 ```
 
 **Backend (Lambda environment variables - set by CDK):**
