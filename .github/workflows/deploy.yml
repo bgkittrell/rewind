@@ -107,9 +107,9 @@ jobs:
           cat > .env.production << EOF
           VITE_API_BASE_URL=${{ steps.cdk-outputs.outputs.api-url }}
           VITE_AWS_REGION=${{ env.AWS_REGION }}
-          VITE_COGNITO_USER_POOL_ID=${{ steps.cdk-outputs.outputs.user-pool-id }}
-          VITE_COGNITO_USER_POOL_CLIENT_ID=${{ steps.cdk-outputs.outputs.user-pool-client-id }}
-          VITE_COGNITO_IDENTITY_POOL_ID=${{ steps.cdk-outputs.outputs.identity-pool-id }}
+          VITE_USER_POOL_ID=${{ steps.cdk-outputs.outputs.user-pool-id }}
+          VITE_USER_POOL_CLIENT_ID=${{ steps.cdk-outputs.outputs.user-pool-client-id }}
+          VITE_IDENTITY_POOL_ID=${{ steps.cdk-outputs.outputs.identity-pool-id }}
           EOF
           npm run build
 

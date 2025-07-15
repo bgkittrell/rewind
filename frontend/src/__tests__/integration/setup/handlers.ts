@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 
 // Base API URL - this should match your backend
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 
 // Auth handlers with correct response shapes from backend
 export const authHandlers = [

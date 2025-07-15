@@ -213,9 +213,9 @@ The deployment pipeline automatically configures these environment variables for
 
 - `VITE_API_BASE_URL`: From backend stack output
 - `VITE_AWS_REGION`: Set to us-east-1
-- `VITE_COGNITO_USER_POOL_ID`: From data stack output
-- `VITE_COGNITO_USER_POOL_CLIENT_ID`: From data stack output
-- `VITE_COGNITO_IDENTITY_POOL_ID`: From data stack output
+- `VITE_USER_POOL_ID`: From data stack output
+- `VITE_USER_POOL_CLIENT_ID`: From data stack output
+- `VITE_IDENTITY_POOL_ID`: From data stack output
 
 ### 2. Backend Configuration
 

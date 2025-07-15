@@ -666,7 +666,7 @@ export interface RecommendationFilters {
 }
 
 export class RecommendationService {
-  private baseUrl = import.meta.env.VITE_API_URL
+  private baseUrl = import.meta.env.VITE_API_BASE_URL
 
   async getRecommendations(limit: number = 10, filters: RecommendationFilters = {}): Promise<RecommendationResponse> {
     const filterString = Object.entries(filters)
