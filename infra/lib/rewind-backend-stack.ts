@@ -3,6 +3,8 @@ import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as apigateway from 'aws-cdk-lib/aws-apigateway'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as cognito from 'aws-cdk-lib/aws-cognito'
+import * as sqs from 'aws-cdk-lib/aws-sqs'
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import { Construct } from 'constructs'
 import * as path from 'path'
@@ -151,6 +153,31 @@ export class RewindBackendStack extends cdk.Stack {
       }),
     )
 
+    // Grant Bedrock permissions to episode function for guest extraction
+    episodeFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        effect: cdk.aws_iam.Effect.ALLOW,
+        actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
+        resources: [
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}::foundation-model/anthropic.claude-sonnet-4-20250514-v1:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:inference-profile/us.anthropic.claude-sonnet-4-20250514-v1:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0`,
+        ],
+      }),
+    )
+
+    // Grant CloudWatch permissions to episode function for metrics publishing
+    episodeFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        effect: cdk.aws_iam.Effect.ALLOW,
+        actions: ['cloudwatch:PutMetricData'],
+        resources: ['*'],
+      }),
+    )
+
     // Grant DynamoDB permissions to the Lambda functions
     Object.values(props.tables).forEach(table => {
       table.grantReadWriteData(podcastFunction)
@@ -176,6 +203,83 @@ export class RewindBackendStack extends cdk.Stack {
     props.tables.podcasts.grantReadData(searchFunction)
     props.tables.episodes.grantReadData(searchFunction)
     props.tables.rateLimit.grantReadWriteData(searchFunction)
+
+    // Create SQS queue for guest extraction processing
+    const guestExtractionDLQ = new sqs.Queue(this, 'GuestExtractionDLQ', {
+      queueName: 'guest-extraction-dlq',
+      retentionPeriod: cdk.Duration.days(14),
+    })
+
+    const guestExtractionQueue = new sqs.Queue(this, 'GuestExtractionQueue', {
+      queueName: 'guest-extraction-queue',
+      visibilityTimeout: cdk.Duration.seconds(300), // 5 minutes
+      retentionPeriod: cdk.Duration.days(14),
+      receiveMessageWaitTime: cdk.Duration.seconds(20), // Long polling
+      deadLetterQueue: {
+        queue: guestExtractionDLQ,
+        maxReceiveCount: 3,
+      },
+    })
+
+    // Create Lambda function for guest extraction processing
+    const guestExtractionProcessor = new NodejsFunction(this, 'GuestExtractionProcessor', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../../backend/src/handlers/guestExtractionProcessor.ts'),
+      timeout: cdk.Duration.minutes(3), // Short timeout per episode
+      memorySize: 1024,
+      environment: {
+        EPISODES_TABLE: props.tables.episodes.tableName,
+        GUEST_EXTRACTION_QUEUE_URL: guestExtractionQueue.queueUrl,
+        LOG_LEVEL: 'INFO',
+      },
+      // Note: Using SQS batch size of 1 for throttling instead of reserved concurrency
+    })
+
+    // Grant permissions to guest extraction processor
+    props.tables.episodes.grantReadWriteData(guestExtractionProcessor)
+    guestExtractionQueue.grantConsumeMessages(guestExtractionProcessor)
+    guestExtractionQueue.grantSendMessages(episodeFunction) // Allow episode handler to send messages
+    guestExtractionQueue.grantSendMessages(podcastFunction) // Allow podcast handler to send messages
+
+    // Grant Bedrock permissions to guest extraction processor
+    guestExtractionProcessor.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        effect: cdk.aws_iam.Effect.ALLOW,
+        actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
+        resources: [
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}::foundation-model/anthropic.claude-sonnet-4-20250514-v1:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:inference-profile/us.anthropic.claude-sonnet-4-20250514-v1:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0`,
+        ],
+      }),
+    )
+
+    // Grant CloudWatch permissions for metrics publishing
+    guestExtractionProcessor.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        effect: cdk.aws_iam.Effect.ALLOW,
+        actions: ['cloudwatch:PutMetricData'],
+        resources: ['*'],
+      }),
+    )
+
+    // Add SQS event source to guest extraction processor
+    guestExtractionProcessor.addEventSource(
+      new SqsEventSource(guestExtractionQueue, {
+        batchSize: 1, // Process one message at a time for throttling
+        maxBatchingWindow: cdk.Duration.seconds(5),
+      }),
+    )
+
+    // Add environment variable for guest extraction queue URL to episode handler
+    episodeFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
+
+    // Add environment variable for guest extraction queue URL to podcast handler (needed for addPodcast)
+    podcastFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
 
     // Create Cognito authorizer for API Gateway
     const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'RewindAuthorizer', {

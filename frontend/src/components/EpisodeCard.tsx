@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import type { Episode } from '../types/episode'
+import { GuestExtractionStatus } from './GuestExtractionStatus'
 
 // Test comment for format hook
 
@@ -117,9 +118,13 @@ function EpisodeCardComponent({
           <p className="text-sm text-gray-600 truncate mb-2">{episode.podcastName}</p>
 
           <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-500">
-              {formatDate(episode.releaseDate)} • {episode.duration}
-            </p>
+            <div className="flex flex-col gap-1">
+              <p className="text-xs text-gray-500">
+                {formatDate(episode.releaseDate)} • {episode.duration}
+              </p>
+              {/* Guest extraction status */}
+              <GuestExtractionStatus episode={episode} />
+            </div>
 
             <div className="flex items-center gap-2">
               {/* Match percentage for recommendations */}
@@ -174,6 +179,9 @@ export const EpisodeCard = React.memo(EpisodeCardComponent, (prevProps, nextProp
   return (
     prevProps.episode.episodeId === nextProps.episode.episodeId &&
     prevProps.episode.playbackPosition === nextProps.episode.playbackPosition &&
+    prevProps.episode.guestExtractionStatus === nextProps.episode.guestExtractionStatus &&
+    prevProps.episode.extractedGuests?.length === nextProps.episode.extractedGuests?.length &&
+    prevProps.episode.guestExtractionConfidence === nextProps.episode.guestExtractionConfidence &&
     prevProps.podcastImageUrl === nextProps.podcastImageUrl &&
     prevProps.onPlay === nextProps.onPlay &&
     prevProps.onAIExplanation === nextProps.onAIExplanation &&

@@ -18,6 +18,7 @@
     "@aws-sdk/client-dynamodb": "^3.450.0",
     "@aws-sdk/client-eventbridge": "^3.450.0",
     "@aws-sdk/client-personalize": "^3.450.0",
+    "@aws-sdk/client-sqs": "^3.845.0",
     "@aws-sdk/lib-dynamodb": "^3.450.0",
     "@aws-sdk/util-dynamodb": "^3.840.0",
     "@types/jsonwebtoken": "^9.0.10",

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx prettier --write .tool_input.file_path"
+            "command": "npx prettier --write \\(.tool_input.file_path)"
           }
         ]
       }

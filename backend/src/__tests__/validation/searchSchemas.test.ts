@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@jest/globals'
+import { describe, it, expect } from 'vitest'
 import { searchQuerySchema } from '../../validation/searchSchemas'
 
 describe('Search Validation Schemas', () => {

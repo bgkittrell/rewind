@@ -13,6 +13,13 @@ export interface Episode {
   createdAt?: string
   naturalKey?: string
 
+  // AI Guest Extraction Fields (matching backend)
+  extractedGuests?: string[]
+  guestExtractionStatus?: 'pending' | 'processing' | 'completed' | 'failed'
+  guestExtractionDate?: string
+  guestExtractionConfidence?: number
+  rawGuestData?: string
+
   // Frontend-specific fields for compatibility
   podcastName?: string // For display purposes
   playbackPosition?: number // Current playback position in seconds

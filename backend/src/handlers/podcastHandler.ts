@@ -4,6 +4,8 @@ import { rssService } from '../services/rssService'
 import { dynamoService } from '../services/dynamoService'
 import { logger } from '../services/loggerService'
 import { withLogging } from '../utils/middleware'
+import { sqsService } from '../services/sqsService'
+import { Episode } from '../types'
 
 const podcastHandler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const headers = createCorsHeaders()
@@ -105,14 +107,47 @@ async function addPodcast(event: APIGatewayProxyEvent, userId: string, path: str
 
     const podcast = await dynamoService.savePodcast(userId, podcastData)
 
-    const response = {
-      podcastId: podcast.podcastId,
-      title: podcast.title,
-      rssUrl: podcast.rssUrl,
-      message: 'Podcast added successfully',
-    }
+    // Automatically sync episodes for the new podcast
+    try {
+      const syncResult = await autoSyncEpisodes(podcast, userId)
 
-    return createSuccessResponse(response, 201, path)
+      const response = {
+        podcastId: podcast.podcastId,
+        title: podcast.title,
+        rssUrl: podcast.rssUrl,
+        message: `Podcast added successfully. ${syncResult.message}`,
+        episodeSync: {
+          episodeCount: syncResult.episodeCount,
+          stats: syncResult.stats,
+          autoSyncEnabled: true,
+        },
+      }
+
+      return createSuccessResponse(response, 201, path)
+    } catch (syncError) {
+      logger.error('Error during automatic episode sync:', syncError)
+
+      // Return success for podcast creation but indicate sync failure
+      const response = {
+        podcastId: podcast.podcastId,
+        title: podcast.title,
+        rssUrl: podcast.rssUrl,
+        message: 'Podcast added successfully, but episode import failed. You can manually sync episodes later.',
+        episodeSync: {
+          episodeCount: 0,
+          stats: {
+            newEpisodes: 0,
+            updatedEpisodes: 0,
+            totalProcessed: 0,
+            duplicatesFound: 0,
+          },
+          autoSyncEnabled: true,
+          error: 'Episode sync failed - manual sync required',
+        },
+      }
+
+      return createSuccessResponse(response, 201, path)
+    }
   } catch (error) {
     logger.error('Error adding podcast:', error)
 
@@ -149,6 +184,101 @@ async function deletePodcast(
     }
 
     return createErrorResponse('Failed to delete podcast', 'INTERNAL_ERROR', 500, path)
+  }
+}
+
+/**
+ * Triggers guest extraction for episodes by sending them to SQS queue
+ * This is async and non-blocking to avoid impacting episode import performance
+ */
+async function triggerGuestExtraction(episodes: Episode[], podcastId: string, userId: string): Promise<void> {
+  try {
+    // Filter episodes that need guest extraction
+    const episodesToProcess = episodes.filter(
+      episode => episode.guestExtractionStatus === 'pending' && episode.title && episode.description,
+    )
+
+    if (episodesToProcess.length === 0) {
+      return
+    }
+
+    logger.info(`Queuing ${episodesToProcess.length} episodes for guest extraction`)
+
+    // Convert episodes to SQS messages
+    const messages = episodesToProcess.map(episode => ({
+      episodeId: episode.episodeId,
+      title: episode.title,
+      description: episode.description,
+      podcastId,
+      userId,
+    }))
+
+    // Send messages to SQS queue (async, non-blocking)
+    await sqsService.sendGuestExtractionMessages(messages)
+
+    logger.info(`Successfully queued ${messages.length} episodes for guest extraction`)
+  } catch (error) {
+    logger.error('Error queuing guest extraction messages:', error)
+    // Don't throw error to avoid blocking episode import
+  }
+}
+
+/**
+ * Automatically syncs episodes for a podcast after creation
+ */
+async function autoSyncEpisodes(
+  podcast: any,
+  userId: string,
+): Promise<{
+  episodeCount: number
+  message: string
+  stats: {
+    newEpisodes: number
+    updatedEpisodes: number
+    totalProcessed: number
+    duplicatesFound: number
+  }
+}> {
+  try {
+    // Parse episodes from RSS feed
+    const episodeData = await rssService.parseEpisodesFromFeed(podcast.rssUrl)
+
+    if (episodeData.length === 0) {
+      return {
+        episodeCount: 0,
+        message: 'No episodes found in RSS feed',
+        stats: {
+          newEpisodes: 0,
+          updatedEpisodes: 0,
+          totalProcessed: 0,
+          duplicatesFound: 0,
+        },
+      }
+    }
+
+    // Save/update episodes with deduplication
+    const savedEpisodes = await dynamoService.saveEpisodes(podcast.podcastId, episodeData)
+
+    // Trigger guest extraction for new episodes (async, non-blocking)
+    await triggerGuestExtraction(savedEpisodes, podcast.podcastId, userId)
+
+    // Calculate statistics (no existing episodes since this is a new podcast)
+    const newEpisodes = savedEpisodes.length
+    const duplicatesFound = episodeData.length - savedEpisodes.length
+
+    return {
+      episodeCount: savedEpisodes.length,
+      message: `Episodes synced successfully. Importing ${savedEpisodes.length} episodes with guest extraction processing...`,
+      stats: {
+        newEpisodes,
+        updatedEpisodes: 0,
+        totalProcessed: episodeData.length,
+        duplicatesFound: Math.max(0, duplicatesFound),
+      },
+    }
+  } catch (error) {
+    logger.error('Error in auto sync episodes:', error)
+    throw error
   }
 }
 

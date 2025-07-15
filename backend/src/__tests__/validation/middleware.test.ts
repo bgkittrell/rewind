@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { z } from 'zod'
 import { APIGatewayProxyEvent } from 'aws-lambda'
 import {
@@ -11,15 +11,15 @@ import {
 import { logger } from '../../services/loggerService'
 
 // Mock the logger
-jest.mock('../../services/loggerService', () => ({
+vi.mock('../../services/loggerService', () => ({
   logger: {
-    warn: jest.fn(),
+    warn: vi.fn(),
   },
 }))
 
 describe('Validation Middleware', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('validateRequestBody', () => {
@@ -167,14 +167,20 @@ describe('Validation Middleware', () => {
       expect(response.headers).toEqual({
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Credentials': 'true',
+        'Content-Security-Policy':
+          "default-src 'self'; script-src 'self' https://cognito-idp.us-east-1.amazonaws.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; media-src 'self' https:; connect-src 'self' https://*.amazonaws.com wss://*.amazonaws.com; font-src 'self' data:; frame-ancestors 'none';",
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
       })
 
       const body = JSON.parse(response.body)
-      expect(body.error).toBe('Test error')
-      expect(body.code).toBe('VALIDATION_ERROR')
-      expect(body.path).toBe('/test')
+      expect(body.error.message).toBe('Test error')
+      expect(body.error.code).toBe('VALIDATION_ERROR')
     })
   })
 
@@ -184,14 +190,18 @@ describe('Validation Middleware', () => {
     })
 
     const querySchema = z.object({
-      limit: z.string().transform(Number).optional(),
+      limit: z
+        .string()
+        .transform(Number)
+        .refine(n => !isNaN(n) && n > 0, 'Invalid limit')
+        .optional(),
     })
 
     const pathSchema = z.object({
       id: z.string().uuid(),
     })
 
-    const mockHandler = jest.fn()
+    const mockHandler = vi.fn()
     const mockEvent: Partial<APIGatewayProxyEvent> = {
       path: '/test',
       body: JSON.stringify({ name: 'John' }),

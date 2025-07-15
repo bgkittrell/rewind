@@ -864,7 +864,7 @@ export class DynamoService {
     episodeId: string,
     extractedGuests: string[],
     confidence: number,
-    status: 'pending' | 'completed' | 'failed',
+    status: 'pending' | 'processing' | 'completed' | 'failed',
     podcastId?: string,
   ): Promise<void> {
     try {

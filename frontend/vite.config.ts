@@ -4,6 +4,18 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router'],
+          aws: ['aws-amplify', '@aws-amplify/ui-react', 'aws-rum-web'],
+          ui: ['@tabler/icons-react'],
+          utils: ['dompurify'],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({

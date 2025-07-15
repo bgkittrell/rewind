@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@jest/globals'
+import { describe, it, expect } from 'vitest'
 import { addPodcastSchema, podcastIdParamSchema, podcastListQuerySchema } from '../../validation/podcastSchemas'
 
 describe('Podcast Validation Schemas', () => {

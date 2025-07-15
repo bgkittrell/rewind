@@ -3,8 +3,7 @@ import { createSuccessResponse, createErrorResponse, createCorsHeaders } from '.
 import { rssService } from '../services/rssService'
 import { dynamoService } from '../services/dynamoService'
 import { logger } from '../services/loggerService'
-import { bedrockService } from '../services/bedrockService'
-import { cloudWatchMetricsService } from '../services/cloudWatchMetricsService'
+import { sqsService } from '../services/sqsService'
 import { withLogging } from '../utils/middleware'
 import { Episode } from '../types'
 import crypto from 'crypto'
@@ -171,7 +170,7 @@ async function syncEpisodes(
     const savedEpisodes = await dynamoService.saveEpisodes(podcastId, episodeData)
 
     // Trigger guest extraction for new episodes (async, non-blocking)
-    await triggerGuestExtraction(savedEpisodes)
+    await triggerGuestExtraction(savedEpisodes, podcastId, userId)
 
     // Calculate statistics
     const newEpisodesResponse = await dynamoService.getEpisodesByPodcast(podcastId, 1000)
@@ -631,10 +630,10 @@ async function refreshEpisodeUrl(body: string | null, userId: string, path: stri
 }
 
 /**
- * Triggers guest extraction for episodes that need it
+ * Triggers guest extraction for episodes by sending them to SQS queue
  * This is async and non-blocking to avoid impacting episode import performance
  */
-async function triggerGuestExtraction(episodes: Episode[]): Promise<void> {
+async function triggerGuestExtraction(episodes: Episode[], podcastId: string, userId: string): Promise<void> {
   try {
     // Filter episodes that need guest extraction
     const episodesToProcess = episodes.filter(
@@ -645,115 +644,25 @@ async function triggerGuestExtraction(episodes: Episode[]): Promise<void> {
       return
     }
 
-    logger.info(`Triggering guest extraction for ${episodesToProcess.length} episodes`)
+    logger.info(`Queuing ${episodesToProcess.length} episodes for guest extraction`)
 
-    // Process episodes in batches to avoid overwhelming the AI service
-    const batchSize = 5
-    for (let i = 0; i < episodesToProcess.length; i += batchSize) {
-      const batch = episodesToProcess.slice(i, i + batchSize)
+    // Convert episodes to SQS messages
+    const messages = episodesToProcess.map(episode => ({
+      episodeId: episode.episodeId,
+      title: episode.title,
+      description: episode.description,
+      podcastId,
+      userId,
+    }))
 
-      // Process batch asynchronously (fire and forget)
-      processGuestExtractionBatch(batch).catch(error => {
-        logger.error('Error processing guest extraction batch:', error)
-      })
-    }
+    // Send messages to SQS queue (async, non-blocking)
+    await sqsService.sendGuestExtractionMessages(messages)
+
+    logger.info(`Successfully queued ${messages.length} episodes for guest extraction`)
   } catch (error) {
-    logger.error('Error triggering guest extraction:', error)
+    logger.error('Error queuing guest extraction messages:', error)
     // Don't throw error to avoid blocking episode import
   }
-}
-
-/**
- * Processes a batch of episodes for guest extraction
- */
-async function processGuestExtractionBatch(episodes: Episode[]): Promise<void> {
-  const batchStartTime = Date.now()
-  const requests = episodes.map(episode => ({
-    episodeId: episode.episodeId,
-    title: episode.title,
-    description: episode.description,
-  }))
-
-  let successCount = 0
-  let failureCount = 0
-
-  try {
-    const results = await bedrockService.batchExtractGuests(requests)
-
-    // Update episodes with extraction results and publish metrics
-    for (const result of results) {
-      const episodeStartTime = Date.now()
-
-      try {
-        await dynamoService.updateEpisodeGuestExtraction(
-          result.episodeId || '',
-          result.guests,
-          result.confidence,
-          result.success ? 'completed' : 'failed',
-        )
-
-        const processingTime = Date.now() - episodeStartTime
-
-        // Publish individual episode metrics
-        await cloudWatchMetricsService.publishGuestExtractionMetrics({
-          episodeId: result.episodeId || '',
-          success: result.success || false,
-          processingTime,
-          guestCount: result.guests.length,
-          confidence: result.confidence,
-          error: result.success ? undefined : 'Extraction failed',
-        })
-
-        if (result.success) {
-          successCount++
-        } else {
-          failureCount++
-        }
-      } catch (updateError) {
-        logger.error(`Failed to update episode ${result.episodeId} with guest extraction:`, updateError)
-        failureCount++
-
-        // Publish failure metrics
-        await cloudWatchMetricsService.publishGuestExtractionMetrics({
-          episodeId: result.episodeId || '',
-          success: false,
-          processingTime: Date.now() - episodeStartTime,
-          guestCount: 0,
-          confidence: 0,
-          error: 'Database update failed',
-        })
-      }
-    }
-  } catch (error) {
-    logger.error('Error in guest extraction batch processing:', error)
-
-    // Mark episodes as failed and publish failure metrics
-    for (const episode of episodes) {
-      const episodeStartTime = Date.now()
-
-      try {
-        await dynamoService.updateEpisodeGuestExtraction(episode.episodeId, [], 0, 'failed')
-      } catch (updateError) {
-        logger.error(`Failed to mark episode ${episode.episodeId} as failed:`, updateError)
-      }
-
-      // Publish failure metrics
-      await cloudWatchMetricsService.publishGuestExtractionMetrics({
-        episodeId: episode.episodeId,
-        success: false,
-        processingTime: Date.now() - episodeStartTime,
-        guestCount: 0,
-        confidence: 0,
-        error: error instanceof Error ? error.message : 'Batch processing failed',
-      })
-
-      failureCount++
-    }
-  }
-
-  // Publish batch-level metrics
-  const batchProcessingTime = Date.now() - batchStartTime
-  await cloudWatchMetricsService.publishBatchMetrics(episodes.length, batchProcessingTime, successCount, failureCount)
 }
 
 export const handler = withLogging(episodeHandler)

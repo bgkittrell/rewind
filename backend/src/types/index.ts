@@ -43,7 +43,7 @@ export interface Episode {
   naturalKey: string
   // AI Guest Extraction Fields
   extractedGuests?: string[]
-  guestExtractionStatus?: 'pending' | 'completed' | 'failed'
+  guestExtractionStatus?: 'pending' | 'processing' | 'completed' | 'failed'
   guestExtractionDate?: string
   guestExtractionConfidence?: number
   rawGuestData?: string
