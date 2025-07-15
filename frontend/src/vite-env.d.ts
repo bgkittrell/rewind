@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_RUM_APPLICATION_ID: string
   readonly VITE_RUM_IDENTITY_POOL_ID: string
   readonly VITE_RUM_REGION: string
+  readonly VITE_VAPID_PUBLIC_KEY: string
 }
 
 declare global {

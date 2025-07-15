@@ -244,6 +244,16 @@ export class RewindDataStack extends cdk.Stack {
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
     })
 
+    // Rate limit table for API throttling
+    this.tables.rateLimit = new dynamodb.Table(this, 'RewindRateLimit', {
+      tableName: 'RewindRateLimit',
+      partitionKey: { name: 'key', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      timeToLiveAttribute: 'expiresAt',
+    })
+
     // Output table names for reference
     new cdk.CfnOutput(this, 'UsersTableName', {
       value: this.tables.users.tableName,
@@ -283,6 +293,11 @@ export class RewindDataStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'SharesTableName', {
       value: this.tables.shares.tableName,
       description: 'Shares table name',
+    })
+
+    new cdk.CfnOutput(this, 'RateLimitTableName', {
+      value: this.tables.rateLimit.tableName,
+      description: 'Rate limit table name',
     })
 
     new cdk.CfnOutput(this, 'EpisodesTableStreamArn', {
