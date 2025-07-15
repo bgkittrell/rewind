@@ -17,7 +17,7 @@ alwaysApply: false
 Reference [BACKEND_API.md](mdc:docs/BACKEND_API.md) for complete API documentation:
 
 ### Base URL
-- **Production**: `https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1`
+- **Production**: `https://bds33eqtv5.execute-api.us-east-1.amazonaws.com/prod`
 - **Development**: `https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1`
 
 ### Authentication
