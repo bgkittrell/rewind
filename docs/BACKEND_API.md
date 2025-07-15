@@ -6,7 +6,7 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
 
 ## Base URL
 
-- **Production**: `https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1` ✅ DEPLOYED
+- **Production**: `https://bds33eqtv5.execute-api.us-east-1.amazonaws.com/prod` ✅ DEPLOYED
 - **Development**: `https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1`
 
 ## Authentication - DEPLOYED ✅
