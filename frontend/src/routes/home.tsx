@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useMediaPlayer } from '../context/MediaPlayerContext'
 import { useAuth } from '../context/AuthContext'
 import { recommendationService } from '../services/recommendationService'
@@ -10,11 +10,14 @@ import { ErrorMessage } from '../components/Home/ErrorMessage'
 import { EmptyState } from '../components/Home/EmptyState'
 import { LoginPrompt } from '../components/Home/LoginPrompt'
 import { RecommendationCard } from '../components/Home/RecommendationCard'
+import { AIExplanationModal } from '../components/AIExplanationModal'
 import type { RecommendationScore } from '../services/recommendationService'
 
 export default function Home() {
   const { playEpisode } = useMediaPlayer()
   const { isAuthenticated, isLoading: authLoading } = useAuth()
+  const [selectedRecommendation, setSelectedRecommendation] = useState<RecommendationScore | null>(null)
+  const [isExplanationModalOpen, setIsExplanationModalOpen] = useState(false)
 
   const {
     recommendations,
@@ -61,20 +64,17 @@ export default function Home() {
       const recommendation = recommendations.find(r => r.episodeId === episode.episodeId)
 
       if (recommendation) {
-        // Show explanation modal - for now, just log it
-        console.log('AI Explanation for:', episode.title)
-        console.log('Reasons:', recommendation.reasons)
-        console.log('Factors:', recommendation.factors)
-        console.log('Score:', recommendation.score)
-
-        // TODO: Implement actual modal component
-        alert(
-          `Why this episode?\n\nScore: ${(recommendation.score * 100).toFixed(0)}%\n\nReasons:\n${recommendation.reasons.join('\n')}`,
-        )
+        setSelectedRecommendation(recommendation)
+        setIsExplanationModalOpen(true)
       }
     },
     [recommendations],
   )
+
+  const handleCloseExplanationModal = useCallback(() => {
+    setIsExplanationModalOpen(false)
+    setSelectedRecommendation(null)
+  }, [])
 
   const handleSignInClick = useCallback(() => {
     window.location.href = '/login'
@@ -132,6 +132,13 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* AI Explanation Modal */}
+      <AIExplanationModal
+        isOpen={isExplanationModalOpen}
+        onClose={handleCloseExplanationModal}
+        recommendation={selectedRecommendation}
+      />
     </div>
   )
 }

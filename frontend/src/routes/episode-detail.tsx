@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useParams, useNavigate, useLocation } from 'react-router'
 import { episodeService, Episode } from '../services/episodeService'
 import { podcastService, Podcast } from '../services/podcastService'
 import { APIError } from '../services/api'
@@ -12,8 +12,46 @@ export default function EpisodeDetail() {
   const episodeId = params.episodeId
   const podcastId = params.podcastId
   const navigate = useNavigate()
+  const location = useLocation()
   const { isAuthenticated, isLoading: authLoading } = useAuth()
   const { playEpisode } = useMediaPlayer()
+
+  const referrer = (location.state as { referrer?: string })?.referrer || 'library'
+
+  const getBackButtonText = () => {
+    switch (referrer) {
+      case 'search':
+        return 'Back to Search'
+      case 'home':
+        return 'Back to Home'
+      case 'library':
+      default:
+        return 'Back to Library'
+    }
+  }
+
+  const handleBackNavigation = () => {
+    // Use navigate with replace: false to preserve browser history and scroll position
+    switch (referrer) {
+      case 'search':
+        // Go back to search and preserve scroll position
+        navigate(-1) // Go back in history to preserve scroll position
+        break
+      case 'home':
+        // Go back to home
+        navigate(-1) // Go back in history to preserve scroll position
+        break
+      case 'library':
+      default:
+        // Go back to the specific podcast page if we have podcastId
+        if (podcastId) {
+          navigate(-1) // Go back in history to preserve scroll position
+        } else {
+          navigate('/library', { replace: false })
+        }
+        break
+    }
+  }
 
   const [episode, setEpisode] = useState<Episode | null>(null)
   const [podcast, setPodcast] = useState<Podcast | null>(null)
@@ -185,8 +223,8 @@ export default function EpisodeDetail() {
         <div className="mb-4 py-4 px-4 bg-red-50 border-l-4 border-red-500">
           <p className="text-sm text-red-800">{error || 'Episode not found'}</p>
           <div className="mt-2 space-x-2">
-            <button onClick={() => navigate('/library')} className="text-sm text-red-600 hover:text-red-800">
-              Back to Library
+            <button onClick={handleBackNavigation} className="text-sm text-red-600 hover:text-red-800">
+              {getBackButtonText()}
             </button>
             {error && (
               <button onClick={() => window.location.reload()} className="text-sm text-red-600 hover:text-red-800">
@@ -204,13 +242,13 @@ export default function EpisodeDetail() {
       {/* Back Button */}
       <div className="bg-white px-4 py-3 border-b border-gray-200">
         <button
-          onClick={() => navigate('/library')}
+          onClick={handleBackNavigation}
           className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Library
+          {getBackButtonText()}
         </button>
       </div>
 

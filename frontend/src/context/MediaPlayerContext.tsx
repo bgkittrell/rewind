@@ -3,6 +3,7 @@ import { episodeService } from '../services/episodeService'
 import { resumeService, ResumeData } from '../services/resumeService'
 import { RESUME_THRESHOLD } from '../constants/resume'
 import type { Episode } from '../types/episode'
+import { useAuth } from './AuthContext'
 
 interface MediaPlayerState {
   currentEpisode: Episode | null
@@ -18,6 +19,7 @@ interface MediaPlayerContextType {
   stop: () => void
   seek: (_position: number) => void
   resumePlayback: (_resumeData: ResumeData) => void
+  updateEpisode: (_updatedEpisode: Episode) => void
   canResume: boolean
   resumeData: ResumeData | null
 }
@@ -25,6 +27,7 @@ interface MediaPlayerContextType {
 const MediaPlayerContext = createContext<MediaPlayerContextType | null>(null)
 
 export function MediaPlayerProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth()
   const [state, setState] = useState<MediaPlayerState>({
     currentEpisode: null,
     isPlaying: false,
@@ -32,12 +35,14 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   })
   const [resumeData, setResumeData] = useState<ResumeData | null>(null)
 
-  // Load resume data on mount
+  // Load resume data only after authentication is complete
   useEffect(() => {
-    resumeService.getResumeData().then(data => {
-      setResumeData(data)
-    })
-  }, [])
+    if (isAuthenticated && !isLoading) {
+      resumeService.getResumeData().then(data => {
+        setResumeData(data)
+      })
+    }
+  }, [isAuthenticated, isLoading])
 
   const playEpisode = async (episode: Episode) => {
     // Get saved progress for this episode
@@ -80,6 +85,8 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
       isPlaying: false,
       currentPosition: 0,
     })
+    // Clear resume data when mini-player is closed
+    setResumeData(null)
   }
 
   const seek = (position: number) => {
@@ -114,6 +121,13 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     resumeService.clearResumeData()
   }
 
+  const updateEpisode = (updatedEpisode: Episode) => {
+    setState(prev => ({
+      ...prev,
+      currentEpisode: updatedEpisode,
+    }))
+  }
+
   return (
     <MediaPlayerContext.Provider
       value={{
@@ -124,6 +138,7 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
         stop,
         seek,
         resumePlayback,
+        updateEpisode,
         canResume: resumeData !== null,
         resumeData,
       }}

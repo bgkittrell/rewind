@@ -50,8 +50,13 @@ export default function Auth() {
       <div className="max-w-md w-full space-y-8">
         {/* App header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-primary">⏪ Rewind</h1>
-          <p className="mt-2 text-sm text-gray-600">Rediscover older episodes from your favorite podcasts</p>
+          <h1 className="text-3xl font-bold text-primary flex items-center justify-center gap-1/2">
+            <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 5l-7 7 7 7V5zm7 0l-7 7 7 7V5z" />
+            </svg>
+            Rewind
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">Rediscover your favorite podcast episodes</p>
         </div>
 
         {/* Login form */}

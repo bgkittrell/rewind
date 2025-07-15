@@ -114,9 +114,16 @@ describe('EpisodeCard', () => {
   })
 
   it('calls onAIExplanation when AI explanation button is clicked', () => {
-    renderWithRouter(<EpisodeCard episode={mockEpisode} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />)
+    renderWithRouter(
+      <EpisodeCard
+        episode={mockEpisode}
+        onPlay={mockOnPlay}
+        onAIExplanation={mockOnAIExplanation}
+        recommendationScore={0.85}
+      />,
+    )
 
-    const aiButton = screen.getByLabelText('Get AI explanation')
+    const aiButton = screen.getByTitle('Click for AI explanation of this recommendation')
     fireEvent.click(aiButton)
 
     expect(mockOnAIExplanation).toHaveBeenCalledWith(mockEpisode)
@@ -128,7 +135,9 @@ describe('EpisodeCard', () => {
     const episodeCard = screen.getByTestId('episode-card')
     fireEvent.click(episodeCard)
 
-    expect(mockNavigate).toHaveBeenCalledWith('/episode/podcast-1/episode-1')
+    expect(mockNavigate).toHaveBeenCalledWith('/episode/podcast-1/episode-1', {
+      state: { referrer: 'library' },
+    })
   })
 
   it('does not navigate when action buttons are clicked', () => {

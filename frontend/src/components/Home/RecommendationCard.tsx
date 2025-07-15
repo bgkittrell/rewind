@@ -1,6 +1,7 @@
 import React from 'react'
 import { EpisodeCard } from '../EpisodeCard'
 import type { RecommendationScore } from '../../services/recommendationService'
+import { IconHeart, IconHeartFilled, IconCircleX } from '@tabler/icons-react'
 
 interface RecommendationCardProps {
   recommendation: RecommendationScore
@@ -34,10 +35,12 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       podcastImageUrl={recommendation.episode.imageUrl}
       onPlay={() => onPlay(recommendation.episode)}
       onAIExplanation={() => onAIExplanation(recommendation.episode)}
+      recommendationScore={recommendation.score}
+      referrer="home"
     />
 
     {/* Feedback buttons */}
-    <div className="absolute top-4 right-4 flex gap-2">
+    <div className="absolute top-2 right-2 flex gap-2">
       <button
         onClick={() => onFeedback(recommendation.episodeId, 'up')}
         className={`p-2 rounded-full transition-colors ${
@@ -45,7 +48,8 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
         }`}
         title="I like this recommendation"
       >
-        👍
+        {/* Heart icon */}
+        {userFeedback === 'up' ? <IconHeartFilled className="w-4 h-4" /> : <IconHeart className="w-4 h-4" />}
       </button>
       <button
         onClick={() => onFeedback(recommendation.episodeId, 'down')}
@@ -54,13 +58,9 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
         }`}
         title="I don't like this recommendation"
       >
-        👎
+        {/* No/blocked icon */}
+        {userFeedback === 'down' ? <IconCircleX className="w-4 h-4" /> : <IconCircleX className="w-4 h-4" />}
       </button>
-    </div>
-
-    {/* Recommendation score badge */}
-    <div className="absolute bottom-4 right-4 bg-primary text-white px-2 py-1 rounded-full text-xs font-medium">
-      {(recommendation.score * 100).toFixed(0)}% match
     </div>
   </div>
 )

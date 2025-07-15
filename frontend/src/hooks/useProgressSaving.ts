@@ -17,7 +17,7 @@ export function useProgressSaving({ episode, currentTime, duration, isPlaying }:
     if (!isPlaying || !episode) return
 
     const saveProgress = async () => {
-      if (episode && Math.abs(currentTime - lastSavedTimeRef.current) > 5) {
+      if (episode && Math.abs(currentTime - lastSavedTimeRef.current) > 5 && duration > 0) {
         try {
           const { episodeService } = await import('../services/episodeService')
           await episodeService.saveProgress(episode.episodeId, currentTime, duration, episode.podcastId)
@@ -37,7 +37,7 @@ export function useProgressSaving({ episode, currentTime, duration, isPlaying }:
     if (!episode || isPlaying) return
 
     const saveProgressOnPause = async () => {
-      if (currentTime > 0 && Math.abs(currentTime - lastSavedTimeRef.current) > 5) {
+      if (currentTime > 0 && Math.abs(currentTime - lastSavedTimeRef.current) > 5 && duration > 0) {
         try {
           const { episodeService } = await import('../services/episodeService')
           await episodeService.saveProgress(episode.episodeId, currentTime, duration, episode.podcastId)
@@ -54,7 +54,7 @@ export function useProgressSaving({ episode, currentTime, duration, isPlaying }:
   // Save progress on unmount
   useEffect(() => {
     return () => {
-      if (episode && currentTime > 0) {
+      if (episode && currentTime > 0 && duration > 0) {
         import('../services/episodeService').then(({ episodeService }) => {
           episodeService
             .saveProgress(episode.episodeId, currentTime, duration, episode.podcastId)

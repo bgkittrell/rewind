@@ -17,6 +17,7 @@ interface FloatingMediaPlayerProps {
   onPause: () => void
   onClose: () => void
   onSeek: (_position: number) => void
+  onEpisodeUpdate?: (updatedEpisode: Episode) => void
 }
 
 export function FloatingMediaPlayer({
@@ -26,6 +27,7 @@ export function FloatingMediaPlayer({
   onPause,
   onClose,
   onSeek,
+  onEpisodeUpdate,
 }: FloatingMediaPlayerProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -51,6 +53,7 @@ export function FloatingMediaPlayer({
       onPause()
       seek(0)
     },
+    onEpisodeUpdate,
   })
 
   // Use progress saving hook

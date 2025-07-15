@@ -7,9 +7,18 @@ interface EpisodeCardProps {
   podcastImageUrl?: string
   onPlay?: (_episode: Episode) => void
   onAIExplanation?: (_episode: Episode) => void
+  recommendationScore?: number
+  referrer?: 'search' | 'library' | 'home'
 }
 
-function EpisodeCardComponent({ episode, podcastImageUrl, onPlay, onAIExplanation }: EpisodeCardProps) {
+function EpisodeCardComponent({
+  episode,
+  podcastImageUrl,
+  onPlay,
+  onAIExplanation,
+  recommendationScore,
+  referrer,
+}: EpisodeCardProps) {
   const [imageError, setImageError] = useState(false)
   const navigate = useNavigate()
 
@@ -30,22 +39,42 @@ function EpisodeCardComponent({ episode, podcastImageUrl, onPlay, onAIExplanatio
   )
 
   const handleCardClick = useCallback(() => {
-    if (episode.podcastId) {
-      navigate(`/episode/${episode.podcastId}/${episode.episodeId}`)
-    } else {
-      navigate(`/episode/${episode.episodeId}`)
-    }
-  }, [navigate, episode.podcastId, episode.episodeId])
+    const path = episode.podcastId
+      ? `/episode/${episode.podcastId}/${episode.episodeId}`
+      : `/episode/${episode.episodeId}`
+
+    navigate(path, {
+      state: { referrer: referrer || 'library' },
+    })
+  }, [navigate, episode.podcastId, episode.episodeId, referrer])
 
   const formatDate = (dateString: string) => {
-    // Parse the date string and add timezone offset to avoid UTC conversion issues
-    const [year, month, day] = dateString.split('-').map(Number)
-    const date = new Date(year, month - 1, day)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
+    if (!dateString) return 'Date unknown'
+
+    try {
+      // Parse the date string and add timezone offset to avoid UTC conversion issues
+      const [year, month, day] = dateString.split('-').map(Number)
+
+      // Validate the parsed values
+      if (isNaN(year) || isNaN(month) || isNaN(day)) {
+        return 'Date unknown'
+      }
+
+      const date = new Date(year, month - 1, day)
+
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Date unknown'
+      }
+
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    } catch (error) {
+      return 'Date unknown'
+    }
   }
 
   const hasProgress = episode.playbackPosition && episode.playbackPosition > 0
@@ -81,27 +110,6 @@ function EpisodeCardComponent({ episode, podcastImageUrl, onPlay, onAIExplanatio
             <h3 className="font-semibold text-gray-900 text-sm leading-tight flex-1 line-clamp-2 break-words">
               {episode.title}
             </h3>
-
-            {/* AI Explanation Button */}
-            <button
-              onClick={handleAIExplanation}
-              className={
-                'flex-shrink-0 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center ' +
-                'hover:bg-gray-200 transition-colors active:bg-gray-300'
-              }
-              aria-label="Get AI explanation"
-              title="Get AI explanation"
-            >
-              <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                <path
-                  d={
-                    'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2z' +
-                    'm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 ' +
-                    '0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z'
-                  }
-                />
-              </svg>
-            </button>
           </div>
 
           <p className="text-sm text-gray-600 truncate mb-2">{episode.podcastName}</p>
@@ -111,20 +119,33 @@ function EpisodeCardComponent({ episode, podcastImageUrl, onPlay, onAIExplanatio
               {formatDate(episode.releaseDate)} • {episode.duration}
             </p>
 
-            {/* Play Button */}
-            <button
-              onClick={handlePlay}
-              className={
-                'flex items-center gap-1 bg-primary text-white px-4 py-2 text-xs rounded-lg ' +
-                'font-medium hover:bg-secondary transition-colors min-w-[60px] min-h-[32px] active:bg-red-700'
-              }
-              aria-label={`Play ${episode.title}`}
-            >
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-              Play
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Match percentage for recommendations */}
+              {recommendationScore !== undefined && (
+                <button
+                  onClick={handleAIExplanation}
+                  className="bg-primary text-white px-2 py-1 rounded-full text-xs font-medium hover:bg-secondary transition-colors active:bg-red-700"
+                  title="Click for AI explanation of this recommendation"
+                >
+                  {(recommendationScore * 100).toFixed(0)}%
+                </button>
+              )}
+
+              {/* Play Button */}
+              <button
+                onClick={handlePlay}
+                className={
+                  'flex items-center gap-1 bg-primary text-white px-4 py-2 text-xs rounded-lg ' +
+                  'font-medium hover:bg-secondary transition-colors min-w-[60px] min-h-[32px] active:bg-red-700'
+                }
+                aria-label={`Play ${episode.title}`}
+              >
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                Play
+              </button>
+            </div>
           </div>
 
           {/* Progress Indicator */}
@@ -153,7 +174,9 @@ export const EpisodeCard = React.memo(EpisodeCardComponent, (prevProps, nextProp
     prevProps.episode.playbackPosition === nextProps.episode.playbackPosition &&
     prevProps.podcastImageUrl === nextProps.podcastImageUrl &&
     prevProps.onPlay === nextProps.onPlay &&
-    prevProps.onAIExplanation === nextProps.onAIExplanation
+    prevProps.onAIExplanation === nextProps.onAIExplanation &&
+    prevProps.recommendationScore === nextProps.recommendationScore &&
+    prevProps.referrer === nextProps.referrer
   )
 })
 
