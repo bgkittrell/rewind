@@ -53,7 +53,7 @@ This document outlines the complete deployment strategy for the Rewind podcast a
 **Frontend (.env.production):**
 
 ```
-VITE_API_BASE_URL=https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1
+VITE_API_BASE_URL=https://bds33eqtv5.execute-api.us-east-1.amazonaws.com/prod
 VITE_AWS_REGION=us-east-1
 VITE_USER_POOL_ID=[FROM_CDK_OUTPUT]
 VITE_USER_POOL_CLIENT_ID=[FROM_CDK_OUTPUT]

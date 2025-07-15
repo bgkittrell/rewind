@@ -9,7 +9,7 @@ This guide provides comprehensive instructions for deploying the Rewind podcast 
 ### ✅ Production Deployment (LIVE)
 
 - **Frontend URL**: https://rewindpodcast.com (CloudFront distribution)
-- **API Base URL**: https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1
+- **API Base URL**: https://bds33eqtv5.execute-api.us-east-1.amazonaws.com/prod
 - **Authentication**: Amazon Cognito User Pool (fully configured)
 - **Database**: DynamoDB tables deployed and operational
 - **CI/CD**: Automated deployment on merge to main branch
@@ -246,7 +246,7 @@ The deployment script creates `frontend/.env.production` with these variables:
 
 ```bash
 # Auto-generated during deployment - DO NOT MODIFY
-VITE_API_BASE_URL=https://12c77xnz00.execute-api.us-east-1.amazonaws.com/v1
+VITE_API_BASE_URL=https://bds33eqtv5.execute-api.us-east-1.amazonaws.com/prod
 VITE_AWS_REGION=us-east-1
 VITE_USER_POOL_ID=us-east-1_Cw78Mapt3
 VITE_USER_POOL_CLIENT_ID=49kf2uvsl9vg08ka6o67ts41jj
