@@ -1,6 +1,7 @@
 import { BedrockRuntimeClient, InvokeModelCommand, InvokeModelCommandInput } from '@aws-sdk/client-bedrock-runtime'
 import { GuestExtractionRequest, GuestExtractionResult } from '../types'
 import { logger } from './loggerService'
+import { cloudWatchMetricsService } from './cloudWatchMetricsService'
 
 export class BedrockService {
   private client: BedrockRuntimeClient
@@ -16,6 +17,8 @@ export class BedrockService {
    * Extract guest names from podcast episode title and description using AWS Bedrock
    */
   async extractGuests(request: GuestExtractionRequest): Promise<GuestExtractionResult> {
+    const startTime = Date.now()
+
     try {
       const prompt = this.buildGuestExtractionPrompt(request.title, request.description)
 
@@ -46,14 +49,41 @@ export class BedrockService {
       const responseBody = JSON.parse(new TextDecoder().decode(response.body))
       const rawResponse = responseBody.content[0].text
 
-      return this.parseGuestExtractionResponse(rawResponse)
+      const result = this.parseGuestExtractionResponse(rawResponse)
+
+      // Calculate metrics
+      const inputTokens = this.estimateTokens(prompt)
+      const outputTokens = this.estimateTokens(rawResponse)
+      const cost = this.calculateCost(inputTokens, outputTokens)
+
+      // Publish Bedrock API metrics
+      await cloudWatchMetricsService.publishBedrockApiMetrics({
+        inputTokens,
+        outputTokens,
+        cost,
+        model: this.modelId,
+      })
+
+      return result
     } catch (error) {
       logger.error('Error extracting guests with Bedrock:', error)
+
+      // Publish error metrics
+      const processingTime = Date.now() - startTime
+      await cloudWatchMetricsService.publishBedrockApiMetrics({
+        inputTokens: 0,
+        outputTokens: 0,
+        cost: 0,
+        model: this.modelId,
+      })
+
       return {
         guests: [],
         confidence: 0,
         reasoning: 'Error occurred during guest extraction',
         rawResponse: error instanceof Error ? error.message : 'Unknown error',
+        success: false,
+        episodeId: request.episodeId,
       }
     }
   }
@@ -179,6 +209,26 @@ Respond only with the JSON object, no additional text.`
     }
 
     return results
+  }
+
+  /**
+   * Estimate token count for text (rough approximation)
+   */
+  private estimateTokens(text: string): number {
+    // Rough approximation: 1 token ≈ 4 characters for English text
+    return Math.ceil(text.length / 4)
+  }
+
+  /**
+   * Calculate cost for Claude 3 Haiku model
+   */
+  private calculateCost(inputTokens: number, outputTokens: number): number {
+    // Claude 3 Haiku pricing (as of 2024):
+    // Input: $0.25 per 1M tokens
+    // Output: $1.25 per 1M tokens
+    const inputCost = (inputTokens / 1000000) * 0.25
+    const outputCost = (outputTokens / 1000000) * 1.25
+    return inputCost + outputCost
   }
 }
 

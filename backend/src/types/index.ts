@@ -165,6 +165,8 @@ export interface GuestExtractionResult {
   confidence: number
   reasoning: string
   rawResponse: string
+  success?: boolean
+  episodeId?: string
 }
 
 export interface RecommendationFilters {

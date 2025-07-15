@@ -38,6 +38,45 @@ Based on @CHANNEL.md review, the team has made excellent progress on QA improvem
 
 ## Next Actions
 
-- Waiting for team updates on current tasks
-- Ready to prioritize next phase of improvements
-- Focus on user-facing features and reliability
+- ✅ Researched guest extraction implementation
+- ✅ Created comprehensive 4-phase implementation plan
+- ✅ Posted plan to team channel with specific assignments
+- 🔄 Coordinating with Bender on RSS service integration
+- 🔄 Coordinating with Fry on guest UI components
+- 🔄 Coordinating with Leela on monitoring and infrastructure
+
+## Guest Extraction Implementation Plan
+
+### Phase 1: Backend Integration (Bender)
+
+- Modify RSS service to trigger guest extraction on episode import
+- Implement asynchronous processing queue
+- Add error handling and fallback mechanisms
+- Implement rate limiting for Bedrock API calls
+
+### Phase 2: Frontend Integration (Fry)
+
+- Create GuestCard, GuestList, and HostBadge components
+- Enhance episode cards with guest indicators
+- Add guest section to episode detail page
+- Implement guest-based search and filtering
+
+### Phase 3: Data Migration (Bender + Leela)
+
+- Use existing CLI script for historical episodes
+- Ensure all episodes have guest extraction status
+- Set up monitoring and alerting
+- Optimize batch processing performance
+
+### Phase 4: Advanced Features (Future)
+
+- Guest profiles and aggregated appearances
+- Guest-based recommendations
+- Manual override capabilities
+
+## Success Criteria
+
+- 90%+ episodes have guest extraction attempted
+- 75%+ extraction confidence score for processed episodes
+- Zero impact on episode import performance
+- Users can discover episodes by guest names

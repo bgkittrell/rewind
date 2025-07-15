@@ -365,6 +365,9 @@ export class DynamoService {
       episode.tags = episodeData.tags
     }
 
+    // Set initial guest extraction status for new episodes
+    episode.guestExtractionStatus = 'pending'
+
     const params = {
       TableName: EPISODES_TABLE,
       Item: marshall(episode, {
@@ -851,6 +854,57 @@ export class DynamoService {
     } catch (error) {
       logger.error('Error updating episode audio URL:', error)
       return null
+    }
+  }
+
+  /**
+   * Updates episode with guest extraction results
+   */
+  async updateEpisodeGuestExtraction(
+    episodeId: string,
+    extractedGuests: string[],
+    confidence: number,
+    status: 'pending' | 'completed' | 'failed',
+  ): Promise<void> {
+    try {
+      // Get podcast ID from episode ID (we need both for the composite key)
+      const episode = await this.getEpisodeById(episodeId)
+      if (!episode) {
+        throw new Error(`Episode ${episodeId} not found`)
+      }
+
+      const updateExpression = 'SET guestExtractionStatus = :status, guestExtractionDate = :date'
+      const expressionAttributeValues: any = {
+        ':status': status,
+        ':date': new Date().toISOString(),
+      }
+
+      let finalUpdateExpression = updateExpression
+
+      // Only add guest data if extraction was successful
+      if (status === 'completed' && extractedGuests.length > 0) {
+        finalUpdateExpression += ', extractedGuests = :guests, guestExtractionConfidence = :confidence'
+        expressionAttributeValues[':guests'] = extractedGuests
+        expressionAttributeValues[':confidence'] = confidence
+      }
+
+      const params = {
+        TableName: EPISODES_TABLE,
+        Key: marshall({
+          podcastId: episode.podcastId,
+          episodeId: episodeId,
+        }),
+        UpdateExpression: finalUpdateExpression,
+        ExpressionAttributeValues: marshall(expressionAttributeValues),
+        ReturnValues: ReturnValue.NONE,
+      }
+
+      await this.dynamoClient.send(new UpdateItemCommand(params))
+
+      logger.info(`Updated episode ${episodeId} guest extraction status to ${status}`)
+    } catch (error) {
+      logger.error(`Error updating episode ${episodeId} guest extraction:`, error)
+      throw error
     }
   }
 }
