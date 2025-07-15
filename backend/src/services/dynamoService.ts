@@ -821,6 +821,38 @@ export class DynamoService {
       throw new Error('Failed to fix episode image URLs')
     }
   }
+
+  // Update episode audio URL specifically (for token refresh)
+  async updateEpisodeAudioUrl(podcastId: string, episodeId: string, newAudioUrl: string): Promise<Episode | null> {
+    const now = new Date().toISOString()
+
+    const params = {
+      TableName: EPISODES_TABLE,
+      Key: marshall({
+        podcastId,
+        episodeId,
+      }),
+      UpdateExpression: 'SET audioUrl = :audioUrl, updatedAt = :updatedAt',
+      ExpressionAttributeValues: marshall({
+        ':audioUrl': newAudioUrl,
+        ':updatedAt': now,
+      }),
+      ReturnValues: ReturnValue.ALL_NEW,
+    }
+
+    try {
+      const result = await this.dynamoClient.send(new UpdateItemCommand(params))
+
+      if (!result.Attributes) {
+        return null
+      }
+
+      return unmarshall(result.Attributes) as Episode
+    } catch (error) {
+      logger.error('Error updating episode audio URL:', error)
+      return null
+    }
+  }
 }
 
 export const dynamoService = new DynamoService()

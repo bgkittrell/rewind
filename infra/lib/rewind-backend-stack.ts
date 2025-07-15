@@ -19,6 +19,8 @@ export class RewindBackendStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: RewindBackendStackProps) {
     super(scope, id, props)
 
+    const allowedOrigins =
+      'http://localhost:5173,http://localhost:3000,https://rewind-production.com,https://d1bpz7t7ooyig6.cloudfront.net'
     // Create Lambda function for podcast operations
     const podcastFunction = new NodejsFunction(this, 'PodcastHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -32,6 +34,7 @@ export class RewindBackendStack extends cdk.Stack {
         SHARES_TABLE: props.tables.shares.tableName,
         USER_POOL_ID: props.userPool.userPoolId,
         USER_POOL_CLIENT_ID: props.userPoolClient.userPoolClientId,
+        ALLOWED_ORIGINS: allowedOrigins,
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
@@ -50,6 +53,7 @@ export class RewindBackendStack extends cdk.Stack {
         USERS_TABLE: props.tables.users.tableName,
         USER_POOL_ID: props.userPool.userPoolId,
         USER_POOL_CLIENT_ID: props.userPoolClient.userPoolClientId,
+        ALLOWED_ORIGINS: allowedOrigins,
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
@@ -68,6 +72,7 @@ export class RewindBackendStack extends cdk.Stack {
         PODCASTS_TABLE: props.tables.podcasts.tableName,
         EPISODES_TABLE: props.tables.episodes.tableName,
         LISTENING_HISTORY_TABLE: props.tables.listeningHistory.tableName,
+        ALLOWED_ORIGINS: allowedOrigins,
       },
       timeout: cdk.Duration.seconds(60), // Longer timeout for RSS parsing
       memorySize: 512, // More memory for episode processing
@@ -89,6 +94,8 @@ export class RewindBackendStack extends cdk.Stack {
         GUEST_ANALYTICS_TABLE: props.tables.guestAnalytics.tableName,
         USER_FEEDBACK_TABLE: props.tables.userFeedback.tableName,
         PODCASTS_TABLE: props.tables.podcasts.tableName,
+        RATE_LIMIT_TABLE: props.tables.rateLimit.tableName,
+        ALLOWED_ORIGINS: allowedOrigins,
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 1024, // More memory for AI processing
@@ -106,6 +113,7 @@ export class RewindBackendStack extends cdk.Stack {
       environment: {
         PODCASTS_TABLE: props.tables.podcasts.tableName,
         EPISODES_TABLE: props.tables.episodes.tableName,
+        ALLOWED_ORIGINS: allowedOrigins,
       },
       timeout: cdk.Duration.seconds(10),
       memorySize: 512, // Balanced for performance/cost
@@ -124,6 +132,10 @@ export class RewindBackendStack extends cdk.Stack {
         resources: [
           `arn:aws:bedrock:${cdk.Stack.of(this).region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0`,
           `arn:aws:bedrock:${cdk.Stack.of(this).region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}::foundation-model/anthropic.claude-sonnet-4-20250514-v1:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:inference-profile/us.anthropic.claude-sonnet-4-20250514-v1:0`,
+          `arn:aws:bedrock:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0`,
         ],
       }),
     )
@@ -146,6 +158,7 @@ export class RewindBackendStack extends cdk.Stack {
     props.tables.guestAnalytics.grantReadWriteData(recommendationFunction)
     props.tables.userFeedback.grantReadWriteData(recommendationFunction)
     props.tables.podcasts.grantReadData(recommendationFunction)
+    props.tables.rateLimit.grantReadWriteData(recommendationFunction)
 
     // Grant specific permissions to search function
     props.tables.podcasts.grantReadData(searchFunction)
@@ -256,6 +269,13 @@ export class RewindBackendStack extends cdk.Stack {
     // POST /episodes/{podcastId}/fix-images - Fix episode image URLs
     const fixImages = episodesByPodcast.addResource('fix-images')
     fixImages.addMethod('POST', new apigateway.LambdaIntegration(episodeFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // POST /episodes/refresh-url - Refresh episode audio URL
+    const refreshUrl = episodes.addResource('refresh-url')
+    refreshUrl.addMethod('POST', new apigateway.LambdaIntegration(episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })

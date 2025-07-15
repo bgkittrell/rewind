@@ -4,6 +4,7 @@ import { rssService } from '../services/rssService'
 import { dynamoService } from '../services/dynamoService'
 import { logger } from '../services/loggerService'
 import { withLogging } from '../utils/middleware'
+import crypto from 'crypto'
 
 const episodeHandler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const headers = createCorsHeaders()
@@ -57,6 +58,8 @@ const episodeHandler = async (event: APIGatewayProxyEvent, context: Context): Pr
           return await syncEpisodes(event.pathParameters?.podcastId, userId, path)
         } else if (path.includes('/fix-images')) {
           return await fixEpisodeImages(event.pathParameters?.podcastId, userId, path)
+        } else if (path.includes('/refresh-url')) {
+          return await refreshEpisodeUrl(event.body, userId, path)
         }
         break
 
@@ -454,6 +457,170 @@ async function getEpisodeByIdWithPodcast(
   } catch (error) {
     logger.error('Error getting episode:', error)
     return createErrorResponse('Failed to get episode', 'INTERNAL_ERROR', 500, path)
+  }
+}
+
+async function refreshEpisodeUrl(body: string | null, userId: string, path: string): Promise<APIGatewayProxyResult> {
+  logger.info('refreshEpisodeUrl called with:', { body, userId, path })
+
+  if (!body) {
+    logger.error('No request body provided')
+    return createErrorResponse('Request body is required', 'VALIDATION_ERROR', 400, path)
+  }
+
+  try {
+    const requestData = JSON.parse(body)
+    logger.info('Parsed request data:', requestData)
+
+    const { episodeId, podcastId } = requestData
+
+    if (!episodeId || !podcastId) {
+      logger.error('Missing required fields:', { episodeId, podcastId })
+      return createErrorResponse('Episode ID and Podcast ID are required', 'VALIDATION_ERROR', 400, path)
+    }
+
+    logger.info('Refreshing episode URL:', { episodeId, podcastId, userId })
+
+    // First, verify the podcast belongs to the user
+    const userPodcasts = await dynamoService.getPodcastsByUser(userId)
+    const podcast = userPodcasts.find(p => p.podcastId === podcastId)
+
+    if (!podcast) {
+      return createErrorResponse('Podcast not found or access denied', 'NOT_FOUND', 404, path)
+    }
+
+    // Get the episode from the database first to find its naturalKey
+    const existingEpisode = await dynamoService.getEpisodeById(podcastId, episodeId)
+
+    if (!existingEpisode) {
+      return createErrorResponse('Episode not found in database', 'NOT_FOUND', 404, path)
+    }
+
+    logger.info('Found episode in database:', {
+      title: existingEpisode.title,
+      naturalKey: existingEpisode.naturalKey,
+      audioUrl: existingEpisode.audioUrl ? existingEpisode.audioUrl.substring(0, 50) + '...' : 'none',
+    })
+
+    // Fetch fresh RSS data
+    const rssEpisodes = await rssService.parseEpisodesFromFeed(podcast.rssUrl, 200)
+
+    if (!rssEpisodes || rssEpisodes.length === 0) {
+      return createErrorResponse('Failed to fetch RSS feed', 'RSS_FETCH_ERROR', 500, path)
+    }
+
+    logger.info('Fetched RSS episodes:', {
+      count: rssEpisodes.length,
+      firstEpisode: rssEpisodes[0]
+        ? {
+            title: rssEpisodes[0].title,
+            releaseDate: rssEpisodes[0].releaseDate,
+            audioUrl: rssEpisodes[0].audioUrl ? rssEpisodes[0].audioUrl.substring(0, 50) + '...' : 'none',
+          }
+        : 'none',
+    })
+
+    // Find the episode in the RSS feed by naturalKey
+    const rssEpisode = rssEpisodes.find(ep => {
+      // Generate naturalKey for RSS episode to match against database episode
+      // This mirrors the exact logic in DynamoService.generateNaturalKey()
+      const normalizedTitle = (ep.title || 'untitled').toLowerCase().trim()
+
+      // Process releaseDate the same way as in DynamoService with full fallback logic
+      let releaseDate: string
+      try {
+        if (!ep.releaseDate || ep.releaseDate.trim() === '') {
+          releaseDate = '1900-01-01'
+        } else {
+          const dateStr = ep.releaseDate.trim()
+          const dateObj = new Date(dateStr)
+
+          // Check for valid date
+          if (isNaN(dateObj.getTime())) {
+            // Try parsing as timestamp if it's a number
+            const timestamp = parseInt(dateStr, 10)
+            if (!isNaN(timestamp) && timestamp > 0) {
+              const timestampDate = new Date(timestamp * 1000) // Assume seconds, convert to ms
+              if (!isNaN(timestampDate.getTime())) {
+                releaseDate = timestampDate.toISOString().split('T')[0]
+              } else {
+                releaseDate = '1900-01-01'
+              }
+            } else {
+              // Try basic date parsing patterns
+              const cleanDateStr = dateStr.replace(/[^\d-/]/g, '')
+              const fallbackDate = new Date(cleanDateStr)
+              if (!isNaN(fallbackDate.getTime())) {
+                releaseDate = fallbackDate.toISOString().split('T')[0]
+              } else {
+                releaseDate = '1900-01-01'
+              }
+            }
+          } else {
+            // Valid date object
+            releaseDate = dateObj.toISOString().split('T')[0]
+          }
+        }
+      } catch (error) {
+        logger.warn('Error parsing release date in refresh endpoint', { releaseDate: ep.releaseDate, error })
+        releaseDate = '1900-01-01'
+      }
+
+      // Generate the same MD5 hash as DynamoService
+      const keyData = `${normalizedTitle}:${releaseDate}`
+      const naturalKey = crypto.createHash('md5').update(keyData).digest('hex')
+      const matches = naturalKey === existingEpisode.naturalKey
+
+      // Debug logging for the first few episodes
+      if (rssEpisodes.indexOf(ep) < 3) {
+        logger.info('RSS episode naturalKey comparison:', {
+          episodeTitle: ep.title,
+          normalizedTitle,
+          releaseDate,
+          keyData,
+          naturalKey,
+          targetNaturalKey: existingEpisode.naturalKey,
+          matches,
+        })
+      }
+
+      return matches
+    })
+
+    if (!rssEpisode) {
+      return createErrorResponse('Episode not found in RSS feed', 'NOT_FOUND', 404, path)
+    }
+
+    // Update the episode in the database with fresh URL
+    const updatedEpisode = await dynamoService.updateEpisodeAudioUrl(podcastId, episodeId, rssEpisode.audioUrl)
+
+    if (!updatedEpisode) {
+      return createErrorResponse('Failed to update episode URL', 'UPDATE_ERROR', 500, path)
+    }
+
+    logger.info('Episode URL refreshed successfully:', {
+      episodeId,
+      oldUrl: 'hidden',
+      newUrl: 'hidden',
+    })
+
+    return createSuccessResponse(
+      {
+        episodeId,
+        audioUrl: rssEpisode.audioUrl,
+        refreshedAt: new Date().toISOString(),
+      },
+      200,
+      path,
+    )
+  } catch (error) {
+    logger.error('Error refreshing episode URL:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      path,
+      userId,
+    })
+    return createErrorResponse('Failed to refresh episode URL', 'INTERNAL_ERROR', 500, path)
   }
 }
 

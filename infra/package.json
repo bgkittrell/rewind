@@ -9,6 +9,7 @@
     "test": "jest --passWithNoTests",
     "cdk": "cdk",
     "deploy": "cdk deploy --all --require-approval never",
+    "deploy-frontend": "cd ../frontend && npm run build && aws s3 sync dist/ s3://$(aws cloudformation describe-stacks --stack-name RewindFrontendStack --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)/ --delete && aws cloudfront create-invalidation --distribution-id $(aws cloudformation describe-stacks --stack-name RewindFrontendStack --query 'Stacks[0].Outputs[?OutputKey==`DistributionId`].OutputValue' --output text) --paths '/*'",
     "destroy": "cdk destroy --all",
     "synth": "cdk synth",
     "diff": "cdk diff"
