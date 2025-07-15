@@ -1,5 +1,5 @@
 import { CloudWatchClient, PutMetricDataCommand } from '@aws-sdk/client-cloudwatch'
-import { logger } from './logger'
+import { logger } from '../services/loggerService'
 
 export interface GuestExtractionMetrics {
   episodeId: string
@@ -42,7 +42,7 @@ export class GuestExtractionMetricsService {
         {
           MetricName: 'TotalExtractions',
           Value: 1,
-          Unit: 'Count',
+          Unit: 'Count' as const,
           Timestamp: timestamp,
           Dimensions: [
             { Name: 'Environment', Value: this.environment },
@@ -52,7 +52,7 @@ export class GuestExtractionMetricsService {
         {
           MetricName: metrics.success ? 'SuccessfulExtractions' : 'FailedExtractions',
           Value: 1,
-          Unit: 'Count',
+          Unit: 'Count' as const,
           Timestamp: timestamp,
           Dimensions: [{ Name: 'Environment', Value: this.environment }],
         },
@@ -61,14 +61,14 @@ export class GuestExtractionMetricsService {
         {
           MetricName: 'SuccessRate',
           Value: metrics.success ? 100 : 0,
-          Unit: 'Percent',
+          Unit: 'Percent' as const,
           Timestamp: timestamp,
           Dimensions: [{ Name: 'Environment', Value: this.environment }],
         },
         {
           MetricName: 'FailureRate',
           Value: metrics.success ? 0 : 100,
-          Unit: 'Percent',
+          Unit: 'Percent' as const,
           Timestamp: timestamp,
           Dimensions: [{ Name: 'Environment', Value: this.environment }],
         },
@@ -77,7 +77,7 @@ export class GuestExtractionMetricsService {
         {
           MetricName: 'ExtractionLatency',
           Value: extractionLatency,
-          Unit: 'Milliseconds',
+          Unit: 'Milliseconds' as const,
           Timestamp: timestamp,
           Dimensions: [{ Name: 'Environment', Value: this.environment }],
         },
@@ -89,7 +89,7 @@ export class GuestExtractionMetricsService {
           metricData.push({
             MetricName: 'ExtractionConfidence',
             Value: metrics.confidence,
-            Unit: 'Percent',
+            Unit: 'Percent' as const,
             Timestamp: timestamp,
             Dimensions: [{ Name: 'Environment', Value: this.environment }],
           })
@@ -99,7 +99,7 @@ export class GuestExtractionMetricsService {
           metricData.push({
             MetricName: 'GuestCount',
             Value: metrics.extractedGuestCount,
-            Unit: 'Count',
+            Unit: 'Count' as const,
             Timestamp: timestamp,
             Dimensions: [{ Name: 'Environment', Value: this.environment }],
           })
@@ -111,7 +111,7 @@ export class GuestExtractionMetricsService {
         metricData.push({
           MetricName: `${metrics.errorType}Errors`,
           Value: 1,
-          Unit: 'Count',
+          Unit: 'Count' as const,
           Timestamp: timestamp,
           Dimensions: [
             { Name: 'Environment', Value: this.environment },
@@ -125,7 +125,7 @@ export class GuestExtractionMetricsService {
         metricData.push({
           MetricName: 'BedrockApiCalls',
           Value: metrics.bedrockApiCalls,
-          Unit: 'Count',
+          Unit: 'Count' as const,
           Timestamp: timestamp,
           Dimensions: [{ Name: 'Environment', Value: this.environment }],
         })
@@ -135,7 +135,7 @@ export class GuestExtractionMetricsService {
         metricData.push({
           MetricName: 'BedrockApiErrors',
           Value: metrics.bedrockApiErrors,
-          Unit: 'Count',
+          Unit: 'Count' as const,
           Timestamp: timestamp,
           Dimensions: [{ Name: 'Environment', Value: this.environment }],
         })
@@ -146,7 +146,7 @@ export class GuestExtractionMetricsService {
         metricData.push({
           MetricName: 'EstimatedCost',
           Value: metrics.estimatedCost,
-          Unit: 'None', // USD
+          Unit: 'Count' as const, // USD cost metric
           Timestamp: timestamp,
           Dimensions: [{ Name: 'Environment', Value: this.environment }],
         })
@@ -156,7 +156,7 @@ export class GuestExtractionMetricsService {
         metricData.push({
           MetricName: 'TokensUsed',
           Value: metrics.tokensUsed,
-          Unit: 'Count',
+          Unit: 'Count' as const,
           Timestamp: timestamp,
           Dimensions: [{ Name: 'Environment', Value: this.environment }],
         })

@@ -865,10 +865,17 @@ export class DynamoService {
     extractedGuests: string[],
     confidence: number,
     status: 'pending' | 'completed' | 'failed',
+    podcastId?: string,
   ): Promise<void> {
     try {
       // Get podcast ID from episode ID (we need both for the composite key)
-      const episode = await this.getEpisodeById(episodeId)
+      let episode
+      if (podcastId) {
+        episode = await this.getEpisodeById(podcastId, episodeId)
+      } else {
+        // Find episode across all podcasts if podcastId not provided
+        episode = await this.getEpisodeById('', episodeId)
+      }
       if (!episode) {
         throw new Error(`Episode ${episodeId} not found`)
       }

@@ -221,12 +221,6 @@ export class RewindMonitoringStack extends cdk.Stack {
         width: 12,
         height: 6,
         period: cdk.Duration.minutes(5),
-        yAxis: {
-          left: {
-            min: 0,
-            max: 100,
-          },
-        },
       }),
       new cloudwatch.GraphWidget({
         title: 'Episodes Processed',
@@ -245,11 +239,6 @@ export class RewindMonitoringStack extends cdk.Stack {
         width: 12,
         height: 6,
         period: cdk.Duration.minutes(5),
-        yAxis: {
-          left: {
-            label: 'Milliseconds',
-          },
-        },
       }),
       new cloudwatch.GraphWidget({
         title: 'Success vs Failure Count',
@@ -268,11 +257,6 @@ export class RewindMonitoringStack extends cdk.Stack {
         width: 24,
         height: 6,
         period: cdk.Duration.hours(1),
-        yAxis: {
-          left: {
-            label: 'USD',
-          },
-        },
       }),
     )
 

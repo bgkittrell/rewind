@@ -11,3 +11,5 @@ Then check @CHANNEL.md to see what the current project status is.
 Once you have this gathered then wait for further instruction.
 
 Note: If you're waiting for someone else to post in the channel, sleep in 30 second intervals until an update is posted.
+
+CRITICAL: Every time you stop your work, you should wait for channel updates

@@ -686,7 +686,7 @@ async function processGuestExtractionBatch(episodes: Episode[]): Promise<void> {
 
       try {
         await dynamoService.updateEpisodeGuestExtraction(
-          result.episodeId,
+          result.episodeId || '',
           result.guests,
           result.confidence,
           result.success ? 'completed' : 'failed',
@@ -696,8 +696,8 @@ async function processGuestExtractionBatch(episodes: Episode[]): Promise<void> {
 
         // Publish individual episode metrics
         await cloudWatchMetricsService.publishGuestExtractionMetrics({
-          episodeId: result.episodeId,
-          success: result.success,
+          episodeId: result.episodeId || '',
+          success: result.success || false,
           processingTime,
           guestCount: result.guests.length,
           confidence: result.confidence,
@@ -715,7 +715,7 @@ async function processGuestExtractionBatch(episodes: Episode[]): Promise<void> {
 
         // Publish failure metrics
         await cloudWatchMetricsService.publishGuestExtractionMetrics({
-          episodeId: result.episodeId,
+          episodeId: result.episodeId || '',
           success: false,
           processingTime: Date.now() - episodeStartTime,
           guestCount: 0,
