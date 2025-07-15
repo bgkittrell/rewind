@@ -8,10 +8,10 @@ This document outlines the third-party services and integrations used in Rewind,
 
 ### Configuration
 
-- **User Pool ID**: Configured via environment variable `COGNITO_USER_POOL_ID`
-- **Client ID**: Frontend application identifier via `COGNITO_CLIENT_ID`
-- **Region**: AWS region for Cognito service via `COGNITO_REGION`
-- **Identity Pool ID**: Optional for federated identities via `COGNITO_IDENTITY_POOL_ID`
+- **User Pool ID**: Configured via environment variable `USER_POOL_ID`
+- **Client ID**: Frontend application identifier via `USER_POOL_CLIENT_ID`
+- **Region**: AWS region for Cognito service via `AWS_REGION`
+- **Identity Pool ID**: Optional for federated identities via `IDENTITY_POOL_ID`
 
 ### Implementation
 
@@ -178,19 +178,19 @@ This document outlines the third-party services and integrations used in Rewind,
 ### Development Environment
 
 ```bash
-COGNITO_USER_POOL_ID=us-east-1_devABCDEF
-COGNITO_CLIENT_ID=dev_client_id_abcdefghijk
-COGNITO_REGION=us-east-1
-COGNITO_IDENTITY_POOL_ID=us-east-1:12345678-1234-1234-1234-123456789012
+USER_POOL_ID=us-east-1_devABCDEF
+USER_POOL_CLIENT_ID=dev_client_id_abcdefghijk
+AWS_REGION=us-east-1
+IDENTITY_POOL_ID=us-east-1:12345678-1234-1234-1234-123456789012
 ```
 
 ### Production Environment
 
 ```bash
-COGNITO_USER_POOL_ID=us-east-1_prodXYZ123
-COGNITO_CLIENT_ID=prod_client_id_lmnopqrstuv
-COGNITO_REGION=us-east-1
-COGNITO_IDENTITY_POOL_ID=us-east-1:87654321-4321-4321-4321-210987654321
+USER_POOL_ID=us-east-1_prodXYZ123
+USER_POOL_CLIENT_ID=prod_client_id_lmnopqrstuv
+AWS_REGION=us-east-1
+IDENTITY_POOL_ID=us-east-1:87654321-4321-4321-4321-210987654321
 ```
 
 ### Security Notes

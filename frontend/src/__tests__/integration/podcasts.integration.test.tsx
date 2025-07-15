@@ -9,7 +9,7 @@ import App from '../../App'
 // Set up MSW server
 import './setup/mswServer'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 
 describe.skip('Podcast Integration Tests', () => {
   beforeEach(() => {

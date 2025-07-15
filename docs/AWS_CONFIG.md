@@ -305,9 +305,9 @@ export class RewindBackendStack extends cdk.Stack {
     // JWT Authorizer for Amazon Cognito
     const jwtAuthorizer = new apigateway.HttpJwtAuthorizer(
       'CognitoAuthorizer',
-      `https://cognito-idp.${this.region}.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`,
+      `https://cognito-idp.${this.region}.amazonaws.com/${process.env.USER_POOL_ID}`,
       {
-        jwtAudience: [process.env.COGNITO_CLIENT_ID],
+        jwtAudience: [process.env.USER_POOL_CLIENT_ID],
       },
     )
 
@@ -552,8 +552,8 @@ export class RewindFrontendStack extends cdk.Stack {
 ## Environment Variables
 
 - **Required Environment Variables**:
-  - `COGNITO_USER_POOL_ID`: Cognito User Pool ID
-  - `COGNITO_CLIENT_ID`: Cognito App Client ID
+  - `USER_POOL_ID`: Cognito User Pool ID
+- `USER_POOL_CLIENT_ID`: Cognito App Client ID
   - `COGNITO_REGION`: AWS region for Cognito service
   - `CDK_DEFAULT_ACCOUNT`: AWS account ID
   - `CDK_DEFAULT_REGION`: AWS region (e.g., us-east-1)
