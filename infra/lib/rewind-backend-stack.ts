@@ -54,6 +54,10 @@ export class RewindBackendStack extends cdk.Stack {
         USERS_TABLE: props.tables.users.tableName,
         USER_POOL_ID: props.userPool.userPoolId,
         USER_POOL_CLIENT_ID: props.userPoolClient.userPoolClientId,
+        RATE_LIMIT_TABLE: props.tables.rateLimit.tableName,
+        LOG_LEVEL: 'INFO',
+        ALLOWED_ORIGINS: 'https://rewind-production.com,https://rewind-staging.com',
+        CSP_REPORT_URI: 'https://rewind-production.com/csp-report',
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
@@ -72,6 +76,10 @@ export class RewindBackendStack extends cdk.Stack {
         PODCASTS_TABLE: props.tables.podcasts.tableName,
         EPISODES_TABLE: props.tables.episodes.tableName,
         LISTENING_HISTORY_TABLE: props.tables.listeningHistory.tableName,
+        RATE_LIMIT_TABLE: props.tables.rateLimit.tableName,
+        LOG_LEVEL: 'INFO',
+        ALLOWED_ORIGINS: 'https://rewind-production.com,https://rewind-staging.com',
+        CSP_REPORT_URI: 'https://rewind-production.com/csp-report',
       },
       timeout: cdk.Duration.seconds(60), // Longer timeout for RSS parsing
       memorySize: 512, // More memory for episode processing
@@ -93,6 +101,10 @@ export class RewindBackendStack extends cdk.Stack {
         GUEST_ANALYTICS_TABLE: props.tables.guestAnalytics.tableName,
         USER_FEEDBACK_TABLE: props.tables.userFeedback.tableName,
         PODCASTS_TABLE: props.tables.podcasts.tableName,
+        RATE_LIMIT_TABLE: props.tables.rateLimit.tableName,
+        LOG_LEVEL: 'INFO',
+        ALLOWED_ORIGINS: 'https://rewind-production.com,https://rewind-staging.com',
+        CSP_REPORT_URI: 'https://rewind-production.com/csp-report',
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 1024, // More memory for AI processing
@@ -110,6 +122,10 @@ export class RewindBackendStack extends cdk.Stack {
       environment: {
         PODCASTS_TABLE: props.tables.podcasts.tableName,
         EPISODES_TABLE: props.tables.episodes.tableName,
+        RATE_LIMIT_TABLE: props.tables.rateLimit.tableName,
+        LOG_LEVEL: 'INFO',
+        ALLOWED_ORIGINS: 'https://rewind-production.com,https://rewind-staging.com',
+        CSP_REPORT_URI: 'https://rewind-production.com/csp-report',
       },
       timeout: cdk.Duration.seconds(10),
       memorySize: 512, // Balanced for performance/cost
@@ -142,6 +158,7 @@ export class RewindBackendStack extends cdk.Stack {
     props.tables.podcasts.grantReadData(episodeFunction)
     props.tables.episodes.grantReadWriteData(episodeFunction)
     props.tables.listeningHistory.grantReadWriteData(episodeFunction)
+    props.tables.rateLimit.grantReadWriteData(episodeFunction)
 
     // Grant specific permissions to recommendation function
     props.tables.episodes.grantReadData(recommendationFunction)
@@ -150,10 +167,12 @@ export class RewindBackendStack extends cdk.Stack {
     props.tables.guestAnalytics.grantReadWriteData(recommendationFunction)
     props.tables.userFeedback.grantReadWriteData(recommendationFunction)
     props.tables.podcasts.grantReadData(recommendationFunction)
+    props.tables.rateLimit.grantReadWriteData(recommendationFunction)
 
     // Grant specific permissions to search function
     props.tables.podcasts.grantReadData(searchFunction)
     props.tables.episodes.grantReadData(searchFunction)
+    props.tables.rateLimit.grantReadWriteData(searchFunction)
 
     // Create Cognito authorizer for API Gateway
     const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'RewindAuthorizer', {
