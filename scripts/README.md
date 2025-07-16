@@ -135,3 +135,61 @@ Each guest extraction costs approximately $0.00025 in Bedrock charges:
 - Never commit JWT tokens to version control
 - Use environment variables or credential files for tokens
 - Tokens should be treated as sensitive data and rotated regularly
+
+## Guest Extraction Queue Monitor
+
+### Overview
+
+The `monitor-guest-extraction-queue.sh` script provides real-time monitoring of the SQS guest extraction queue health and processing status.
+
+### Prerequisites
+
+- AWS CLI configured with appropriate credentials
+- Proper IAM permissions for SQS and CloudWatch
+
+### Usage
+
+```bash
+# Run continuous monitoring (refreshes every 30 seconds)
+./scripts/monitor-guest-extraction-queue.sh
+
+# Run once and exit
+./scripts/monitor-guest-extraction-queue.sh --once
+
+# Custom refresh interval
+./scripts/monitor-guest-extraction-queue.sh --interval 60
+
+# Show help
+./scripts/monitor-guest-extraction-queue.sh --help
+```
+
+### Features
+
+- **Real-time queue metrics** - Shows pending, processing, and failed messages
+- **Health indicators** - Color-coded status for quick assessment
+- **Message aging** - Alerts when messages are stuck in queue
+- **Dead letter queue monitoring** - Tracks failed processing attempts
+- **Processing load assessment** - Evaluates system capacity
+- **Quick action suggestions** - Provides relevant AWS CLI commands
+
+### Monitoring Metrics
+
+- **Pending Messages**: Messages waiting to be processed
+- **Processing Messages**: Messages currently being processed
+- **Failed Messages**: Messages in dead letter queue
+- **Message Age**: How long the oldest message has been in queue
+- **Processing Load**: Overall system capacity utilization
+
+### Status Indicators
+
+- 🟢 **GREEN**: Normal operation
+- 🟡 **YELLOW**: Warning conditions
+- 🔴 **RED**: Critical issues requiring attention
+
+### Quick Actions
+
+The script provides helpful commands for common operations:
+
+- Monitor Lambda logs in real-time
+- Inspect dead letter queue messages
+- Redrive failed messages back to main queue

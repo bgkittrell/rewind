@@ -8,7 +8,6 @@ import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import { Construct } from 'constructs'
 import * as path from 'path'
-import { EmergencyGuestExtractionMonitoring } from './emergency-guest-extraction-monitoring'
 
 export interface RewindBackendStackProps extends cdk.StackProps {
   tables: { [key: string]: dynamodb.Table }
@@ -18,7 +17,6 @@ export interface RewindBackendStackProps extends cdk.StackProps {
 
 export class RewindBackendStack extends cdk.Stack {
   public readonly apiUrl: string
-
   constructor(scope: Construct, id: string, props: RewindBackendStackProps) {
     super(scope, id, props)
 
@@ -213,12 +211,12 @@ export class RewindBackendStack extends cdk.Stack {
 
     const guestExtractionQueue = new sqs.Queue(this, 'GuestExtractionQueue', {
       queueName: 'guest-extraction-queue',
-      visibilityTimeout: cdk.Duration.seconds(900), // 15 minutes - increased for retry handling
+      visibilityTimeout: cdk.Duration.seconds(1800), // 30 minutes - increased for retry handling
       retentionPeriod: cdk.Duration.days(14),
       receiveMessageWaitTime: cdk.Duration.seconds(20), // Long polling
       deadLetterQueue: {
         queue: guestExtractionDLQ,
-        maxReceiveCount: 3,
+        maxReceiveCount: 4,
       },
     })
 
@@ -229,7 +227,6 @@ export class RewindBackendStack extends cdk.Stack {
       entry: path.join(__dirname, '../../backend/src/handlers/guestExtractionProcessor.ts'),
       timeout: cdk.Duration.minutes(5), // Increased timeout for retry handling
       memorySize: 1024,
-      reservedConcurrentExecutions: 2, // Limit concurrent executions to prevent rate limiting
       environment: {
         EPISODES_TABLE: props.tables.episodes.tableName,
         GUEST_EXTRACTION_QUEUE_URL: guestExtractionQueue.queueUrl,
@@ -273,6 +270,8 @@ export class RewindBackendStack extends cdk.Stack {
       new SqsEventSource(guestExtractionQueue, {
         batchSize: 1, // Process one message at a time for throttling
         maxBatchingWindow: cdk.Duration.seconds(5),
+        maxConcurrency: 2, // Limit to 2 concurrent Lambda executions (AWS minimum)
+        enabled: true,
       }),
     )
 
@@ -490,21 +489,6 @@ export class RewindBackendStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: this.apiUrl,
       description: 'API Gateway URL',
-    })
-
-    // Add emergency guest extraction monitoring
-    const emergencyMonitoring = new EmergencyGuestExtractionMonitoring(this, 'EmergencyGuestExtractionMonitoring', {
-      guestExtractionQueue: guestExtractionQueue,
-      guestExtractionDlq: guestExtractionDLQ,
-      guestExtractionProcessor: guestExtractionProcessor,
-      episodeHandler: episodeFunction,
-      podcastHandler: podcastFunction,
-    })
-
-    // Output emergency monitoring dashboard URL
-    new cdk.CfnOutput(this, 'EmergencyMonitoringDashboardUrl', {
-      value: `https://console.aws.amazon.com/cloudwatch/home?region=${this.region}#dashboards:name=EMERGENCY-Guest-Extraction-Pipeline-Monitoring`,
-      description: 'Emergency Guest Extraction Pipeline Monitoring Dashboard URL',
     })
   }
 }

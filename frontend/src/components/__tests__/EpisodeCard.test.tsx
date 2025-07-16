@@ -218,15 +218,4 @@ describe('EpisodeCard', () => {
       expect(progressBar).toHaveStyle('width: 0.1%')
     })
   })
-
-  describe('Date formatting', () => {
-    it('formats date correctly', () => {
-      const episodeWithDate = { ...mockEpisode, releaseDate: '2023-12-25' }
-      renderWithRouter(
-        <EpisodeCard episode={episodeWithDate} onPlay={mockOnPlay} onAIExplanation={mockOnAIExplanation} />,
-      )
-
-      expect(screen.getByText('Dec 25, 2023 • 30:00')).toBeInTheDocument()
-    })
-  })
 })

@@ -403,7 +403,7 @@ describe('BedrockService', () => {
       // Mock multiple responses for batch processing
       mockSend.mockResolvedValue(mockResponse)
 
-      const requests = Array.from({ length: 7 }, (_, i) => ({
+      const requests = Array.from({ length: 3 }, (_, i) => ({
         episodeId: `ep${i + 1}`,
         title: `Episode ${i + 1}`,
         description: `Description ${i + 1}`,
@@ -413,11 +413,11 @@ describe('BedrockService', () => {
       const results = await service.batchExtractGuests(requests)
       const endTime = Date.now()
 
-      expect(results).toHaveLength(7)
-      // Should have some delay between batches (batch size is 5)
-      expect(endTime - startTime).toBeGreaterThan(900) // At least 900ms delay
-      expect(mockSend).toHaveBeenCalledTimes(7)
-    })
+      expect(results).toHaveLength(3)
+      // Should have some delay between batches (batch size is 2, so 2 batches with 1 delay of 2s)
+      expect(endTime - startTime).toBeGreaterThan(1900) // At least 1900ms delay
+      expect(mockSend).toHaveBeenCalledTimes(3)
+    }, 10000)
 
     it('should handle empty batch request', async () => {
       const results = await service.batchExtractGuests([])

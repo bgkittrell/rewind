@@ -86,7 +86,16 @@ export class DynamoService {
     }
 
     try {
+      // First delete all episodes associated with this podcast
+      await this.deleteEpisodesByPodcast(podcastId)
+
+      // Then delete all listening history records for this podcast
+      await this.deleteListeningHistoryByPodcast(podcastId)
+
+      // Finally delete the podcast record
       await this.dynamoClient.send(new DeleteItemCommand(params))
+
+      logger.info(`Successfully deleted podcast ${podcastId} and all associated data`)
     } catch (error) {
       logger.error('Error deleting podcast:', error)
       if (error instanceof Error && error.name === 'ConditionalCheckFailedException') {
@@ -571,6 +580,61 @@ export class DynamoService {
     } catch (error) {
       logger.error('Error deleting episodes:', error)
       throw new Error('Failed to delete episodes')
+    }
+  }
+
+  async deleteListeningHistoryByPodcast(podcastId: string): Promise<void> {
+    try {
+      const batchSize = 25
+
+      // Scan for all listening history records with this podcastId
+      let lastEvaluatedKey: Record<string, any> | undefined
+
+      do {
+        const params = {
+          TableName: LISTENING_HISTORY_TABLE,
+          FilterExpression: 'podcastId = :podcastId',
+          ExpressionAttributeValues: marshall({
+            ':podcastId': podcastId,
+          }),
+          ExclusiveStartKey: lastEvaluatedKey,
+        }
+
+        const result = await this.dynamoClient.send(new ScanCommand(params))
+
+        if (!result.Items || result.Items.length === 0) {
+          break
+        }
+
+        // Delete in batches
+        for (let i = 0; i < result.Items.length; i += batchSize) {
+          const batch = result.Items.slice(i, i + batchSize)
+          const deleteRequests = batch.map(item => {
+            const unmarshalled = unmarshall(item)
+            return {
+              DeleteRequest: {
+                Key: marshall({
+                  userId: unmarshalled.userId,
+                  episodeId: unmarshalled.episodeId,
+                }),
+              },
+            }
+          })
+
+          const deleteParams = {
+            RequestItems: {
+              [LISTENING_HISTORY_TABLE]: deleteRequests,
+            },
+          }
+
+          await this.dynamoClient.send(new BatchWriteItemCommand(deleteParams))
+        }
+
+        lastEvaluatedKey = result.LastEvaluatedKey
+      } while (lastEvaluatedKey)
+    } catch (error) {
+      logger.error('Error deleting listening history:', error)
+      throw new Error('Failed to delete listening history')
     }
   }
 

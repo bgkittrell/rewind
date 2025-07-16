@@ -5,7 +5,10 @@ import { podcastService, Podcast } from '../services/podcastService'
 import { APIError } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useMediaPlayer } from '../context/MediaPlayerContext'
+import { AIExplanationModal } from '../components/AIExplanationModal'
 import type { Episode as MediaPlayerEpisode } from '../types/episode'
+import type { RecommendationScore } from '../services/recommendationService'
+import { useRecommendations } from '../hooks/useRecommendations'
 
 export default function EpisodeDetail() {
   const params = useParams<{ episodeId: string; podcastId?: string }>()
@@ -61,6 +64,8 @@ export default function EpisodeDetail() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [lastListenedDate, setLastListenedDate] = useState<string | null>(null)
   const [playbackProgress, setPlaybackProgress] = useState<number>(0)
+  const [isAISummaryModalOpen, setIsAISummaryModalOpen] = useState(false)
+  const [recommendation, setRecommendation] = useState<RecommendationScore | null>(null)
 
   // Load episode details
   useEffect(() => {
@@ -73,6 +78,11 @@ export default function EpisodeDetail() {
       loadEpisodeDetails()
     }
   }, [authLoading, isAuthenticated, episodeId, navigate])
+
+  const { recommendations } = useRecommendations({
+    isAuthenticated,
+    isLoading: authLoading,
+  })
 
   const loadEpisodeDetails = async () => {
     if (!episodeId) return
@@ -159,8 +169,9 @@ export default function EpisodeDetail() {
   }
 
   const handleAIExplanation = () => {
-    // TODO: Implement AI explanation modal
-    console.log('AI explanation for:', episode?.title)
+    const rec = recommendations.find(r => r.episodeId === episodeId)
+    setRecommendation(rec || null)
+    setIsAISummaryModalOpen(true)
   }
 
   const formatDate = (dateString: string) => {
@@ -418,6 +429,13 @@ export default function EpisodeDetail() {
           </div>
         </div>
       )}
+
+      {/* AI Summary Modal */}
+      <AIExplanationModal
+        isOpen={isAISummaryModalOpen}
+        onClose={() => setIsAISummaryModalOpen(false)}
+        recommendation={recommendation}
+      />
     </div>
   )
 }

@@ -52,32 +52,17 @@ function EpisodeCardComponent({
   }, [navigate, episode.podcastId, episode.episodeId, referrer])
 
   const formatDate = (dateString: string) => {
+    console.log('dateString', dateString)
     if (!dateString) return 'Date unknown'
-
-    try {
-      // Parse the date string and add timezone offset to avoid UTC conversion issues
-      const [year, month, day] = dateString.split('-').map(Number)
-
-      // Validate the parsed values
-      if (isNaN(year) || isNaN(month) || isNaN(day)) {
-        return 'Date unknown'
-      }
-
-      const date = new Date(year, month - 1, day)
-
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        return 'Date unknown'
-      }
-
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    } catch (error) {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) {
       return 'Date unknown'
     }
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
   }
 
   const hasProgress = episode.playbackPosition && episode.playbackPosition > 0
