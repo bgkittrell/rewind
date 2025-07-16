@@ -55,6 +55,12 @@ rewind-cursor/
 │   │   │   ├── EpisodeCard.tsx         # Episode display card
 │   │   │   ├── AddPodcastModal.tsx     # Add podcast modal
 │   │   │   ├── FloatingMediaPlayer.tsx # Media player component
+│   │   │   ├── EpisodeSyncIndicator.tsx # Episode sync status indicator
+│   │   │   ├── PWAUpdater.tsx          # PWA update notifications
+│   │   │   ├── Home/                   # Home page components
+│   │   │   ├── MediaPlayer/            # Media player sub-components
+│   │   │   ├── guest/                  # Guest-related components
+│   │   │   ├── ui/                     # Reusable UI components
 │   │   │   └── auth/                   # Authentication components
 │   │   │       ├── AuthModal.tsx       # Authentication modal
 │   │   │       ├── LoginForm.tsx       # Login form
@@ -69,10 +75,18 @@ rewind-cursor/
 │   │   │   ├── library.tsx             # User's podcast library
 │   │   │   ├── search.tsx              # Search for podcasts
 │   │   │   └── error-page.tsx          # Error boundary page
+│   │   ├── hooks/                      # Custom React hooks
+│   │   │   ├── useAudioPlayer.ts       # Audio player logic
+│   │   │   ├── useEpisodeSyncStatus.ts # Episode sync status
+│   │   │   └── useRecommendations.ts   # Recommendation data
 │   │   ├── services/                   # API and external services
 │   │   │   ├── api.ts                  # API client configuration
-│   │   │   └── podcastService.ts       # Podcast-related API calls
-│   │   └── mocks/                      # Mock data for development
+│   │   │   ├── podcastService.ts       # Podcast-related API calls
+│   │   │   ├── episodeService.ts       # Episode-related API calls
+│   │   │   ├── recommendationService.ts # Recommendation API calls
+│   │   │   └── resumeService.ts        # Resume/playback position
+│   │   ├── theme/                      # Theme and design tokens
+│   │   └── utils/                      # Utility functions
 │   ├── tests/                          # Test files
 │   │   └── e2e/                        # End-to-end tests
 │   │       └── app.spec.ts             # Main app E2E tests
@@ -91,11 +105,9 @@ rewind-cursor/
 │       │   ├── episodeHandler.ts       # Episode management endpoints
 │       │   ├── searchHandler.ts        # Search functionality
 │       │   ├── recommendationHandler.ts # Recommendation engine
+│       │   ├── episodeSyncProcessor.ts # Episode sync processor
+│       │   ├── guestExtractionProcessor.ts # Guest extraction processor
 │       │   └── __tests__/              # Handler tests
-│       │       ├── authHandler.test.ts # Auth handler tests
-│       │       ├── podcastHandler.test.ts # Podcast handler tests
-│       │       ├── episodeHandler.test.ts # Episode handler tests
-│       │       └── searchHandler.test.ts # Search handler tests
 │       ├── services/                   # Business logic services
 │       │   ├── dynamoService.ts        # DynamoDB operations
 │       │   ├── rssService.ts           # RSS feed processing
@@ -105,12 +117,17 @@ rewind-cursor/
 │       │   ├── recommendationService.ts # Recommendation logic
 │       │   ├── rateLimitService.ts     # Rate limiting
 │       │   ├── loggerService.ts        # Structured logging with correlation IDs
+│       │   ├── sqsService.ts           # SQS queue management
+│       │   ├── searchService.ts        # Search functionality
 │       │   └── __tests__/              # Service tests
 │       ├── types/                      # TypeScript type definitions
 │       │   └── index.ts                # Shared type definitions
+│       ├── validation/                 # Input validation schemas
+│       │   └── schemas.ts              # Validation schemas
 │       └── utils/                      # Utility functions
 │           ├── response.ts             # HTTP response utilities
-│           └── middleware.ts           # Request/response logging middleware
+│           ├── middleware.ts           # Request/response logging middleware
+│           └── searchUtils.ts          # Search utility functions
 ├── infra/                              # 🏗️ Infrastructure as Code (AWS CDK)
 │   ├── package.json                    # CDK dependencies
 │   ├── tsconfig.json                   # TypeScript configuration

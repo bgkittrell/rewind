@@ -6,6 +6,7 @@ import { APIError } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useMediaPlayer } from '../context/MediaPlayerContext'
 import { AIExplanationModal } from '../components/AIExplanationModal'
+import { GuestList } from '../components/guest/GuestList'
 import type { Episode as MediaPlayerEpisode } from '../types/episode'
 import type { RecommendationScore } from '../services/recommendationService'
 import { useRecommendations } from '../hooks/useRecommendations'
@@ -205,6 +206,26 @@ export default function EpisodeDetail() {
     }
   }
 
+  // Transform guest names into Guest objects for the GuestList component
+  const transformGuestsToGuestObjects = (guestNames: string[]) => {
+    return guestNames.map((name, index) => ({
+      id: `guest-${index}`,
+      name: name.trim(),
+    }))
+  }
+
+  // Get all guests from the episode
+  const getAllGuests = () => {
+    const guestNames = episode?.extractedGuests || []
+
+    // Deduplicate guests (in case there are duplicates)
+    const uniqueGuestNames = Array.from(new Set(guestNames.map(name => name.trim().toLowerCase())))
+      .map(lowerName => guestNames.find(name => name.trim().toLowerCase() === lowerName) || '')
+      .filter(name => name.length > 0)
+
+    return transformGuestsToGuestObjects(uniqueGuestNames)
+  }
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -294,11 +315,11 @@ export default function EpisodeDetail() {
                   <span>{formatDate(episode.releaseDate)}</span>
                   <span>•</span>
                   <span>{episode.duration}</span>
-                  {episode.guests && episode.guests.length > 0 && (
+                  {episode.extractedGuests && episode.extractedGuests.length > 0 && (
                     <>
                       <span>•</span>
                       <span>
-                        {episode.guests.length} guest{episode.guests.length > 1 ? 's' : ''}
+                        {episode.extractedGuests.length} guest{episode.extractedGuests.length > 1 ? 's' : ''}
                       </span>
                     </>
                   )}
@@ -397,19 +418,9 @@ export default function EpisodeDetail() {
       </div>
 
       {/* Guests Section */}
-      {episode.guests && episode.guests.length > 0 && (
+      {episode.extractedGuests && episode.extractedGuests.length > 0 && (
         <div className="bg-white px-4 py-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Guests</h2>
-          <div className="flex flex-wrap gap-2">
-            {episode.guests.map((guest, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800"
-              >
-                {guest}
-              </span>
-            ))}
-          </div>
+          <GuestList guests={getAllGuests()} />
         </div>
       )}
 

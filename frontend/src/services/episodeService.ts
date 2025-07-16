@@ -13,6 +13,11 @@ export interface Episode {
   tags?: string[]
   createdAt: string
   naturalKey: string
+  // AI Guest Extraction Fields
+  extractedGuests?: string[]
+  guestExtractionStatus?: 'pending' | 'processing' | 'completed' | 'failed'
+  guestExtractionDate?: string
+  guestExtractionConfidence?: number
 }
 
 export interface EpisodeListResponse {
@@ -216,6 +221,30 @@ export class EpisodeService {
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     return episodeDate > thirtyDaysAgo
+  }
+
+  async getSyncStatus(podcastId: string): Promise<{
+    podcastId: string
+    syncStatus: 'idle' | 'queued' | 'processing' | 'completed' | 'failed'
+    startedAt?: string
+    completedAt?: string
+    error?: string
+    episodeCount: number
+  }> {
+    try {
+      const response = await apiClient.post<{
+        podcastId: string
+        syncStatus: 'idle' | 'queued' | 'processing' | 'completed' | 'failed'
+        startedAt?: string
+        completedAt?: string
+        error?: string
+        episodeCount: number
+      }>(`/episodes/${podcastId}/sync-status`)
+      return response
+    } catch (error) {
+      console.error('Error getting sync status:', error)
+      throw new Error('Failed to get sync status')
+    }
   }
 
   // Utility method to format release date for display

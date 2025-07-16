@@ -15,3 +15,5 @@ export type { SpinnerProps, SkeletonProps, LoadingOverlayProps, SkeletonCardProp
 
 export { ToastProvider, useToast, useToastActions } from './Toast'
 export type { ToastOptions } from './Toast'
+
+export * from './icons'

@@ -184,7 +184,7 @@ export class RewindBackendStack extends cdk.Stack {
     })
 
     // Grant specific permissions to episode function
-    props.tables.podcasts.grantReadData(episodeFunction)
+    props.tables.podcasts.grantReadWriteData(episodeFunction)
     props.tables.episodes.grantReadWriteData(episodeFunction)
     props.tables.listeningHistory.grantReadWriteData(episodeFunction)
     props.tables.rateLimit.grantReadWriteData(episodeFunction)
@@ -220,6 +220,23 @@ export class RewindBackendStack extends cdk.Stack {
       },
     })
 
+    // Create SQS queue for episode sync processing
+    const episodeSyncDLQ = new sqs.Queue(this, 'EpisodeSyncDLQ', {
+      queueName: 'episode-sync-dlq',
+      retentionPeriod: cdk.Duration.days(14),
+    })
+
+    const episodeSyncQueue = new sqs.Queue(this, 'EpisodeSyncQueue', {
+      queueName: 'episode-sync-queue',
+      visibilityTimeout: cdk.Duration.minutes(15), // 15 minutes for RSS parsing and batch processing
+      retentionPeriod: cdk.Duration.days(14),
+      receiveMessageWaitTime: cdk.Duration.seconds(20), // Long polling
+      deadLetterQueue: {
+        queue: episodeSyncDLQ,
+        maxReceiveCount: 3,
+      },
+    })
+
     // Create Lambda function for guest extraction processing
     const guestExtractionProcessor = new NodejsFunction(this, 'GuestExtractionProcessor', {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -234,11 +251,35 @@ export class RewindBackendStack extends cdk.Stack {
       },
     })
 
+    // Create Lambda function for episode sync processing
+    const episodeSyncProcessor = new NodejsFunction(this, 'EpisodeSyncProcessor', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../../backend/src/handlers/episodeSyncProcessor.ts'),
+      timeout: cdk.Duration.minutes(15), // Longer timeout for RSS parsing and batch processing
+      memorySize: 1024,
+      environment: {
+        PODCASTS_TABLE: props.tables.podcasts.tableName,
+        EPISODES_TABLE: props.tables.episodes.tableName,
+        GUEST_EXTRACTION_QUEUE_URL: guestExtractionQueue.queueUrl,
+        LOG_LEVEL: 'INFO',
+        ALLOWED_ORIGINS: allowedOrigins,
+      },
+    })
+
     // Grant permissions to guest extraction processor
     props.tables.episodes.grantReadWriteData(guestExtractionProcessor)
     guestExtractionQueue.grantConsumeMessages(guestExtractionProcessor)
     guestExtractionQueue.grantSendMessages(episodeFunction) // Allow episode handler to send messages
     guestExtractionQueue.grantSendMessages(podcastFunction) // Allow podcast handler to send messages
+
+    // Grant permissions to episode sync processor
+    props.tables.podcasts.grantReadWriteData(episodeSyncProcessor)
+    props.tables.episodes.grantReadWriteData(episodeSyncProcessor)
+    episodeSyncQueue.grantConsumeMessages(episodeSyncProcessor)
+    episodeSyncQueue.grantSendMessages(podcastFunction) // Allow podcast handler to send messages
+    episodeSyncQueue.grantSendMessages(episodeFunction) // Allow episode handler to send messages
+    guestExtractionQueue.grantSendMessages(episodeSyncProcessor) // Allow episode sync processor to queue guest extraction
 
     // Grant Bedrock permissions to guest extraction processor
     guestExtractionProcessor.addToRolePolicy(
@@ -275,11 +316,27 @@ export class RewindBackendStack extends cdk.Stack {
       }),
     )
 
+    // Add SQS event source to episode sync processor
+    episodeSyncProcessor.addEventSource(
+      new SqsEventSource(episodeSyncQueue, {
+        batchSize: 1, // Process one podcast at a time
+        maxBatchingWindow: cdk.Duration.seconds(5),
+        maxConcurrency: 3, // Allow more concurrency for episode sync jobs
+        enabled: true,
+      }),
+    )
+
     // Add environment variable for guest extraction queue URL to episode handler
     episodeFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
 
+    // Add environment variable for episode sync queue URL to episode handler
+    episodeFunction.addEnvironment('EPISODE_SYNC_QUEUE_URL', episodeSyncQueue.queueUrl)
+
     // Add environment variable for guest extraction queue URL to podcast handler (needed for addPodcast)
     podcastFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
+
+    // Add environment variable for episode sync queue URL to podcast handler
+    podcastFunction.addEnvironment('EPISODE_SYNC_QUEUE_URL', episodeSyncQueue.queueUrl)
 
     // Add environment variable for guest extraction queue URL to recommendation handler (for validation scripts)
     recommendationFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
@@ -376,6 +433,13 @@ export class RewindBackendStack extends cdk.Stack {
     // POST /episodes/{podcastId}/sync - Sync episodes from RSS
     const syncEpisodes = episodesByPodcast.addResource('sync')
     syncEpisodes.addMethod('POST', new apigateway.LambdaIntegration(episodeFunction), {
+      authorizer: cognitoAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    })
+
+    // POST /episodes/{podcastId}/sync-status - Get sync status for a podcast
+    const syncStatus = episodesByPodcast.addResource('sync-status')
+    syncStatus.addMethod('POST', new apigateway.LambdaIntegration(episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })

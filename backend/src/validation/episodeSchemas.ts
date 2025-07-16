@@ -14,6 +14,7 @@ export const podcastIdParamSchema = z.object({
 export const saveProgressSchema = z.object({
   position: z.number().min(0, 'Position must be non-negative'),
   duration: z.number().min(0, 'Duration must be non-negative'),
+  podcastId: z.string().min(1, 'Podcast ID is required'),
 })
 
 // Query parameters for episode listing

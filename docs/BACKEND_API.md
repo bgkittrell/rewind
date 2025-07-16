@@ -16,13 +16,11 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
 - **Token Validation**: All protected endpoints validate Cognito JWT tokens via API Gateway REST API with Cognito User Pool authorizer
 - **User Identification**: User ID extracted from Cognito token claims (sub field)
 
-### Current Working Configuration ✅ DEPLOYED
+### Authentication Configuration ✅ DEPLOYED
 
-- **Cognito User Pool**: `us-east-1_Cw78Mapt3`
-- **User Pool Client**: `49kf2uvsl9vg08ka6o67ts41jj`
-- **Identity Pool**: `us-east-1:c78b0b1e-1234-5678-9abc-def012345678` (auto-generated)
-- **Hosted UI Domain**: `rewind-730420835413-us-east-1.auth.us-east-1.amazoncognito.com`
+- **Provider**: AWS Cognito User Pool
 - **Region**: `us-east-1`
+- **Configuration**: Managed via CDK deployment
 
 ### Authentication Flow
 
@@ -46,17 +44,7 @@ This document outlines the RESTful API endpoints for the Rewind backend, support
 
 ### Environment Variables
 
-```bash
-# Frontend (auto-generated in .env.production)
-VITE_USER_POOL_ID=us-east-1_Cw78Mapt3
-VITE_USER_POOL_CLIENT_ID=49kf2uvsl9vg08ka6o67ts41jj
-VITE_IDENTITY_POOL_ID=us-east-1:xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-VITE_AWS_REGION=us-east-1
-
-# Backend (injected via CDK)
-USER_POOL_ID=us-east-1_Cw78Mapt3
-USER_POOL_CLIENT_ID=49kf2uvsl9vg08ka6o67ts41jj
-```
+Environment variables are auto-generated during deployment from CDK stack outputs.
 
 ## 🚀 Currently Implemented & Deployed Endpoints
 

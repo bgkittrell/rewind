@@ -6,6 +6,8 @@ import { APIError } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useMediaPlayer } from '../context/MediaPlayerContext'
 import EpisodeCard from '../components/EpisodeCard'
+import EpisodeSyncIndicator from '../components/EpisodeSyncIndicator'
+import { useEpisodeSyncStatus } from '../hooks/useEpisodeSyncStatus'
 import { stripAndTruncate } from '../utils/textUtils'
 
 import type { Episode as MediaPlayerEpisode } from '../types/episode'
@@ -30,6 +32,19 @@ export default function PodcastDetail() {
   const [isFixingImages, setIsFixingImages] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
+  // Sync status tracking
+  const {
+    syncStatus,
+    isLoading: isSyncStatusLoading,
+    error: syncStatusError,
+    startPolling: startSyncPolling,
+  } = useEpisodeSyncStatus({
+    podcastId,
+    enabled: !authLoading && isAuthenticated,
+    pollInterval: 3000, // Poll every 3 seconds
+    stopOnComplete: true,
+  })
+
   const EPISODES_PER_PAGE = 20
 
   // Load podcast details
@@ -50,6 +65,15 @@ export default function PodcastDetail() {
       loadEpisodes(undefined, true)
     }
   }, [podcast])
+
+  // Reload episodes when sync completes
+  useEffect(() => {
+    if (syncStatus?.syncStatus === 'completed') {
+      loadEpisodes(undefined, true) // Reload episodes
+    } else if (syncStatus?.syncStatus === 'failed' && syncStatus.error) {
+      setError(`Sync failed: ${syncStatus.error}`)
+    }
+  }, [syncStatus?.syncStatus, syncStatus?.episodeCount, syncStatus?.error])
 
   const loadPodcastDetails = async () => {
     if (!podcastId) return
@@ -116,35 +140,11 @@ export default function PodcastDetail() {
 
       const response = await episodeService.syncEpisodes(podcastId)
 
-      if (response.episodeCount > 0) {
-        // Show detailed sync results
-        const stats = response.stats
-        let message = `Sync completed! `
+      // Show success message for queued sync
+      setSuccessMessage(response.message || 'Episode sync has been queued for processing')
 
-        if (stats) {
-          if (stats.newEpisodes > 0) {
-            message += `${stats.newEpisodes} new episodes added`
-          }
-          if (stats.updatedEpisodes > 0) {
-            message +=
-              stats.newEpisodes > 0
-                ? `, ${stats.updatedEpisodes} episodes updated`
-                : `${stats.updatedEpisodes} episodes updated`
-          }
-          if (stats.duplicatesFound > 0) {
-            message += `. Found and merged ${stats.duplicatesFound} duplicates`
-          }
-        } else {
-          message += `${response.episodeCount} episodes synced`
-        }
-
-        setSuccessMessage(message)
-
-        // Reload episodes after successful sync
-        await loadEpisodes(undefined, true)
-      } else {
-        setSuccessMessage('No new episodes found in RSS feed')
-      }
+      // Start polling for sync status updates
+      startSyncPolling()
     } catch (err) {
       console.error('Failed to sync episodes:', err)
       if (err instanceof APIError) {
@@ -415,6 +415,19 @@ export default function PodcastDetail() {
                   <span>•</span>
                   <span>Added {new Date(podcast.createdAt).toLocaleDateString()}</span>
                 </div>
+
+                {/* Sync Status Indicator */}
+                {(syncStatus || isSyncStatusLoading || syncStatusError) && (
+                  <div className="mt-3">
+                    <EpisodeSyncIndicator
+                      syncStatus={syncStatus}
+                      isLoading={isSyncStatusLoading}
+                      error={syncStatusError}
+                      showDetails={true}
+                      className="inline-block"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Dropdown Menu */}

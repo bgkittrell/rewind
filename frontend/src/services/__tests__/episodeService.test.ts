@@ -347,4 +347,103 @@ describe('EpisodeService', () => {
       )
     })
   })
+
+  describe('getSyncStatus', () => {
+    it('should get sync status successfully', async () => {
+      const mockSyncStatus = {
+        podcastId: 'test-podcast-id',
+        syncStatus: 'completed',
+        startedAt: '2024-01-01T11:00:00Z',
+        completedAt: '2024-01-01T12:00:00Z',
+        error: null,
+        episodeCount: 25,
+      }
+
+      mockApiClient.post.mockResolvedValue(mockSyncStatus)
+
+      const result = await episodeService.getSyncStatus('test-podcast-id')
+
+      expect(result).toEqual(mockSyncStatus)
+      expect(mockApiClient.post).toHaveBeenCalledWith('/episodes/test-podcast-id/sync-status')
+    })
+
+    it('should handle sync status errors', async () => {
+      mockApiClient.post.mockRejectedValue(new Error('API error'))
+
+      await expect(episodeService.getSyncStatus('test-podcast-id')).rejects.toThrow('Failed to get sync status')
+    })
+
+    it('should handle network errors', async () => {
+      mockApiClient.post.mockRejectedValue(new Error('Network timeout'))
+
+      await expect(episodeService.getSyncStatus('test-podcast-id')).rejects.toThrow('Failed to get sync status')
+    })
+
+    it('should handle API errors with specific messages', async () => {
+      const apiError = new Error('Podcast not found')
+      mockApiClient.post.mockRejectedValue(apiError)
+
+      await expect(episodeService.getSyncStatus('test-podcast-id')).rejects.toThrow('Failed to get sync status')
+    })
+
+    it('should handle empty podcast ID', async () => {
+      await expect(episodeService.getSyncStatus('')).rejects.toThrow('Failed to get sync status')
+    })
+
+    it('should handle different sync statuses', async () => {
+      const queuedStatus = {
+        podcastId: 'test-podcast-id',
+        syncStatus: 'queued',
+        startedAt: null,
+        completedAt: null,
+        error: null,
+        episodeCount: 10,
+      }
+
+      mockApiClient.post.mockResolvedValue(queuedStatus)
+
+      const result = await episodeService.getSyncStatus('test-podcast-id')
+
+      expect(result.syncStatus).toBe('queued')
+      expect(result.startedAt).toBeNull()
+      expect(result.completedAt).toBeNull()
+    })
+
+    it('should handle failed sync status with error', async () => {
+      const failedStatus = {
+        podcastId: 'test-podcast-id',
+        syncStatus: 'failed',
+        startedAt: '2024-01-01T11:00:00Z',
+        completedAt: '2024-01-01T11:15:00Z',
+        error: 'RSS feed parsing failed',
+        episodeCount: 0,
+      }
+
+      mockApiClient.post.mockResolvedValue(failedStatus)
+
+      const result = await episodeService.getSyncStatus('test-podcast-id')
+
+      expect(result.syncStatus).toBe('failed')
+      expect(result.error).toBe('RSS feed parsing failed')
+    })
+
+    it('should handle processing sync status', async () => {
+      const processingStatus = {
+        podcastId: 'test-podcast-id',
+        syncStatus: 'processing',
+        startedAt: '2024-01-01T11:00:00Z',
+        completedAt: null,
+        error: null,
+        episodeCount: 15,
+      }
+
+      mockApiClient.post.mockResolvedValue(processingStatus)
+
+      const result = await episodeService.getSyncStatus('test-podcast-id')
+
+      expect(result.syncStatus).toBe('processing')
+      expect(result.startedAt).toBeDefined()
+      expect(result.completedAt).toBeNull()
+    })
+  })
 })

@@ -11,6 +11,7 @@ import {
   ReturnValue,
   AttributeValue,
   QueryCommandInput,
+  Select,
 } from '@aws-sdk/client-dynamodb'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { Podcast, Episode, EpisodeData, ListeningHistoryItem, LastPlayedEpisode } from '../types'
@@ -125,7 +126,146 @@ export class DynamoService {
     }
   }
 
+  async updatePodcastSyncStatus(
+    userId: string,
+    podcastId: string,
+    status: 'idle' | 'queued' | 'processing' | 'completed' | 'failed',
+    options?: {
+      error?: string
+      episodeCount?: number
+    },
+  ): Promise<void> {
+    const now = new Date().toISOString()
+
+    // Build SET expressions
+    const setExpressions: string[] = ['episodeSyncStatus = :status']
+    const removeExpressions: string[] = []
+    const expressionAttributeValues: Record<string, any> = {
+      ':status': status,
+    }
+
+    // Set appropriate timestamp based on status
+    if (status === 'queued' || status === 'processing') {
+      setExpressions.push('episodeSyncStartedAt = :startedAt')
+      expressionAttributeValues[':startedAt'] = now
+
+      // Clear any previous completion time and error
+      removeExpressions.push('episodeSyncCompletedAt', 'episodeSyncError')
+    } else if (status === 'completed' || status === 'failed') {
+      setExpressions.push('episodeSyncCompletedAt = :completedAt')
+      expressionAttributeValues[':completedAt'] = now
+    }
+
+    // Set error message if provided
+    if (options?.error) {
+      setExpressions.push('episodeSyncError = :error')
+      expressionAttributeValues[':error'] = options.error
+    } else if (status === 'completed') {
+      // Clear error on successful completion
+      removeExpressions.push('episodeSyncError')
+    }
+
+    // Update episode count if provided
+    if (options?.episodeCount !== undefined) {
+      setExpressions.push('episodeCount = :episodeCount')
+      expressionAttributeValues[':episodeCount'] = options.episodeCount
+    }
+
+    // Build the final UpdateExpression
+    let updateExpression = `SET ${setExpressions.join(', ')}`
+    if (removeExpressions.length > 0) {
+      updateExpression += ` REMOVE ${removeExpressions.join(', ')}`
+    }
+
+    const params = {
+      TableName: PODCASTS_TABLE,
+      Key: marshall({
+        userId,
+        podcastId,
+      }),
+      UpdateExpression: updateExpression,
+      ExpressionAttributeValues: marshall(expressionAttributeValues),
+      ConditionExpression: 'attribute_exists(podcastId)',
+    }
+
+    try {
+      await this.dynamoClient.send(new UpdateItemCommand(params))
+      logger.info('Updated podcast sync status', {
+        podcastId,
+        status,
+        error: options?.error,
+        episodeCount: options?.episodeCount,
+      })
+    } catch (error) {
+      logger.error('Error updating podcast sync status:', error)
+      if (error instanceof Error && error.name === 'ConditionalCheckFailedException') {
+        throw new Error('Podcast not found')
+      }
+      throw new Error('Failed to update podcast sync status')
+    }
+  }
+
+  async getPodcastSyncStatus(
+    userId: string,
+    podcastId: string,
+  ): Promise<{
+    episodeSyncStatus?: string
+    episodeSyncStartedAt?: string
+    episodeSyncCompletedAt?: string
+    episodeSyncError?: string
+    episodeCount: number
+  } | null> {
+    const params = {
+      TableName: PODCASTS_TABLE,
+      Key: marshall({
+        userId,
+        podcastId,
+      }),
+      ProjectionExpression:
+        'episodeSyncStatus, episodeSyncStartedAt, episodeSyncCompletedAt, episodeSyncError, episodeCount',
+    }
+
+    try {
+      const result = await this.dynamoClient.send(new GetItemCommand(params))
+
+      if (!result.Item) {
+        return null
+      }
+
+      const data = unmarshall(result.Item)
+      return {
+        episodeSyncStatus: data.episodeSyncStatus,
+        episodeSyncStartedAt: data.episodeSyncStartedAt,
+        episodeSyncCompletedAt: data.episodeSyncCompletedAt,
+        episodeSyncError: data.episodeSyncError,
+        episodeCount: data.episodeCount || 0,
+      }
+    } catch (error) {
+      logger.error('Error getting podcast sync status:', error)
+      throw new Error('Failed to get podcast sync status')
+    }
+  }
+
   // Episode CRUD Operations
+  async getEpisodeCount(podcastId: string): Promise<number> {
+    const params = {
+      TableName: EPISODES_TABLE,
+      KeyConditionExpression: 'podcastId = :podcastId',
+      ExpressionAttributeValues: marshall({
+        ':podcastId': podcastId,
+      }),
+      Select: Select.COUNT,
+    }
+
+    try {
+      const result = await this.dynamoClient.send(new QueryCommand(params))
+      return result.Count || 0
+    } catch (error) {
+      logger.error('Error getting episode count:', error)
+      throw new Error('Failed to get episode count')
+    }
+  }
+
   async saveEpisodes(podcastId: string, episodes: EpisodeData[]): Promise<Episode[]> {
     if (episodes.length === 0) {
       return []

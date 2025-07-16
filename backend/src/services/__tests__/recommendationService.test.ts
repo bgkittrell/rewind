@@ -584,5 +584,15 @@ describe('RecommendationService', () => {
 
       expect(mockSend).toHaveBeenCalledTimes(2)
     })
+
+    it('should create initial record for new guest with up action', async () => {
+      mockSend.mockResolvedValueOnce({})
+
+      await service.updateGuestAnalytics('user1', 'ep1', ['New Guest'], 'up', 5)
+
+      expect(mockSend).toHaveBeenCalledTimes(1)
+      // The main fix is that this should not throw an error when creating a new record
+      // The method should complete successfully even for guests that don't exist yet
+    })
   })
 })

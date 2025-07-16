@@ -64,12 +64,12 @@ export const guestAnalyticsUpdateSchema = z
     episodeId: episodeIdSchema,
     guests: z
       .array(z.string().min(1, 'Guest name cannot be empty').max(100, 'Guest name too long'))
-      .min(1, 'At least one guest is required')
       .max(10, 'Cannot track more than 10 guests per episode'),
-    action: z.enum(['listen', 'favorite'], {
-      errorMap: () => ({ message: 'Action must be either "listen" or "favorite"' }),
+    action: z.enum(['played', 'skipped', 'completed', 'up', 'down'], {
+      errorMap: () => ({ message: 'Action must be one of: played, skipped, completed, up, down' }),
     }),
-    rating: z.number().min(1, 'Rating must be between 1 and 5').max(5, 'Rating must be between 1 and 5').optional(),
+    rating: z.number().min(1).max(5).optional(),
+    contextData: z.record(z.unknown()).optional(),
   })
   .strict()
 

@@ -127,9 +127,9 @@ export class BedrockService {
 
 Your task is to identify any guest names mentioned in the episode title and description. Focus on:
 - People who are being interviewed or featured as guests
-- Authors, experts, or notable figures mentioned by name
 - Exclude hosts, regular co-hosts, or the show's main personalities
 - Be conservative - only extract names when you're confident they represent guests
+- When you see a character name,somtimes denoted like Batman (Michael Keaton), you should extract the name Michael Keaton
 
 Episode Title: "${title}"
 
@@ -147,7 +147,7 @@ Rules:
 2. Normalize name formatting (proper capitalization)
 3. Confidence should be 0.0 to 1.0 based on how certain you are
 4. If no clear guests are mentioned, return empty array
-5. Maximum 5 guests per episode to avoid noise
+5. Maximum 7 guests per episode to avoid noise
 6. Exclude obvious host names or show personalities
 
 Respond only with the JSON object, no additional text.`

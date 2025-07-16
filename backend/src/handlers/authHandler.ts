@@ -14,27 +14,19 @@ import { createResponse } from '../utils/response'
 import { User } from '../types'
 import { logger } from '../services/loggerService'
 import { withLogging } from '../utils/middleware'
+import { withValidation } from '../validation/middleware'
+import {
+  signupSchema,
+  signinSchema,
+  confirmSchema,
+  resendSchema,
+  type SignupRequest,
+  type SigninRequest,
+  type ConfirmRequest,
+  type ResendRequest,
+} from '../validation/authSchemas'
 
-// Request body interfaces
-interface SignUpRequestBody {
-  email: string
-  password: string
-  name: string
-}
-
-interface SignInRequestBody {
-  email: string
-  password: string
-}
-
-interface ConfirmSignUpRequestBody {
-  email: string
-  confirmationCode: string
-}
-
-interface ResendConfirmationRequestBody {
-  email: string
-}
+// Use validated request types from schemas
 
 // Helper function to safely get error message and name
 function getErrorInfo(error: unknown): { message: string; name?: string } {
@@ -67,17 +59,37 @@ const authHandler = async (event: APIGatewayProxyEvent, context: Context): Promi
     const body = event.body ? JSON.parse(event.body) : {}
 
     switch (true) {
-      case path.includes('/auth/signup') && method === 'POST':
-        return await handleSignUp(body)
+      case path.includes('/auth/signup') && method === 'POST': {
+        const validationResult = signupSchema.safeParse(body)
+        if (!validationResult.success) {
+          return createResponse(400, { error: 'Email, password, and name are required' })
+        }
+        return await handleSignUp(validationResult.data)
+      }
 
-      case path.includes('/auth/signin') && method === 'POST':
-        return await handleSignIn(body)
+      case path.includes('/auth/signin') && method === 'POST': {
+        const validationResult = signinSchema.safeParse(body)
+        if (!validationResult.success) {
+          return createResponse(400, { error: 'Email and password are required' })
+        }
+        return await handleSignIn(validationResult.data)
+      }
 
-      case path.includes('/auth/confirm') && method === 'POST':
-        return await handleConfirmSignUp(body)
+      case path.includes('/auth/confirm') && method === 'POST': {
+        const validationResult = confirmSchema.safeParse(body)
+        if (!validationResult.success) {
+          return createResponse(400, { error: 'Email and confirmation code are required' })
+        }
+        return await handleConfirmSignUp(validationResult.data)
+      }
 
-      case path.includes('/auth/resend') && method === 'POST':
-        return await handleResendConfirmation(body)
+      case path.includes('/auth/resend') && method === 'POST': {
+        const validationResult = resendSchema.safeParse(body)
+        if (!validationResult.success) {
+          return createResponse(400, { error: 'Email is required' })
+        }
+        return await handleResendConfirmation(validationResult.data)
+      }
 
       default:
         return createResponse(404, { error: 'Endpoint not found' })
@@ -88,14 +100,48 @@ const authHandler = async (event: APIGatewayProxyEvent, context: Context): Promi
   }
 }
 
+// Create validated handlers for each endpoint
+export const signupHandler = withLogging(
+  withValidation(
+    async (event: APIGatewayProxyEvent, validatedBody?: SignupRequest) => {
+      return await handleSignUp(validatedBody!)
+    },
+    { bodySchema: signupSchema },
+  ),
+)
+
+export const signinHandler = withLogging(
+  withValidation(
+    async (event: APIGatewayProxyEvent, validatedBody?: SigninRequest) => {
+      return await handleSignIn(validatedBody!)
+    },
+    { bodySchema: signinSchema },
+  ),
+)
+
+export const confirmHandler = withLogging(
+  withValidation(
+    async (event: APIGatewayProxyEvent, validatedBody?: ConfirmRequest) => {
+      return await handleConfirmSignUp(validatedBody!)
+    },
+    { bodySchema: confirmSchema },
+  ),
+)
+
+export const resendHandler = withLogging(
+  withValidation(
+    async (event: APIGatewayProxyEvent, validatedBody?: ResendRequest) => {
+      return await handleResendConfirmation(validatedBody!)
+    },
+    { bodySchema: resendSchema },
+  ),
+)
+
+// Keep the old handler for backward compatibility
 export const handler = withLogging(authHandler)
 
-async function handleSignUp(body: SignUpRequestBody): Promise<APIGatewayProxyResult> {
+async function handleSignUp(body: SignupRequest): Promise<APIGatewayProxyResult> {
   const { email, password, name } = body
-
-  if (!email || !password || !name) {
-    return createResponse(400, { error: 'Email, password, and name are required' })
-  }
 
   try {
     // Create user in Cognito
@@ -133,12 +179,8 @@ async function handleSignUp(body: SignUpRequestBody): Promise<APIGatewayProxyRes
   }
 }
 
-async function handleSignIn(body: SignInRequestBody): Promise<APIGatewayProxyResult> {
+async function handleSignIn(body: SigninRequest): Promise<APIGatewayProxyResult> {
   const { email, password } = body
-
-  if (!email || !password) {
-    return createResponse(400, { error: 'Email and password are required' })
-  }
 
   try {
     const authCommand = new InitiateAuthCommand({
@@ -197,12 +239,8 @@ async function handleSignIn(body: SignInRequestBody): Promise<APIGatewayProxyRes
   }
 }
 
-async function handleConfirmSignUp(body: ConfirmSignUpRequestBody): Promise<APIGatewayProxyResult> {
-  const { email, confirmationCode } = body
-
-  if (!email || !confirmationCode) {
-    return createResponse(400, { error: 'Email and confirmation code are required' })
-  }
+async function handleConfirmSignUp(body: ConfirmRequest): Promise<APIGatewayProxyResult> {
+  const { email, code: confirmationCode } = body
 
   try {
     const confirmCommand = new ConfirmSignUpCommand({
@@ -231,12 +269,8 @@ async function handleConfirmSignUp(body: ConfirmSignUpRequestBody): Promise<APIG
   }
 }
 
-async function handleResendConfirmation(body: ResendConfirmationRequestBody): Promise<APIGatewayProxyResult> {
+async function handleResendConfirmation(body: ResendRequest): Promise<APIGatewayProxyResult> {
   const { email } = body
-
-  if (!email) {
-    return createResponse(400, { error: 'Email is required' })
-  }
 
   try {
     const resendCommand = new ResendConfirmationCodeCommand({

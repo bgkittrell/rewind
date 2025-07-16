@@ -5,7 +5,14 @@ import { dynamoService } from '../services/dynamoService'
 import { logger } from '../services/loggerService'
 import { sqsService } from '../services/sqsService'
 import { withLogging } from '../utils/middleware'
-import { Episode } from '../types'
+import { withValidation, validateRequestBody } from '../validation/middleware'
+import {
+  saveProgressSchema,
+  episodeIdParamSchema,
+  type SaveProgressRequest,
+  type EpisodeIdParam,
+} from '../validation/episodeSchemas'
+import { Episode, EpisodeSyncMessage } from '../types'
 import crypto from 'crypto'
 
 const episodeHandler = async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
@@ -56,12 +63,14 @@ const episodeHandler = async (event: APIGatewayProxyEvent, context: Context): Pr
         break
 
       case 'POST':
-        if (path.includes('/sync')) {
-          return await syncEpisodes(event.pathParameters?.podcastId, userId, path)
-        } else if (path.includes('/fix-images')) {
+        if (path.includes('/fix-images')) {
           return await fixEpisodeImages(event.pathParameters?.podcastId, userId, path)
         } else if (path.includes('/refresh-url')) {
           return await refreshEpisodeUrl(event.body, userId, path)
+        } else if (path.includes('/sync-status')) {
+          return await getSyncStatus(event.pathParameters?.podcastId, userId, path)
+        } else if (path.includes('/sync')) {
+          return await syncEpisodes(event.pathParameters?.podcastId, userId, path)
         }
         break
 
@@ -141,69 +150,69 @@ async function syncEpisodes(
       return createErrorResponse('Podcast not found or access denied', 'NOT_FOUND', 404, path)
     }
 
-    // Get existing episodes count before sync
-    const existingEpisodesResponse = await dynamoService.getEpisodesByPodcast(podcastId, 1000)
-    const existingEpisodesCount = existingEpisodesResponse.episodes.length
+    // Update podcast status to queued
+    await dynamoService.updatePodcastSyncStatus(userId, podcastId, 'queued')
 
-    // Parse episodes from RSS feed
-    const episodeData = await rssService.parseEpisodesFromFeed(podcast.rssUrl)
-
-    if (episodeData.length === 0) {
-      return createSuccessResponse(
-        {
-          message: 'No episodes found in RSS feed',
-          episodeCount: 0,
-          episodes: [],
-          stats: {
-            newEpisodes: 0,
-            updatedEpisodes: 0,
-            totalProcessed: 0,
-            duplicatesFound: 0,
-          },
-        },
-        200,
-        path,
-      )
-    }
-
-    // Save/update episodes with deduplication
-    const savedEpisodes = await dynamoService.saveEpisodes(podcastId, episodeData)
-
-    // Trigger guest extraction for new episodes (async, non-blocking)
-    await triggerGuestExtraction(savedEpisodes, podcastId, userId)
-
-    // Calculate statistics
-    const newEpisodesResponse = await dynamoService.getEpisodesByPodcast(podcastId, 1000)
-    const newEpisodesCount = newEpisodesResponse.episodes.length
-
-    const newEpisodes = Math.max(0, newEpisodesCount - existingEpisodesCount)
-    const updatedEpisodes = Math.max(0, savedEpisodes.length - newEpisodes)
-    const duplicatesFound = episodeData.length - savedEpisodes.length
+    // Queue the episode sync job for asynchronous processing
+    await queueEpisodeSync(podcast, userId)
 
     const response = {
-      message: 'Episodes synced successfully',
-      episodeCount: savedEpisodes.length,
-      episodes: savedEpisodes.slice(0, 5), // Return first 5 episodes as preview
-      stats: {
-        newEpisodes,
-        updatedEpisodes,
-        totalProcessed: episodeData.length,
-        duplicatesFound: Math.max(0, duplicatesFound),
-      },
+      message: 'Episode sync has been queued for processing',
+      podcastId,
+      status: 'queued',
+      note: 'Episodes will be synced asynchronously. Check back in a few minutes for updated episode count.',
     }
 
-    return createSuccessResponse(response, 201, path)
+    return createSuccessResponse(response, 202, path) // 202 Accepted for async processing
   } catch (error) {
-    logger.error('Error syncing episodes:', error)
+    logger.error('Error queuing episode sync:', error)
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    if (errorMessage.includes('Failed to parse episodes from RSS feed')) {
-      return createErrorResponse(errorMessage, 'RSS_PARSE_ERROR', 400, path)
+    if (errorMessage.includes('Episode sync SQS queue URL not configured')) {
+      return createErrorResponse('Episode sync service is not configured', 'SERVICE_UNAVAILABLE', 503, path)
     }
 
-    return createErrorResponse('Failed to sync episodes', 'INTERNAL_ERROR', 500, path)
+    return createErrorResponse('Failed to queue episode sync', 'INTERNAL_ERROR', 500, path)
   }
 }
+
+// Create validated saveProgress handler
+const saveProgressHandler = withValidation(
+  async (
+    event: APIGatewayProxyEvent,
+    validatedBody?: SaveProgressRequest,
+    validatedQuery?: undefined,
+    validatedPath?: EpisodeIdParam,
+  ) => {
+    const userId = event.requestContext.authorizer?.claims?.sub
+    if (!userId) {
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401, event.path)
+    }
+
+    const { episodeId } = validatedPath!
+    const { position, duration, podcastId } = validatedBody!
+
+    try {
+      await dynamoService.savePlaybackProgress(userId, episodeId, podcastId, position, duration)
+
+      const response = {
+        message: 'Progress saved successfully',
+        position,
+        duration,
+        progressPercentage: Math.round((position / duration) * 100),
+      }
+
+      return createSuccessResponse(response, 200, event.path)
+    } catch (error) {
+      logger.error('Error saving progress:', error)
+      return createErrorResponse('Failed to save progress', 'INTERNAL_ERROR', 500, event.path)
+    }
+  },
+  {
+    bodySchema: saveProgressSchema,
+    pathSchema: episodeIdParamSchema,
+  },
+)
 
 async function saveProgress(
   userId: string,
@@ -508,7 +517,7 @@ async function refreshEpisodeUrl(body: string | null, userId: string, path: stri
     })
 
     // Fetch fresh RSS data
-    const rssEpisodes = await rssService.parseEpisodesFromFeed(podcast.rssUrl, 200)
+    const rssEpisodes = await rssService.parseEpisodesFromFeed(podcast.rssUrl)
 
     if (!rssEpisodes || rssEpisodes.length === 0) {
       return createErrorResponse('Failed to fetch RSS feed', 'RSS_FETCH_ERROR', 500, path)
@@ -662,6 +671,71 @@ async function triggerGuestExtraction(episodes: Episode[], podcastId: string, us
   } catch (error) {
     logger.error('Error queuing guest extraction messages:', error)
     // Don't throw error to avoid blocking episode import
+  }
+}
+
+async function getSyncStatus(
+  podcastId: string | undefined,
+  userId: string,
+  path: string,
+): Promise<APIGatewayProxyResult> {
+  if (!podcastId) {
+    return createErrorResponse('Podcast ID is required', 'VALIDATION_ERROR', 400, path)
+  }
+
+  try {
+    // First, verify the podcast belongs to the user
+    const userPodcasts = await dynamoService.getPodcastsByUser(userId)
+    const podcast = userPodcasts.find(p => p.podcastId === podcastId)
+
+    if (!podcast) {
+      return createErrorResponse('Podcast not found or access denied', 'NOT_FOUND', 404, path)
+    }
+
+    // Get sync status
+    const syncStatus = await dynamoService.getPodcastSyncStatus(userId, podcastId)
+
+    if (!syncStatus) {
+      return createErrorResponse('Sync status not found', 'NOT_FOUND', 404, path)
+    }
+
+    const response = {
+      podcastId,
+      syncStatus: syncStatus.episodeSyncStatus || 'idle',
+      startedAt: syncStatus.episodeSyncStartedAt,
+      completedAt: syncStatus.episodeSyncCompletedAt,
+      error: syncStatus.episodeSyncError,
+      episodeCount: syncStatus.episodeCount,
+    }
+
+    return createSuccessResponse(response, 200, path)
+  } catch (error) {
+    logger.error('Error getting sync status:', error)
+    return createErrorResponse('Failed to get sync status', 'INTERNAL_ERROR', 500, path)
+  }
+}
+
+/**
+ * Queue episode sync job for asynchronous processing
+ */
+async function queueEpisodeSync(podcast: any, userId: string): Promise<void> {
+  try {
+    const episodeSyncMessage: EpisodeSyncMessage = {
+      podcastId: podcast.podcastId,
+      userId,
+      rssUrl: podcast.rssUrl,
+      timestamp: new Date().toISOString(),
+    }
+
+    await sqsService.sendEpisodeSyncMessage(episodeSyncMessage)
+
+    logger.info('Episode sync job queued successfully', {
+      podcastId: podcast.podcastId,
+      userId,
+    })
+  } catch (error) {
+    logger.error('Error queuing episode sync job:', error)
+    throw error
   }
 }
 

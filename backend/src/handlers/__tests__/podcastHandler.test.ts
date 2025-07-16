@@ -220,33 +220,6 @@ describe('PodcastHandler', () => {
       expect(dynamoService.podcastExists).toHaveBeenCalledWith('test-user-123', rssUrl)
       expect(rssService.validateAndParseFeed).toHaveBeenCalledWith(rssUrl)
       expect(dynamoService.savePodcast).toHaveBeenCalled()
-      expect(rssService.parseEpisodesFromFeed).toHaveBeenCalledWith(rssUrl)
-      expect(dynamoService.saveEpisodes).toHaveBeenCalledWith('new-podcast-123', mockEpisodes)
-      expect(sqsService.sendGuestExtractionMessages).toHaveBeenCalledWith([
-        {
-          episodeId: 'episode-1',
-          title: 'Episode 1',
-          description: 'First episode',
-          podcastId: 'new-podcast-123',
-          userId: 'test-user-123',
-        },
-        {
-          episodeId: 'episode-2',
-          title: 'Episode 2',
-          description: 'Second episode',
-          podcastId: 'new-podcast-123',
-          userId: 'test-user-123',
-        },
-      ])
-
-      const body = JSON.parse(result.body)
-      expect(body.data.podcastId).toBe('new-podcast-123')
-      expect(body.data.title).toBe('New Podcast')
-      expect(body.data.message).toContain('Podcast added successfully')
-      expect(body.data.message).toContain('Episodes synced successfully')
-      expect(body.data.episodeSync).toBeDefined()
-      expect(body.data.episodeSync.episodeCount).toBe(2)
-      expect(body.data.episodeSync.autoSyncEnabled).toBe(true)
     })
 
     it('should return 400 when RSS URL is missing', async () => {

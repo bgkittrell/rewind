@@ -52,7 +52,6 @@ function EpisodeCardComponent({
   }, [navigate, episode.podcastId, episode.episodeId, referrer])
 
   const formatDate = (dateString: string) => {
-    console.log('dateString', dateString)
     if (!dateString) return 'Date unknown'
     const date = new Date(dateString)
     if (isNaN(date.getTime())) {

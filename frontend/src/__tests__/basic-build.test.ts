@@ -32,50 +32,31 @@ beforeAll(() => {
     },
     configurable: true,
   })
+
+  // Mock VitePWA virtual module
+  vi.mock('virtual:pwa-register/react', () => ({
+    useRegisterSW: vi.fn(() => ({
+      needRefresh: [false, vi.fn()],
+      offlineReady: [false, vi.fn()],
+      updateServiceWorker: vi.fn(),
+    })),
+  }))
 })
 
 describe('Basic Build Tests', () => {
-  it('should import PWA service without throwing', async () => {
-    await expect(import('../services/pwaService')).resolves.toBeDefined()
+  it('should import PWA updater component without throwing', async () => {
+    await expect(import('../components/PWAUpdater')).resolves.toBeDefined()
   })
 
-  it('should create PWA service instance without throwing', async () => {
-    const { PWAService } = await import('../services/pwaService')
-    expect(() => new PWAService()).not.toThrow()
+  it('should render PWA updater component without throwing', async () => {
+    const { PWAUpdater } = await import('../components/PWAUpdater')
+    expect(PWAUpdater).toBeDefined()
+    expect(typeof PWAUpdater).toBe('function')
   })
 
-  it('should have all required PWA service methods', async () => {
-    const { pwaService } = await import('../services/pwaService')
-
-    expect(pwaService).toBeDefined()
-    expect(typeof pwaService.initialize).toBe('function')
-    expect(typeof pwaService.checkForUpdates).toBe('function')
-    expect(typeof pwaService.applyUpdate).toBe('function')
-    expect(typeof pwaService.onUpdateAvailable).toBe('function')
-    expect(typeof pwaService.isUpdateAvailable).toBe('function')
-    expect(typeof pwaService.isInstalled).toBe('function')
-  })
-
-  it('should handle basic PWA service operations', async () => {
-    const { PWAService } = await import('../services/pwaService')
-    const service = new PWAService()
-
-    // These should not throw
-    expect(async () => {
-      await service.initialize()
-      await service.checkForUpdates()
-      await service.applyUpdate()
-      service.onUpdateAvailable(() => {})
-      service.isUpdateAvailable()
-      service.isInstalled()
-    }).not.toThrow()
-  })
-
-  it('should have proper type exports', async () => {
-    const module = await import('../services/pwaService')
-
-    expect(module.PWAService).toBeDefined()
-    expect(module.pwaService).toBeDefined()
-    expect(module.pwaService).toBeInstanceOf(module.PWAService)
+  it('should have proper component structure', async () => {
+    const module = await import('../components/PWAUpdater')
+    expect(module.PWAUpdater).toBeDefined()
+    expect(typeof module.PWAUpdater).toBe('function')
   })
 })

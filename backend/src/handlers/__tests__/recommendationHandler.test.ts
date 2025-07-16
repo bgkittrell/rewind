@@ -386,7 +386,7 @@ describe('recommendationHandler', () => {
     const mockAnalyticsRequest = {
       episodeId: 'episode-123',
       guests: ['John Doe', 'Jane Smith'],
-      action: 'listen',
+      action: 'played',
       rating: 4.5,
     }
 
@@ -401,7 +401,7 @@ describe('recommendationHandler', () => {
         'test-user-123',
         'episode-123',
         ['John Doe', 'Jane Smith'],
-        'listen',
+        'played',
         4.5,
       )
 
@@ -409,10 +409,10 @@ describe('recommendationHandler', () => {
       expect(body.data).toEqual({ success: true })
     })
 
-    it('should handle favorite action', async () => {
+    it('should handle up action', async () => {
       mockUpdateGuestAnalytics.mockResolvedValueOnce(undefined)
 
-      const request = { ...mockAnalyticsRequest, action: 'favorite' }
+      const request = { ...mockAnalyticsRequest, action: 'up' }
       const event = createMockEvent('/recommendations/guest-analytics', 'POST', request)
       const result = await updateGuestAnalytics(event)
 
@@ -421,7 +421,28 @@ describe('recommendationHandler', () => {
         'test-user-123',
         'episode-123',
         ['John Doe', 'Jane Smith'],
-        'favorite',
+        'up',
+        4.5,
+      )
+    })
+
+    it('should handle request with contextData', async () => {
+      mockUpdateGuestAnalytics.mockResolvedValueOnce(undefined)
+
+      const request = {
+        ...mockAnalyticsRequest,
+        action: 'up',
+        contextData: { source: 'recommendations', score: 0.95 },
+      }
+      const event = createMockEvent('/recommendations/guest-analytics', 'POST', request)
+      const result = await updateGuestAnalytics(event)
+
+      expect(result.statusCode).toBe(200)
+      expect(mockUpdateGuestAnalytics).toHaveBeenCalledWith(
+        'test-user-123',
+        'episode-123',
+        ['John Doe', 'Jane Smith'],
+        'up',
         4.5,
       )
     })
@@ -436,7 +457,7 @@ describe('recommendationHandler', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error.message).toBe('Missing required fields: episodeId, guests, action')
+      expect(body.error.message).toContain('Validation failed')
       expect(body.error.code).toBe('VALIDATION_ERROR')
     })
 
@@ -447,7 +468,7 @@ describe('recommendationHandler', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error.message).toBe('Action must be either "listen" or "favorite"')
+      expect(body.error.message).toContain('Validation failed')
       expect(body.error.code).toBe('VALIDATION_ERROR')
     })
 
@@ -458,7 +479,7 @@ describe('recommendationHandler', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error.message).toBe('Guests must be an array of strings')
+      expect(body.error.message).toContain('Validation failed')
       expect(body.error.code).toBe('VALIDATION_ERROR')
     })
 

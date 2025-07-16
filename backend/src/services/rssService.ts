@@ -1,5 +1,6 @@
 import Parser from 'rss-parser'
 import { v4 as uuidv4 } from 'uuid'
+import { logger } from './loggerService'
 
 interface RSSFeedData {
   title: string
@@ -134,6 +135,11 @@ export class RSSService {
     return undefined
   }
 
+  async parseAllEpisodesFromFeed(rssUrl: string): Promise<EpisodeData[]> {
+    logger.info('Starting full episode parsing from RSS feed', { rssUrl })
+    return this.parseEpisodesFromFeed(rssUrl) // No limit - parse all episodes
+  }
+
   async getEpisodeCount(rssUrl: string): Promise<number> {
     try {
       const feed = await this.parser.parseURL(rssUrl)
@@ -143,7 +149,7 @@ export class RSSService {
     }
   }
 
-  async parseEpisodesFromFeed(rssUrl: string, limit = 50): Promise<EpisodeData[]> {
+  async parseEpisodesFromFeed(rssUrl: string, limit?: number): Promise<EpisodeData[]> {
     try {
       const feed = await this.parser.parseURL(rssUrl)
 
@@ -154,9 +160,9 @@ export class RSSService {
       // Get podcast image as fallback for episodes
       const podcastImageUrl = this.extractImageUrl(feed)
 
-      // Process episodes (limit to most recent)
-      const episodes = feed.items
-        .slice(0, limit)
+      // Process episodes (limit to most recent if limit provided, otherwise process all)
+      const itemsToProcess = limit ? feed.items.slice(0, limit) : feed.items
+      const episodes = itemsToProcess
         .map((item: RSSFeedItem): EpisodeData | null => {
           const audioUrl = this.extractAudioUrl(item)
           if (!audioUrl) {

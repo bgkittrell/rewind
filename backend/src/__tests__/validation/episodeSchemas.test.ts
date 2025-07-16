@@ -81,6 +81,7 @@ describe('Episode Validation Schemas', () => {
       const validData = {
         position: 120.5,
         duration: 1800,
+        podcastId: 'test-podcast-id',
       }
       const result = saveProgressSchema.safeParse(validData)
       expect(result.success).toBe(true)
@@ -91,6 +92,7 @@ describe('Episode Validation Schemas', () => {
       const validData = {
         position: 0,
         duration: 1800,
+        podcastId: 'test-podcast-id',
       }
       const result = saveProgressSchema.safeParse(validData)
       expect(result.success).toBe(true)
@@ -101,6 +103,7 @@ describe('Episode Validation Schemas', () => {
       const validData = {
         position: 120,
         duration: 0,
+        podcastId: 'test-podcast-id',
       }
       const result = saveProgressSchema.safeParse(validData)
       expect(result.success).toBe(true)
@@ -111,6 +114,7 @@ describe('Episode Validation Schemas', () => {
       const invalidData = {
         position: -10,
         duration: 1800,
+        podcastId: 'test-podcast-id',
       }
       const result = saveProgressSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
@@ -121,6 +125,7 @@ describe('Episode Validation Schemas', () => {
       const invalidData = {
         position: 120,
         duration: -100,
+        podcastId: 'test-podcast-id',
       }
       const result = saveProgressSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
@@ -131,6 +136,7 @@ describe('Episode Validation Schemas', () => {
       const invalidData = {
         position: 'not-a-number',
         duration: 1800,
+        podcastId: 'test-podcast-id',
       }
       const result = saveProgressSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
@@ -140,6 +146,7 @@ describe('Episode Validation Schemas', () => {
       const invalidData = {
         position: 120,
         duration: 'not-a-number',
+        podcastId: 'test-podcast-id',
       }
       const result = saveProgressSchema.safeParse(invalidData)
       expect(result.success).toBe(false)

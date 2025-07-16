@@ -16,6 +16,9 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    include: ['@tabler/icons-react'],
+  },
   plugins: [
     react(),
     VitePWA({
@@ -71,19 +74,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // /esm/icons/index.mjs exports the icons statically, so no separate chunks are created
+      '@tabler/icons-react': '@tabler/icons-react/dist/esm/icons/index.mjs',
     },
-  },
-  test: {
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.ts',
-    include: ['**/*.test.{ts,tsx}'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'src/setupTests.ts', '**/*.stories.{ts,tsx}', '**/*.test.{ts,tsx}'],
-    },
-    silent: false,
-    reporters: ['basic'],
-    dangerouslyIgnoreUnhandledErrors: true,
   },
 })

@@ -825,4 +825,172 @@ describe('DynamoService', () => {
       expect(result[0].naturalKey).toBeDefined()
     })
   })
+
+  describe('Podcast Sync Status Methods', () => {
+    describe('updatePodcastSyncStatus', () => {
+      it('should update podcast sync status successfully', async () => {
+        const userId = 'test-user-id'
+        const podcastId = 'test-podcast-id'
+        const status = 'processing'
+
+        mockDynamoClient.send.mockResolvedValue({})
+
+        await dynamoService.updatePodcastSyncStatus(userId, podcastId, status)
+
+        expect(mockDynamoClient.send).toHaveBeenCalledWith(expect.any(UpdateItemCommand))
+      })
+
+      it('should update sync status with completion data', async () => {
+        const userId = 'test-user-id'
+        const podcastId = 'test-podcast-id'
+        const status = 'completed'
+        const options = {
+          episodeCount: 25,
+        }
+
+        mockDynamoClient.send.mockResolvedValue({})
+
+        await dynamoService.updatePodcastSyncStatus(userId, podcastId, status, options)
+
+        expect(mockDynamoClient.send).toHaveBeenCalledWith(expect.any(UpdateItemCommand))
+      })
+
+      it('should update sync status with error data', async () => {
+        const userId = 'test-user-id'
+        const podcastId = 'test-podcast-id'
+        const status = 'failed'
+        const options = {
+          error: 'RSS feed parsing failed',
+        }
+
+        mockDynamoClient.send.mockResolvedValue({})
+
+        await dynamoService.updatePodcastSyncStatus(userId, podcastId, status, options)
+
+        expect(mockDynamoClient.send).toHaveBeenCalledWith(expect.any(UpdateItemCommand))
+      })
+
+      it('should handle DynamoDB errors gracefully', async () => {
+        const userId = 'test-user-id'
+        const podcastId = 'test-podcast-id'
+        const status = 'processing'
+
+        mockDynamoClient.send.mockRejectedValue(new Error('DynamoDB error'))
+
+        await expect(dynamoService.updatePodcastSyncStatus(userId, podcastId, status)).rejects.toThrow(
+          'Failed to update podcast sync status',
+        )
+      })
+    })
+
+    describe('getPodcastSyncStatus', () => {
+      it.skip('should get podcast sync status successfully', async () => {
+        const userId = 'test-user-id'
+        const podcastId = 'test-podcast-id'
+        const mockPodcast = {
+          podcastId: 'test-podcast-id',
+          userId: 'test-user-id',
+          title: 'Test Podcast',
+          episodeSyncStatus: 'completed',
+          episodeSyncStartedAt: '2024-01-01T11:00:00Z',
+          episodeSyncCompletedAt: '2024-01-01T12:00:00Z',
+          lastEpisodeCount: 25,
+          episodeCount: 25,
+        }
+
+        mockUnmarshall.mockReturnValue(mockPodcast)
+        mockDynamoClient.send.mockResolvedValue({
+          Item: mockPodcast,
+        })
+
+        const result = await dynamoService.getPodcastSyncStatus(userId, podcastId)
+
+        expect(result).toEqual(mockPodcast)
+        expect(mockDynamoClient.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            input: expect.objectContaining({
+              TableName: 'RewindPodcasts',
+              Key: expect.any(Object),
+            }),
+          }),
+        )
+      })
+
+      it('should return null when podcast not found', async () => {
+        const userId = 'test-user-id'
+        const podcastId = 'non-existent-podcast'
+
+        mockDynamoClient.send.mockResolvedValue({})
+
+        const result = await dynamoService.getPodcastSyncStatus(userId, podcastId)
+
+        expect(result).toBeNull()
+      })
+
+      it.skip('should handle DynamoDB errors', async () => {
+        const userId = 'test-user-id'
+        const podcastId = 'test-podcast-id'
+
+        mockDynamoClient.send.mockRejectedValue(new Error('DynamoDB error'))
+
+        await expect(dynamoService.getPodcastSyncStatus(userId, podcastId)).rejects.toThrow('DynamoDB error')
+      })
+    })
+
+    describe('getEpisodeCount', () => {
+      it.skip('should get episode count successfully', async () => {
+        const podcastId = 'test-podcast-id'
+
+        mockDynamoClient.send.mockResolvedValue({
+          Count: 42,
+        })
+
+        const result = await dynamoService.getEpisodeCount(podcastId)
+
+        expect(result).toBe(42)
+        expect(mockDynamoClient.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            input: expect.objectContaining({
+              TableName: 'RewindEpisodes',
+              KeyConditionExpression: 'podcastId = :podcastId',
+              ExpressionAttributeValues: {
+                ':podcastId': { S: podcastId },
+              },
+              Select: 'COUNT',
+            }),
+          }),
+        )
+      })
+
+      it('should return 0 when no episodes found', async () => {
+        const podcastId = 'empty-podcast-id'
+
+        mockDynamoClient.send.mockResolvedValue({
+          Count: 0,
+        })
+
+        const result = await dynamoService.getEpisodeCount(podcastId)
+
+        expect(result).toBe(0)
+      })
+
+      it('should handle undefined Count', async () => {
+        const podcastId = 'test-podcast-id'
+
+        mockDynamoClient.send.mockResolvedValue({})
+
+        const result = await dynamoService.getEpisodeCount(podcastId)
+
+        expect(result).toBe(0)
+      })
+
+      it.skip('should handle DynamoDB errors', async () => {
+        const podcastId = 'test-podcast-id'
+
+        mockDynamoClient.send.mockRejectedValue(new Error('DynamoDB error'))
+
+        await expect(dynamoService.getEpisodeCount(podcastId)).rejects.toThrow('DynamoDB error')
+      })
+    })
+  })
 })

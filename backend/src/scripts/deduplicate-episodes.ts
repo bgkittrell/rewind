@@ -170,11 +170,11 @@ class EpisodeDeduplicator {
       })
     }
 
-    if (latestEpisode.guests && latestEpisode.guests.length > 0) {
+    if (latestEpisode.extractedGuests && latestEpisode.extractedGuests.length > 0) {
       params.UpdateExpression += ', guests = :guests'
       params.ExpressionAttributeValues = marshall({
         ...unmarshall(params.ExpressionAttributeValues),
-        ':guests': latestEpisode.guests,
+        ':extractedGuests': latestEpisode.extractedGuests,
       })
     }
 

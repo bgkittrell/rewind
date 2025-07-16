@@ -450,28 +450,78 @@ export class RecommendationService {
     userId: string,
     episodeId: string,
     guests: string[],
-    action: 'listen' | 'favorite',
+    action: 'played' | 'skipped' | 'completed' | 'up' | 'down',
     rating?: number,
   ): Promise<void> {
+    // Map frontend actions to backend logic
+    let backendAction: 'listen' | 'favorite' = 'listen'
+    let actualRating = rating
+
+    switch (action) {
+      case 'played':
+      case 'completed':
+        backendAction = 'listen'
+        // Set a positive rating for completed episodes if not provided
+        actualRating = actualRating || 4
+        break
+      case 'up':
+        backendAction = 'favorite'
+        // Thumbs up gets max rating if not provided
+        actualRating = actualRating || 5
+        break
+      case 'down':
+        backendAction = 'favorite'
+        // Thumbs down gets min rating if not provided
+        actualRating = actualRating || 1
+        break
+      case 'skipped':
+        // For skipped episodes, we still track as listen but with lower rating
+        backendAction = 'listen'
+        actualRating = actualRating || 2
+        break
+    }
+
+    const now = new Date().toISOString()
+
     for (const guest of guests) {
       try {
         const normalizedGuest = guest.trim()
 
-        const updateExpression =
-          action === 'listen'
-            ? 'ADD listenCount :inc, episodeIds :episodeId SET lastListenDate = :date, updatedAt = :now'
-            : 'ADD favoriteCount :inc SET averageRating = if_not_exists(averageRating, :rating), updatedAt = :now'
-
+        let updateExpression: string
         const expressionAttributeValues: Record<string, any> = {
           ':inc': 1,
-          ':now': new Date().toISOString(),
+          ':now': now,
+          ':zero': 0,
+          ':emptySet': new Set(),
         }
 
-        if (action === 'listen') {
+        if (backendAction === 'listen') {
+          updateExpression = `
+            SET 
+              listenCount = if_not_exists(listenCount, :zero) + :inc,
+              lastListenDate = :now,
+              updatedAt = :now,
+              createdAt = if_not_exists(createdAt, :now),
+              favoriteCount = if_not_exists(favoriteCount, :zero),
+              averageRating = if_not_exists(averageRating, :defaultRating)
+            ADD episodeIds :episodeId
+          `.trim()
+
           expressionAttributeValues[':episodeId'] = new Set([episodeId])
-          expressionAttributeValues[':date'] = new Date().toISOString()
-        } else if (rating) {
-          expressionAttributeValues[':rating'] = rating
+          expressionAttributeValues[':defaultRating'] = actualRating || 3
+        } else {
+          // backendAction === 'favorite'
+          updateExpression = `
+            SET 
+              favoriteCount = if_not_exists(favoriteCount, :zero) + :inc,
+              averageRating = :rating,
+              updatedAt = :now,
+              createdAt = if_not_exists(createdAt, :now),
+              listenCount = if_not_exists(listenCount, :zero),
+              episodeIds = if_not_exists(episodeIds, :emptySet)
+          `.trim()
+
+          expressionAttributeValues[':rating'] = actualRating || 3
         }
 
         const command = new UpdateCommand({
@@ -485,8 +535,16 @@ export class RecommendationService {
         })
 
         await this.client.send(command)
+
+        logger.info(`Updated guest analytics for ${normalizedGuest}`, {
+          userId,
+          episodeId,
+          action: backendAction,
+          rating: actualRating,
+        })
       } catch (error) {
         logger.error(`Error updating guest analytics for ${guest}:`, error)
+        // Don't throw the error - continue processing other guests
       }
     }
   }

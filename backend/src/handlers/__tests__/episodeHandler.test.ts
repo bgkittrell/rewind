@@ -2,10 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { handler } from '../episodeHandler'
 import { rssService } from '../../services/rssService'
 import { dynamoService } from '../../services/dynamoService'
+import { sqsService } from '../../services/sqsService'
 
 // Mock dependencies
 vi.mock('../../services/rssService')
 vi.mock('../../services/dynamoService')
+vi.mock('../../services/sqsService')
 vi.mock('../../services/loggerService', () => ({
   logger: {
     error: vi.fn(),
@@ -23,6 +25,7 @@ vi.mock('../../services/loggerService', () => ({
 
 const mockRssService = vi.mocked(rssService)
 const mockDynamoService = vi.mocked(dynamoService)
+const mockSqsService = vi.mocked(sqsService)
 
 describe('EpisodeHandler', () => {
   beforeEach(() => {
@@ -107,7 +110,7 @@ describe('EpisodeHandler', () => {
   })
 
   describe('POST /episodes/{podcastId}/sync', () => {
-    it('should sync episodes successfully', async () => {
+    it('should queue episode sync successfully', async () => {
       const mockPodcasts = [
         {
           podcastId: 'test-podcast-id',
@@ -122,39 +125,29 @@ describe('EpisodeHandler', () => {
         },
       ]
 
-      const mockEpisodeData = [
-        {
-          title: 'Test Episode',
-          audioUrl: 'https://example.com/episode.mp3',
-          duration: '30:00',
-          releaseDate: '2024-01-01T00:00:00Z',
-          description: 'Test description',
-        },
-      ]
-
-      const mockSavedEpisodes = [
-        {
-          episodeId: 'episode-1',
-          podcastId: 'test-podcast-id',
-          title: 'Test Episode',
-          description: 'Test description',
-          audioUrl: 'https://example.com/episode.mp3',
-          duration: '30:00',
-          releaseDate: '2024-01-01T00:00:00Z',
-          createdAt: '2024-01-01T00:00:00Z',
-        },
-      ]
-
       mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
-      mockRssService.parseEpisodesFromFeed.mockResolvedValue(mockEpisodeData)
-      mockDynamoService.saveEpisodes.mockResolvedValue(mockSavedEpisodes)
+      mockDynamoService.updatePodcastSyncStatus.mockResolvedValue(undefined)
+      mockSqsService.sendEpisodeSyncMessage.mockResolvedValue(undefined)
 
       const event = createMockEvent('POST', '/episodes/test-podcast-id/sync', { podcastId: 'test-podcast-id' })
       const result = await handler(event as any)
 
-      expect(result.statusCode).toBe(201)
-      expect(mockRssService.parseEpisodesFromFeed).toHaveBeenCalled()
-      expect(mockDynamoService.saveEpisodes).toHaveBeenCalled()
+      expect(result.statusCode).toBe(202)
+      expect(mockDynamoService.updatePodcastSyncStatus).toHaveBeenCalledWith(
+        'test-user-id',
+        'test-podcast-id',
+        'queued',
+      )
+      expect(mockSqsService.sendEpisodeSyncMessage).toHaveBeenCalledWith({
+        podcastId: 'test-podcast-id',
+        userId: 'test-user-id',
+        rssUrl: 'https://example.com/feed.xml',
+        timestamp: expect.any(String),
+      })
+
+      const responseBody = JSON.parse(result.body)
+      expect(responseBody.data.message).toBe('Episode sync has been queued for processing')
+      expect(responseBody.data.status).toBe('queued')
     })
 
     it('should return 404 when podcast not found', async () => {
@@ -164,6 +157,92 @@ describe('EpisodeHandler', () => {
       const result = await handler(event as any)
 
       expect(result.statusCode).toBe(404)
+    })
+  })
+
+  describe('POST /episodes/{podcastId}/sync-status', () => {
+    it('should get sync status successfully', async () => {
+      const mockPodcasts = [
+        {
+          podcastId: 'test-podcast-id',
+          userId: 'test-user-id',
+          title: 'Test Podcast',
+          description: 'Test podcast description',
+          rssUrl: 'https://example.com/feed.xml',
+          imageUrl: 'https://example.com/image.jpg',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastUpdated: '2024-01-01T00:00:00Z',
+          episodeCount: 1,
+        },
+      ]
+
+      const mockSyncStatus = {
+        podcastId: 'test-podcast-id',
+        userId: 'test-user-id',
+        episodeSyncStatus: 'completed',
+        episodeSyncStartedAt: '2024-01-01T11:00:00Z',
+        episodeSyncCompletedAt: '2024-01-01T12:00:00Z',
+        lastEpisodeCount: 25,
+        episodeCount: 25,
+      }
+
+      mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
+      mockDynamoService.getPodcastSyncStatus.mockResolvedValue(mockSyncStatus)
+
+      const event = createMockEvent('POST', '/episodes/test-podcast-id/sync-status', { podcastId: 'test-podcast-id' })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(200)
+      expect(mockDynamoService.getPodcastSyncStatus).toHaveBeenCalledWith('test-user-id', 'test-podcast-id')
+
+      const responseBody = JSON.parse(result.body)
+      expect(responseBody.data.podcastId).toBe('test-podcast-id')
+      expect(responseBody.data.syncStatus).toBe('completed')
+      expect(responseBody.data.startedAt).toBe('2024-01-01T11:00:00Z')
+      expect(responseBody.data.completedAt).toBe('2024-01-01T12:00:00Z')
+      expect(responseBody.data.episodeCount).toBe(25)
+    })
+
+    it('should return 404 when podcast not found', async () => {
+      mockDynamoService.getPodcastsByUser.mockResolvedValue([])
+
+      const event = createMockEvent('POST', '/episodes/test-podcast-id/sync-status', { podcastId: 'test-podcast-id' })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(404)
+    })
+
+    it('should return 404 when sync status not found', async () => {
+      const mockPodcasts = [
+        {
+          podcastId: 'test-podcast-id',
+          userId: 'test-user-id',
+          title: 'Test Podcast',
+          description: 'Test podcast description',
+          rssUrl: 'https://example.com/feed.xml',
+          imageUrl: 'https://example.com/image.jpg',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastUpdated: '2024-01-01T00:00:00Z',
+          episodeCount: 1,
+        },
+      ]
+
+      mockDynamoService.getPodcastsByUser.mockResolvedValue(mockPodcasts)
+      mockDynamoService.getPodcastSyncStatus.mockResolvedValue(null)
+
+      const event = createMockEvent('POST', '/episodes/test-podcast-id/sync-status', { podcastId: 'test-podcast-id' })
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(404)
+    })
+
+    it('should return 400 when podcast ID is missing', async () => {
+      const event = createMockEvent('POST', '/episodes//sync-status', {})
+      const result = await handler(event as any)
+
+      expect(result.statusCode).toBe(400)
+      const responseBody = JSON.parse(result.body)
+      expect(responseBody.error.message).toBe('Podcast ID is required')
     })
   })
 

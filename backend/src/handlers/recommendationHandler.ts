@@ -380,10 +380,11 @@ export const updateGuestAnalytics = async (event: APIGatewayProxyEvent): Promise
       }
     }
 
-    const { episodeId, guests, action, rating } = JSON.parse(event.body)
-
-    // Validate request
-    if (!episodeId || !guests || !action) {
+    // Validate request body using Zod schema
+    let updateRequest
+    try {
+      updateRequest = validateRequestBody(guestAnalyticsUpdateSchema, event.body)
+    } catch (validationError) {
       return {
         statusCode: 400,
         headers: {
@@ -392,41 +393,7 @@ export const updateGuestAnalytics = async (event: APIGatewayProxyEvent): Promise
         },
         body: JSON.stringify({
           error: {
-            message: 'Missing required fields: episodeId, guests, action',
-            code: 'VALIDATION_ERROR',
-          },
-          timestamp: new Date().toISOString(),
-        } as APIResponse),
-      }
-    }
-
-    if (!['listen', 'favorite'].includes(action)) {
-      return {
-        statusCode: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-        body: JSON.stringify({
-          error: {
-            message: 'Action must be either "listen" or "favorite"',
-            code: 'VALIDATION_ERROR',
-          },
-          timestamp: new Date().toISOString(),
-        } as APIResponse),
-      }
-    }
-
-    if (!Array.isArray(guests)) {
-      return {
-        statusCode: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-        body: JSON.stringify({
-          error: {
-            message: 'Guests must be an array of strings',
+            message: validationError instanceof Error ? validationError.message : 'Validation failed',
             code: 'VALIDATION_ERROR',
           },
           timestamp: new Date().toISOString(),
@@ -435,7 +402,13 @@ export const updateGuestAnalytics = async (event: APIGatewayProxyEvent): Promise
     }
 
     // Update guest analytics
-    await recommendationService.updateGuestAnalytics(userId, episodeId, guests, action, rating)
+    await recommendationService.updateGuestAnalytics(
+      userId,
+      updateRequest.episodeId,
+      updateRequest.guests,
+      updateRequest.action,
+      updateRequest.rating,
+    )
 
     const response: APIResponse = {
       data: { success: true },

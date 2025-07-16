@@ -25,6 +25,12 @@ export interface Podcast {
   createdAt: string
   lastUpdated: string
   episodeCount: number
+  // Episode sync status tracking
+  episodeSyncStatus?: 'idle' | 'queued' | 'processing' | 'completed' | 'failed'
+  episodeSyncStartedAt?: string
+  episodeSyncCompletedAt?: string
+  episodeSyncError?: string
+  lastEpisodeCount?: number // Track episode count before sync for comparison
 }
 
 export interface Episode {
@@ -188,4 +194,25 @@ export interface LastPlayedEpisode {
   audioUrl: string
   imageUrl?: string
   podcastImageUrl?: string
+}
+
+export interface EpisodeSyncMessage {
+  podcastId: string
+  userId: string
+  rssUrl: string
+  timestamp: string
+}
+
+export interface EpisodeSyncResult {
+  podcastId: string
+  episodeCount: number
+  message: string
+  stats: {
+    newEpisodes: number
+    updatedEpisodes: number
+    totalProcessed: number
+    duplicatesFound: number
+  }
+  success: boolean
+  error?: string
 }

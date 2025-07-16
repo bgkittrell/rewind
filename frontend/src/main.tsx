@@ -26,11 +26,11 @@ const RouteLoader = () => (
   </div>
 )
 
-// Import PWA service
-import { pwaService } from './services/pwaService'
 // Import RUM service
 import { rumService } from './services/rumService'
 import { rumConfig, isRumConfigured } from './config/rumConfig'
+// Import PWA updater component
+import { PWAUpdater } from './components/PWAUpdater'
 
 const router = createBrowserRouter([
   {
@@ -110,9 +110,6 @@ const router = createBrowserRouter([
   },
 ])
 
-// Initialize PWA service for update handling
-pwaService.initialize()
-
 // Initialize RUM service for monitoring
 if (isRumConfigured()) {
   rumService.initialize(rumConfig).catch(error => {
@@ -128,68 +125,11 @@ window.addEventListener('beforeunload', () => {
   // The actual progress saving is handled in FloatingMediaPlayer component
 })
 
-// Show update notification when available
-let updateNotificationElement: HTMLDivElement | null = null
-
-pwaService.onUpdateAvailable(showReload => {
-  if (showReload && !updateNotificationElement) {
-    updateNotificationElement = document.createElement('div')
-    updateNotificationElement.className = 'fixed top-0 left-0 right-0 z-50 bg-red-500 text-white px-4 py-3 shadow-lg'
-
-    // Create elements safely without innerHTML
-    const container = document.createElement('div')
-    container.className = 'flex items-center justify-between'
-
-    const textContainer = document.createElement('div')
-
-    const title = document.createElement('p')
-    title.className = 'font-medium'
-    title.textContent = 'Update Available'
-
-    const subtitle = document.createElement('p')
-    subtitle.className = 'text-sm text-red-100'
-    subtitle.textContent = 'A new version of Rewind is ready to install'
-
-    textContainer.appendChild(title)
-    textContainer.appendChild(subtitle)
-
-    const buttonContainer = document.createElement('div')
-    buttonContainer.className = 'flex items-center space-x-2'
-
-    const updateBtn = document.createElement('button')
-    updateBtn.id = 'update-btn'
-    updateBtn.className = 'bg-white text-red-500 px-4 py-2 rounded font-medium hover:bg-red-50'
-    updateBtn.textContent = 'Update Now'
-    updateBtn.addEventListener('click', () => {
-      pwaService.applyUpdate()
-    })
-
-    const dismissBtn = document.createElement('button')
-    dismissBtn.id = 'dismiss-btn'
-    dismissBtn.className = 'text-white hover:text-red-200 p-1'
-    dismissBtn.textContent = '×'
-
-    buttonContainer.appendChild(updateBtn)
-    buttonContainer.appendChild(dismissBtn)
-
-    container.appendChild(textContainer)
-    container.appendChild(buttonContainer)
-
-    updateNotificationElement.appendChild(container)
-    document.body.appendChild(updateNotificationElement)
-
-    // Handle dismiss button click
-    document.getElementById('dismiss-btn')?.addEventListener('click', () => {
-      updateNotificationElement?.remove()
-      updateNotificationElement = null
-    })
-  }
-})
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <AuthProvider>
+        <PWAUpdater />
         <RouterProvider router={router} />
       </AuthProvider>
     </ErrorBoundary>
