@@ -27,10 +27,7 @@ export class RewindBackendStackMonitoring extends Construct {
 
     // Create guest extraction monitoring
     this.guestExtractionMonitoring = new GuestExtractionMonitoring(this, 'GuestExtractionMonitoring', {
-      // Note: We'll need to get the recommendation function from the backend stack
-      // For now, we'll assume it's available. In practice, you'd need to expose it
-      // from the RewindBackendStack class
-      guestExtractionFunction: backendStack.recommendationFunction,
+      guestExtractionFunction: backendStack.guestExtractionProcessor,
       namePrefix: 'rewind',
       environment,
       alertEmail,
@@ -83,16 +80,10 @@ export interface ExtendedRewindBackendStackProps extends cdk.StackProps {
 
 // This would be the updated backend stack with monitoring integration
 export class RewindBackendStackWithMonitoring extends RewindBackendStack {
-  public readonly recommendationFunction: cdk.aws_lambda.Function
-  public readonly episodeFunction: cdk.aws_lambda.Function
-  public readonly podcastFunction: cdk.aws_lambda.Function
   public readonly monitoring?: RewindBackendStackMonitoring
 
   constructor(scope: Construct, id: string, props: ExtendedRewindBackendStackProps) {
     super(scope, id, props)
-
-    // Expose Lambda functions (these would be set in the parent class)
-    // This is a conceptual example - you'd need to modify the parent class
 
     // Add monitoring if enabled
     if (props.enableGuestExtractionMonitoring) {

@@ -31,10 +31,10 @@ export interface GuestExtractionMonitoringProps {
 
 export class GuestExtractionMonitoring extends Construct {
   public readonly dashboard: cloudwatch.Dashboard
-  public readonly successRateAlarm: cloudwatch.Alarm
-  public readonly errorRateAlarm: cloudwatch.Alarm
-  public readonly latencyAlarm: cloudwatch.Alarm
-  public readonly costAlarm: cloudwatch.Alarm
+  public readonly successRateAlarm!: cloudwatch.Alarm
+  public readonly errorRateAlarm!: cloudwatch.Alarm
+  public readonly latencyAlarm!: cloudwatch.Alarm
+  public readonly costAlarm!: cloudwatch.Alarm
 
   constructor(scope: Construct, id: string, props: GuestExtractionMonitoringProps) {
     super(scope, id)
@@ -59,117 +59,122 @@ export class GuestExtractionMonitoring extends Construct {
     this.dashboard = new cloudwatch.Dashboard(this, 'GuestExtractionDashboard', {
       dashboardName: `${namePrefix}-guest-extraction-${environment}`,
       widgets: [
-        // Row 1: Overview metrics
-        new cloudwatch.GraphWidget({
-          title: 'Guest Extraction Success Rate',
-          width: 12,
-          height: 6,
-          left: [extractionMetrics.successRate, extractionMetrics.failureRate],
-          leftYAxis: {
-            min: 0,
-            max: 100,
-            label: 'Percentage',
-          },
-          period: cdk.Duration.minutes(5),
-          statistic: 'Average',
-        }),
+        [
+          // Row 1: Overview metrics
+          new cloudwatch.GraphWidget({
+            title: 'Guest Extraction Success Rate',
+            width: 12,
+            height: 6,
+            left: [extractionMetrics.successRate, extractionMetrics.failureRate],
+            leftYAxis: {
+              min: 0,
+              max: 100,
+              label: 'Percentage',
+            },
+            period: cdk.Duration.minutes(5),
+            statistic: 'Average',
+          }),
 
-        new cloudwatch.GraphWidget({
-          title: 'Extraction Volume',
-          width: 12,
-          height: 6,
-          left: [
-            extractionMetrics.totalExtractions,
-            extractionMetrics.successfulExtractions,
-            extractionMetrics.failedExtractions,
-          ],
-          leftYAxis: {
-            min: 0,
-            label: 'Count',
-          },
-          period: cdk.Duration.minutes(5),
-          statistic: 'Sum',
-        }),
+          new cloudwatch.GraphWidget({
+            title: 'Extraction Volume',
+            width: 12,
+            height: 6,
+            left: [
+              extractionMetrics.totalExtractions,
+              extractionMetrics.successfulExtractions,
+              extractionMetrics.failedExtractions,
+            ],
+            leftYAxis: {
+              min: 0,
+              label: 'Count',
+            },
+            period: cdk.Duration.minutes(5),
+            statistic: 'Sum',
+          }),
+        ],
+        [
+          // Row 2: Performance metrics
+          new cloudwatch.GraphWidget({
+            title: 'Extraction Latency',
+            width: 12,
+            height: 6,
+            left: [extractionMetrics.extractionLatency],
+            leftYAxis: {
+              min: 0,
+              label: 'Milliseconds',
+            },
+            period: cdk.Duration.minutes(5),
+            statistic: 'Average',
+          }),
 
-        // Row 2: Performance metrics
-        new cloudwatch.GraphWidget({
-          title: 'Extraction Latency',
-          width: 12,
-          height: 6,
-          left: [extractionMetrics.extractionLatency],
-          leftYAxis: {
-            min: 0,
-            label: 'Milliseconds',
-          },
-          period: cdk.Duration.minutes(5),
-          statistic: 'Average',
-        }),
+          new cloudwatch.GraphWidget({
+            title: 'Bedrock API Usage',
+            width: 12,
+            height: 6,
+            left: [extractionMetrics.bedrockApiCalls, extractionMetrics.bedrockApiErrors],
+            leftYAxis: {
+              min: 0,
+              label: 'Count',
+            },
+            period: cdk.Duration.minutes(5),
+            statistic: 'Sum',
+          }),
+        ],
+        [
+          // Row 3: Cost and error analysis
+          new cloudwatch.GraphWidget({
+            title: 'Estimated Bedrock Costs',
+            width: 12,
+            height: 6,
+            left: [extractionMetrics.estimatedCost],
+            leftYAxis: {
+              min: 0,
+              label: 'USD',
+            },
+            period: cdk.Duration.hours(1),
+            statistic: 'Sum',
+          }),
 
-        new cloudwatch.GraphWidget({
-          title: 'Bedrock API Usage',
-          width: 12,
-          height: 6,
-          left: [extractionMetrics.bedrockApiCalls, extractionMetrics.bedrockApiErrors],
-          leftYAxis: {
-            min: 0,
-            label: 'Count',
-          },
-          period: cdk.Duration.minutes(5),
-          statistic: 'Sum',
-        }),
+          new cloudwatch.GraphWidget({
+            title: 'Error Types',
+            width: 12,
+            height: 6,
+            left: [extractionMetrics.timeoutErrors, extractionMetrics.parseErrors, extractionMetrics.apiErrors],
+            leftYAxis: {
+              min: 0,
+              label: 'Count',
+            },
+            period: cdk.Duration.minutes(5),
+            statistic: 'Sum',
+          }),
+        ],
+        [
+          // Row 4: Lambda function metrics
+          new cloudwatch.GraphWidget({
+            title: 'Lambda Function Performance',
+            width: 12,
+            height: 6,
+            left: [guestExtractionFunction.metricDuration(), guestExtractionFunction.metricErrors()],
+            leftYAxis: {
+              min: 0,
+              label: 'Duration (ms) / Errors',
+            },
+            period: cdk.Duration.minutes(5),
+          }),
 
-        // Row 3: Cost and error analysis
-        new cloudwatch.GraphWidget({
-          title: 'Estimated Bedrock Costs',
-          width: 12,
-          height: 6,
-          left: [extractionMetrics.estimatedCost],
-          leftYAxis: {
-            min: 0,
-            label: 'USD',
-          },
-          period: cdk.Duration.hours(1),
-          statistic: 'Sum',
-        }),
-
-        new cloudwatch.GraphWidget({
-          title: 'Error Types',
-          width: 12,
-          height: 6,
-          left: [extractionMetrics.timeoutErrors, extractionMetrics.parseErrors, extractionMetrics.apiErrors],
-          leftYAxis: {
-            min: 0,
-            label: 'Count',
-          },
-          period: cdk.Duration.minutes(5),
-          statistic: 'Sum',
-        }),
-
-        // Row 4: Lambda function metrics
-        new cloudwatch.GraphWidget({
-          title: 'Lambda Function Performance',
-          width: 12,
-          height: 6,
-          left: [guestExtractionFunction.metricDuration(), guestExtractionFunction.metricErrors()],
-          leftYAxis: {
-            min: 0,
-            label: 'Duration (ms) / Errors',
-          },
-          period: cdk.Duration.minutes(5),
-        }),
-
-        new cloudwatch.GraphWidget({
-          title: 'Lambda Function Invocations',
-          width: 12,
-          height: 6,
-          left: [guestExtractionFunction.metricInvocations(), guestExtractionFunction.metricThrottles()],
-          leftYAxis: {
-            min: 0,
-            label: 'Count',
-          },
-          period: cdk.Duration.minutes(5),
-          statistic: 'Sum',
-        }),
+          new cloudwatch.GraphWidget({
+            title: 'Lambda Function Invocations',
+            width: 12,
+            height: 6,
+            left: [guestExtractionFunction.metricInvocations(), guestExtractionFunction.metricThrottles()],
+            leftYAxis: {
+              min: 0,
+              label: 'Count',
+            },
+            period: cdk.Duration.minutes(5),
+            statistic: 'Sum',
+          }),
+        ],
       ],
     })
 
@@ -330,7 +335,7 @@ export class GuestExtractionMonitoring extends Construct {
     environment: string,
   ) {
     // Success rate alarm (alert if below 85%)
-    this.successRateAlarm = new cloudwatch.Alarm(this, 'SuccessRateAlarm', {
+    ;(this as any).successRateAlarm = new cloudwatch.Alarm(this, 'SuccessRateAlarm', {
       alarmName: `${namePrefix}-guest-extraction-success-rate-${environment}`,
       alarmDescription: 'Alert when guest extraction success rate drops below 85%',
       metric: metrics.successRate,
@@ -344,7 +349,7 @@ export class GuestExtractionMonitoring extends Construct {
     this.successRateAlarm.addAlarmAction(new cloudwatchActions.SnsAction(alertTopic))
 
     // Error rate alarm (alert if above 15%)
-    this.errorRateAlarm = new cloudwatch.Alarm(this, 'ErrorRateAlarm', {
+    ;(this as any).errorRateAlarm = new cloudwatch.Alarm(this, 'ErrorRateAlarm', {
       alarmName: `${namePrefix}-guest-extraction-error-rate-${environment}`,
       alarmDescription: 'Alert when guest extraction error rate exceeds 15%',
       metric: metrics.failureRate,
@@ -358,7 +363,7 @@ export class GuestExtractionMonitoring extends Construct {
     this.errorRateAlarm.addAlarmAction(new cloudwatchActions.SnsAction(alertTopic))
 
     // Latency alarm (alert if average latency > 30 seconds)
-    this.latencyAlarm = new cloudwatch.Alarm(this, 'LatencyAlarm', {
+    ;(this as any).latencyAlarm = new cloudwatch.Alarm(this, 'LatencyAlarm', {
       alarmName: `${namePrefix}-guest-extraction-latency-${environment}`,
       alarmDescription: 'Alert when guest extraction latency exceeds 30 seconds',
       metric: metrics.extractionLatency,
@@ -372,15 +377,13 @@ export class GuestExtractionMonitoring extends Construct {
     this.latencyAlarm.addAlarmAction(new cloudwatchActions.SnsAction(alertTopic))
 
     // Cost alarm (alert if estimated cost > $50/day)
-    this.costAlarm = new cloudwatch.Alarm(this, 'CostAlarm', {
+    ;(this as any).costAlarm = new cloudwatch.Alarm(this, 'CostAlarm', {
       alarmName: `${namePrefix}-guest-extraction-cost-${environment}`,
       alarmDescription: 'Alert when estimated daily cost exceeds $50',
       metric: metrics.estimatedCost,
       threshold: 50,
       comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
       evaluationPeriods: 1,
-      period: cdk.Duration.hours(24),
-      statistic: 'Sum',
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
     })
 

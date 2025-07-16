@@ -17,13 +17,21 @@ export interface RewindBackendStackProps extends cdk.StackProps {
 
 export class RewindBackendStack extends cdk.Stack {
   public readonly apiUrl: string
+  public readonly podcastFunction: lambda.Function
+  public readonly authFunction: lambda.Function
+  public readonly episodeFunction: lambda.Function
+  public readonly recommendationFunction: lambda.Function
+  public readonly searchFunction: lambda.Function
+  public readonly guestExtractionProcessor: lambda.Function
+  public readonly episodeSyncProcessor: lambda.Function
+
   constructor(scope: Construct, id: string, props: RewindBackendStackProps) {
     super(scope, id, props)
 
     const allowedOrigins =
       'http://localhost:5173,http://localhost:3000,https://rewind-production.com,https://d1bpz7t7ooyig6.cloudfront.net'
     // Create Lambda function for podcast operations
-    const podcastFunction = new NodejsFunction(this, 'PodcastHandler', {
+    this.podcastFunction = new NodejsFunction(this, 'PodcastHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../backend/src/handlers/podcastHandler.ts'),
@@ -49,7 +57,7 @@ export class RewindBackendStack extends cdk.Stack {
     })
 
     // Create Lambda function for authentication operations
-    const authFunction = new NodejsFunction(this, 'AuthHandler', {
+    this.authFunction = new NodejsFunction(this, 'AuthHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../backend/src/handlers/authHandler.ts'),
@@ -71,7 +79,7 @@ export class RewindBackendStack extends cdk.Stack {
     })
 
     // Create Lambda function for episode operations
-    const episodeFunction = new NodejsFunction(this, 'EpisodeHandler', {
+    this.episodeFunction = new NodejsFunction(this, 'EpisodeHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../backend/src/handlers/episodeHandler.ts'),
@@ -92,7 +100,7 @@ export class RewindBackendStack extends cdk.Stack {
     })
 
     // Create Lambda function for recommendation operations
-    const recommendationFunction = new NodejsFunction(this, 'RecommendationHandler', {
+    this.recommendationFunction = new NodejsFunction(this, 'RecommendationHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../backend/src/handlers/recommendationHandlerSecure.ts'),
@@ -116,7 +124,7 @@ export class RewindBackendStack extends cdk.Stack {
     })
 
     // Create Lambda function for search operations
-    const searchFunction = new NodejsFunction(this, 'SearchHandler', {
+    this.searchFunction = new NodejsFunction(this, 'SearchHandler', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../backend/src/handlers/searchHandler.ts'),
@@ -137,7 +145,7 @@ export class RewindBackendStack extends cdk.Stack {
     })
 
     // Grant Bedrock permissions to recommendation function
-    recommendationFunction.addToRolePolicy(
+    this.recommendationFunction.addToRolePolicy(
       new cdk.aws_iam.PolicyStatement({
         effect: cdk.aws_iam.Effect.ALLOW,
         actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
@@ -153,7 +161,7 @@ export class RewindBackendStack extends cdk.Stack {
     )
 
     // Grant Bedrock permissions to episode function for guest extraction
-    episodeFunction.addToRolePolicy(
+    this.episodeFunction.addToRolePolicy(
       new cdk.aws_iam.PolicyStatement({
         effect: cdk.aws_iam.Effect.ALLOW,
         actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
@@ -169,7 +177,7 @@ export class RewindBackendStack extends cdk.Stack {
     )
 
     // Grant CloudWatch permissions to episode function for metrics publishing
-    episodeFunction.addToRolePolicy(
+    this.episodeFunction.addToRolePolicy(
       new cdk.aws_iam.PolicyStatement({
         effect: cdk.aws_iam.Effect.ALLOW,
         actions: ['cloudwatch:PutMetricData'],
@@ -179,29 +187,29 @@ export class RewindBackendStack extends cdk.Stack {
 
     // Grant DynamoDB permissions to the Lambda functions
     Object.values(props.tables).forEach(table => {
-      table.grantReadWriteData(podcastFunction)
-      table.grantReadWriteData(authFunction)
+      table.grantReadWriteData(this.podcastFunction)
+      table.grantReadWriteData(this.authFunction)
     })
 
     // Grant specific permissions to episode function
-    props.tables.podcasts.grantReadWriteData(episodeFunction)
-    props.tables.episodes.grantReadWriteData(episodeFunction)
-    props.tables.listeningHistory.grantReadWriteData(episodeFunction)
-    props.tables.rateLimit.grantReadWriteData(episodeFunction)
+    props.tables.podcasts.grantReadWriteData(this.episodeFunction)
+    props.tables.episodes.grantReadWriteData(this.episodeFunction)
+    props.tables.listeningHistory.grantReadWriteData(this.episodeFunction)
+    props.tables.rateLimit.grantReadWriteData(this.episodeFunction)
 
     // Grant specific permissions to recommendation function
-    props.tables.episodes.grantReadData(recommendationFunction)
-    props.tables.listeningHistory.grantReadData(recommendationFunction)
-    props.tables.userFavorites.grantReadWriteData(recommendationFunction)
-    props.tables.guestAnalytics.grantReadWriteData(recommendationFunction)
-    props.tables.userFeedback.grantReadWriteData(recommendationFunction)
-    props.tables.podcasts.grantReadData(recommendationFunction)
-    props.tables.rateLimit.grantReadWriteData(recommendationFunction)
+    props.tables.episodes.grantReadData(this.recommendationFunction)
+    props.tables.listeningHistory.grantReadData(this.recommendationFunction)
+    props.tables.userFavorites.grantReadWriteData(this.recommendationFunction)
+    props.tables.guestAnalytics.grantReadWriteData(this.recommendationFunction)
+    props.tables.userFeedback.grantReadWriteData(this.recommendationFunction)
+    props.tables.podcasts.grantReadData(this.recommendationFunction)
+    props.tables.rateLimit.grantReadWriteData(this.recommendationFunction)
 
     // Grant specific permissions to search function
-    props.tables.podcasts.grantReadData(searchFunction)
-    props.tables.episodes.grantReadData(searchFunction)
-    props.tables.rateLimit.grantReadWriteData(searchFunction)
+    props.tables.podcasts.grantReadData(this.searchFunction)
+    props.tables.episodes.grantReadData(this.searchFunction)
+    props.tables.rateLimit.grantReadWriteData(this.searchFunction)
 
     // Create SQS queue for guest extraction processing
     const guestExtractionDLQ = new sqs.Queue(this, 'GuestExtractionDLQ', {
@@ -238,7 +246,7 @@ export class RewindBackendStack extends cdk.Stack {
     })
 
     // Create Lambda function for guest extraction processing
-    const guestExtractionProcessor = new NodejsFunction(this, 'GuestExtractionProcessor', {
+    this.guestExtractionProcessor = new NodejsFunction(this, 'GuestExtractionProcessor', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../backend/src/handlers/guestExtractionProcessor.ts'),
@@ -252,7 +260,7 @@ export class RewindBackendStack extends cdk.Stack {
     })
 
     // Create Lambda function for episode sync processing
-    const episodeSyncProcessor = new NodejsFunction(this, 'EpisodeSyncProcessor', {
+    this.episodeSyncProcessor = new NodejsFunction(this, 'EpisodeSyncProcessor', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../backend/src/handlers/episodeSyncProcessor.ts'),
@@ -268,21 +276,21 @@ export class RewindBackendStack extends cdk.Stack {
     })
 
     // Grant permissions to guest extraction processor
-    props.tables.episodes.grantReadWriteData(guestExtractionProcessor)
-    guestExtractionQueue.grantConsumeMessages(guestExtractionProcessor)
-    guestExtractionQueue.grantSendMessages(episodeFunction) // Allow episode handler to send messages
-    guestExtractionQueue.grantSendMessages(podcastFunction) // Allow podcast handler to send messages
+    props.tables.episodes.grantReadWriteData(this.guestExtractionProcessor)
+    guestExtractionQueue.grantConsumeMessages(this.guestExtractionProcessor)
+    guestExtractionQueue.grantSendMessages(this.episodeFunction) // Allow episode handler to send messages
+    guestExtractionQueue.grantSendMessages(this.podcastFunction) // Allow podcast handler to send messages
 
     // Grant permissions to episode sync processor
-    props.tables.podcasts.grantReadWriteData(episodeSyncProcessor)
-    props.tables.episodes.grantReadWriteData(episodeSyncProcessor)
-    episodeSyncQueue.grantConsumeMessages(episodeSyncProcessor)
-    episodeSyncQueue.grantSendMessages(podcastFunction) // Allow podcast handler to send messages
-    episodeSyncQueue.grantSendMessages(episodeFunction) // Allow episode handler to send messages
-    guestExtractionQueue.grantSendMessages(episodeSyncProcessor) // Allow episode sync processor to queue guest extraction
+    props.tables.podcasts.grantReadWriteData(this.episodeSyncProcessor)
+    props.tables.episodes.grantReadWriteData(this.episodeSyncProcessor)
+    episodeSyncQueue.grantConsumeMessages(this.episodeSyncProcessor)
+    episodeSyncQueue.grantSendMessages(this.podcastFunction) // Allow podcast handler to send messages
+    episodeSyncQueue.grantSendMessages(this.episodeFunction) // Allow episode handler to send messages
+    guestExtractionQueue.grantSendMessages(this.episodeSyncProcessor) // Allow episode sync processor to queue guest extraction
 
     // Grant Bedrock permissions to guest extraction processor
-    guestExtractionProcessor.addToRolePolicy(
+    this.guestExtractionProcessor.addToRolePolicy(
       new cdk.aws_iam.PolicyStatement({
         effect: cdk.aws_iam.Effect.ALLOW,
         actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
@@ -298,7 +306,7 @@ export class RewindBackendStack extends cdk.Stack {
     )
 
     // Grant CloudWatch permissions for metrics publishing
-    guestExtractionProcessor.addToRolePolicy(
+    this.guestExtractionProcessor.addToRolePolicy(
       new cdk.aws_iam.PolicyStatement({
         effect: cdk.aws_iam.Effect.ALLOW,
         actions: ['cloudwatch:PutMetricData'],
@@ -307,7 +315,7 @@ export class RewindBackendStack extends cdk.Stack {
     )
 
     // Add SQS event source to guest extraction processor
-    guestExtractionProcessor.addEventSource(
+    this.guestExtractionProcessor.addEventSource(
       new SqsEventSource(guestExtractionQueue, {
         batchSize: 1, // Process one message at a time for throttling
         maxBatchingWindow: cdk.Duration.seconds(5),
@@ -317,7 +325,7 @@ export class RewindBackendStack extends cdk.Stack {
     )
 
     // Add SQS event source to episode sync processor
-    episodeSyncProcessor.addEventSource(
+    this.episodeSyncProcessor.addEventSource(
       new SqsEventSource(episodeSyncQueue, {
         batchSize: 1, // Process one podcast at a time
         maxBatchingWindow: cdk.Duration.seconds(5),
@@ -327,19 +335,19 @@ export class RewindBackendStack extends cdk.Stack {
     )
 
     // Add environment variable for guest extraction queue URL to episode handler
-    episodeFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
+    this.episodeFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
 
     // Add environment variable for episode sync queue URL to episode handler
-    episodeFunction.addEnvironment('EPISODE_SYNC_QUEUE_URL', episodeSyncQueue.queueUrl)
+    this.episodeFunction.addEnvironment('EPISODE_SYNC_QUEUE_URL', episodeSyncQueue.queueUrl)
 
     // Add environment variable for guest extraction queue URL to podcast handler (needed for addPodcast)
-    podcastFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
+    this.podcastFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
 
     // Add environment variable for episode sync queue URL to podcast handler
-    podcastFunction.addEnvironment('EPISODE_SYNC_QUEUE_URL', episodeSyncQueue.queueUrl)
+    this.podcastFunction.addEnvironment('EPISODE_SYNC_QUEUE_URL', episodeSyncQueue.queueUrl)
 
     // Add environment variable for guest extraction queue URL to recommendation handler (for validation scripts)
-    recommendationFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
+    this.recommendationFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
 
     // Create Cognito authorizer for API Gateway
     const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'RewindAuthorizer', {
@@ -398,24 +406,24 @@ export class RewindBackendStack extends cdk.Stack {
 
     // Add authentication routes (no authorization needed)
     const auth = api.root.addResource('auth')
-    auth.addResource('signin').addMethod('POST', new apigateway.LambdaIntegration(authFunction))
-    auth.addResource('signup').addMethod('POST', new apigateway.LambdaIntegration(authFunction))
-    auth.addResource('confirm').addMethod('POST', new apigateway.LambdaIntegration(authFunction))
-    auth.addResource('resend').addMethod('POST', new apigateway.LambdaIntegration(authFunction))
+    auth.addResource('signin').addMethod('POST', new apigateway.LambdaIntegration(this.authFunction))
+    auth.addResource('signup').addMethod('POST', new apigateway.LambdaIntegration(this.authFunction))
+    auth.addResource('confirm').addMethod('POST', new apigateway.LambdaIntegration(this.authFunction))
+    auth.addResource('resend').addMethod('POST', new apigateway.LambdaIntegration(this.authFunction))
 
     // Add protected API routes (require authorization)
     const podcasts = api.root.addResource('podcasts')
-    podcasts.addMethod('GET', new apigateway.LambdaIntegration(podcastFunction), {
+    podcasts.addMethod('GET', new apigateway.LambdaIntegration(this.podcastFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
-    podcasts.addMethod('POST', new apigateway.LambdaIntegration(podcastFunction), {
+    podcasts.addMethod('POST', new apigateway.LambdaIntegration(this.podcastFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     const podcastById = podcasts.addResource('{podcastId}')
-    podcastById.addMethod('DELETE', new apigateway.LambdaIntegration(podcastFunction), {
+    podcastById.addMethod('DELETE', new apigateway.LambdaIntegration(this.podcastFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
@@ -425,48 +433,48 @@ export class RewindBackendStack extends cdk.Stack {
 
     // GET /episodes/{podcastId} - Get episodes for a podcast
     const episodesByPodcast = episodes.addResource('{podcastId}')
-    episodesByPodcast.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
+    episodesByPodcast.addMethod('GET', new apigateway.LambdaIntegration(this.episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     // POST /episodes/{podcastId}/sync - Sync episodes from RSS
     const syncEpisodes = episodesByPodcast.addResource('sync')
-    syncEpisodes.addMethod('POST', new apigateway.LambdaIntegration(episodeFunction), {
+    syncEpisodes.addMethod('POST', new apigateway.LambdaIntegration(this.episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     // POST /episodes/{podcastId}/sync-status - Get sync status for a podcast
     const syncStatus = episodesByPodcast.addResource('sync-status')
-    syncStatus.addMethod('POST', new apigateway.LambdaIntegration(episodeFunction), {
+    syncStatus.addMethod('POST', new apigateway.LambdaIntegration(this.episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     // DELETE /episodes/{podcastId} - Delete all episodes for a podcast
-    episodesByPodcast.addMethod('DELETE', new apigateway.LambdaIntegration(episodeFunction), {
+    episodesByPodcast.addMethod('DELETE', new apigateway.LambdaIntegration(this.episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     // POST /episodes/{podcastId}/fix-images - Fix episode image URLs
     const fixImages = episodesByPodcast.addResource('fix-images')
-    fixImages.addMethod('POST', new apigateway.LambdaIntegration(episodeFunction), {
+    fixImages.addMethod('POST', new apigateway.LambdaIntegration(this.episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     // POST /episodes/refresh-url - Refresh episode audio URL
     const refreshUrl = episodes.addResource('refresh-url')
-    refreshUrl.addMethod('POST', new apigateway.LambdaIntegration(episodeFunction), {
+    refreshUrl.addMethod('POST', new apigateway.LambdaIntegration(this.episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     // GET /episodes/{podcastId}/{episodeId} - Get specific episode by podcast and episode ID
     const episodeByPodcastAndId = episodesByPodcast.addResource('{episodeId}')
-    episodeByPodcastAndId.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
+    episodeByPodcastAndId.addMethod('GET', new apigateway.LambdaIntegration(this.episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
@@ -475,7 +483,7 @@ export class RewindBackendStack extends cdk.Stack {
     const episodeById = episodes.addResource('{episodeId}')
 
     // GET /episodes/{episodeId} - Get individual episode
-    episodeById.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
+    episodeById.addMethod('GET', new apigateway.LambdaIntegration(this.episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
@@ -483,27 +491,27 @@ export class RewindBackendStack extends cdk.Stack {
     const progress = episodeById.addResource('progress')
 
     // GET /episodes/{episodeId}/progress - Get playback progress
-    progress.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
+    progress.addMethod('GET', new apigateway.LambdaIntegration(this.episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     // PUT /episodes/{episodeId}/progress - Save playback progress
-    progress.addMethod('PUT', new apigateway.LambdaIntegration(episodeFunction), {
+    progress.addMethod('PUT', new apigateway.LambdaIntegration(this.episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     // GET /listening-history - Get user's listening history
     const listeningHistory = api.root.addResource('listening-history')
-    listeningHistory.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
+    listeningHistory.addMethod('GET', new apigateway.LambdaIntegration(this.episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     // GET /resume - Get resume data for last played episode
     const resume = api.root.addResource('resume')
-    resume.addMethod('GET', new apigateway.LambdaIntegration(episodeFunction), {
+    resume.addMethod('GET', new apigateway.LambdaIntegration(this.episodeFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
@@ -512,28 +520,28 @@ export class RewindBackendStack extends cdk.Stack {
     const recommendations = api.root.addResource('recommendations')
 
     // GET /recommendations - Get personalized recommendations
-    recommendations.addMethod('GET', new apigateway.LambdaIntegration(recommendationFunction), {
+    recommendations.addMethod('GET', new apigateway.LambdaIntegration(this.recommendationFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     // POST /recommendations/extract-guests - Extract guests from episode
     const extractGuests = recommendations.addResource('extract-guests')
-    extractGuests.addMethod('POST', new apigateway.LambdaIntegration(recommendationFunction), {
+    extractGuests.addMethod('POST', new apigateway.LambdaIntegration(this.recommendationFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     // POST /recommendations/batch-extract-guests - Batch extract guests
     const batchExtractGuests = recommendations.addResource('batch-extract-guests')
-    batchExtractGuests.addMethod('POST', new apigateway.LambdaIntegration(recommendationFunction), {
+    batchExtractGuests.addMethod('POST', new apigateway.LambdaIntegration(this.recommendationFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
 
     // POST /recommendations/guest-analytics - Update guest analytics
     const guestAnalytics = recommendations.addResource('guest-analytics')
-    guestAnalytics.addMethod('POST', new apigateway.LambdaIntegration(recommendationFunction), {
+    guestAnalytics.addMethod('POST', new apigateway.LambdaIntegration(this.recommendationFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
@@ -541,7 +549,7 @@ export class RewindBackendStack extends cdk.Stack {
     // Add search endpoint
     // GET /search - Search episodes
     const search = api.root.addResource('search')
-    search.addMethod('GET', new apigateway.LambdaIntegration(searchFunction), {
+    search.addMethod('GET', new apigateway.LambdaIntegration(this.searchFunction), {
       authorizer: cognitoAuthorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     })
