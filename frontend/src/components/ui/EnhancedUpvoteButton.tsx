@@ -46,7 +46,7 @@ export function EnhancedUpvoteButton({
           // Handle silent failure scenario
           showToast({
             type: 'error',
-            title: 'There was a problem with your request.',
+            title: 'Something went wrong',
             description: 'Please try again in a moment.',
             duration: 5000,
           })

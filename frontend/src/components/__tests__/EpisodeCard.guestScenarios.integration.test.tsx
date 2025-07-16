@@ -5,7 +5,6 @@
  * Tests to ensure UI behavior matches expected backend behavior after bug fix
  */
 
-import React from 'react'
 import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { MemoryRouter } from 'react-router'
@@ -25,7 +24,7 @@ vi.mock('../../services/recommendationService', () => ({
 
 // Mock the navigation
 vi.mock('react-router', async importOriginal => {
-  const actual = await importOriginal()
+  const actual = (await importOriginal()) as any
   return {
     ...actual,
     useNavigate: () => vi.fn(),

@@ -94,6 +94,16 @@ export class RecommendationService {
       return total + value * weight
     }, 0)
 
+    // Debug logging for episodes with guest matches
+    if (factors.guestMatchBonus > 0) {
+      logger.debug(`Episode with guest matches: ${episode.title}`, {
+        episodeId: episode.episodeId,
+        factors,
+        score,
+        extractedGuests: episode.extractedGuests,
+      })
+    }
+
     // Generate explanation for the recommendation
     const reasons = this.generateRecommendationReasons(factors, episode)
 
@@ -184,16 +194,36 @@ export class RecommendationService {
 
       if (guestData) {
         // Score based on how much user likes this guest
+        // Normalize averageRating from 1-5 scale to 0-1 scale
+        const normalizedRating = (guestData.averageRating - 1) / 4 // Convert 1-5 to 0-1
         const guestScore = Math.min(
-          guestData.listenCount * 0.3 + guestData.favoriteCount * 0.5 + guestData.averageRating * 0.2,
+          guestData.listenCount * 0.2 + guestData.favoriteCount * 0.6 + normalizedRating * 0.2,
           1.0,
         )
         totalScore += guestScore
         guestMatches++
+
+        // Debug logging
+        logger.debug(`Guest match found: ${guest}`, {
+          listenCount: guestData.listenCount,
+          favoriteCount: guestData.favoriteCount,
+          averageRating: guestData.averageRating,
+          normalizedRating,
+          guestScore,
+        })
       }
     }
 
-    return guestMatches > 0 ? totalScore / guestMatches : 0
+    const finalScore = guestMatches > 0 ? totalScore / guestMatches : 0
+    if (finalScore > 0) {
+      logger.debug(`Guest match score for episode ${episode.episodeId}: ${finalScore}`, {
+        extractedGuests: episode.extractedGuests,
+        totalScore,
+        guestMatches,
+      })
+    }
+
+    return finalScore
   }
 
   /**
@@ -277,6 +307,11 @@ export class RecommendationService {
 
       // Only show episodes with guests if requested
       if (filters.guests && episode.factors.guestMatchBonus === 0) {
+        logger.debug(`Filtering out episode with no guest matches: ${episode.episode.title}`, {
+          episodeId: episode.episode.episodeId,
+          extractedGuests: episode.episode.extractedGuests,
+          guestMatchBonus: episode.factors.guestMatchBonus,
+        })
         return false
       }
 
@@ -355,7 +390,19 @@ export class RecommendationService {
       })
 
       const result = await this.client.send(command)
-      return (result.Items as GuestAnalytics[]) || []
+      const guestAnalytics = (result.Items as GuestAnalytics[]) || []
+
+      // Debug logging
+      logger.debug(`Retrieved ${guestAnalytics.length} guest analytics for user ${userId}`, {
+        guests: guestAnalytics.map(ga => ({
+          guestName: ga.guestName,
+          favoriteCount: ga.favoriteCount,
+          averageRating: ga.averageRating,
+          listenCount: ga.listenCount,
+        })),
+      })
+
+      return guestAnalytics
     } catch (error) {
       logger.error('Error fetching guest analytics:', error)
       return []

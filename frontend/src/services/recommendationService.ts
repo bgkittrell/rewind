@@ -78,6 +78,7 @@ export interface GuestAnalyticsRequest {
 export interface GuestAnalyticsResponse {
   message: string
   updated: boolean
+  guestAnalyticsCreated?: boolean
 }
 
 export interface RecommendationError {
@@ -224,18 +225,24 @@ class RecommendationService {
    * Get episode details (helper method)
    */
   private async getEpisodeDetails(episodeId: string): Promise<RecommendationEpisode> {
-    // This is a simplified version - in practice, you might need to call a different endpoint
-    // or get this data from the episodes service
-    return {
-      episodeId,
-      podcastId: '',
-      title: '',
-      description: '',
-      audioUrl: '',
-      duration: '',
-      releaseDate: '',
-      podcastName: '',
-      extractedGuests: [],
+    try {
+      // Fetch episode details from the episodes endpoint
+      const episode = await apiClient.get<RecommendationEpisode>(`/episodes/${episodeId}`)
+      return episode
+    } catch (error) {
+      console.error('Error fetching episode details:', error)
+      // Return minimal data if fetch fails
+      return {
+        episodeId,
+        podcastId: '',
+        title: '',
+        description: '',
+        audioUrl: '',
+        duration: '',
+        releaseDate: '',
+        podcastName: '',
+        extractedGuests: [],
+      }
     }
   }
 }

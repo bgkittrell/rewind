@@ -183,7 +183,7 @@ describe('Enhanced Error Handling for ValidationException', () => {
       // ===== PHASE 4: Verify Silent Failure Detection =====
       await waitFor(() => {
         // Should show error message even though API returned success
-        expect(screen.getByText('There was a problem with your request.')).toBeInTheDocument()
+        expect(screen.getByText('Something went wrong')).toBeInTheDocument()
         expect(screen.getByText('Please try again in a moment.')).toBeInTheDocument()
       })
 
@@ -215,7 +215,7 @@ describe('Enhanced Error Handling for ValidationException', () => {
       // ===== PHASE 4: Verify Warning Detection =====
       await waitFor(() => {
         // Should detect warning and show error message
-        expect(screen.getByText('There was a problem with your request.')).toBeInTheDocument()
+        expect(screen.getByText('Something went wrong')).toBeInTheDocument()
       })
 
       // ===== PHASE 5: Verify UI State =====

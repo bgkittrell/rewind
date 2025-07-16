@@ -161,8 +161,8 @@ describe('ValidationException Error Handling', () => {
     it('should detect silent failure when backend returns success but operation failed', async () => {
       // Mock successful response but with silent failure indicators
       const mockResponse = {
-        success: true,
         message: 'Success',
+        updated: true,
         guestAnalyticsCreated: false, // This indicates silent failure
         warning: 'ValidationException occurred but was handled',
       }
@@ -191,8 +191,8 @@ describe('ValidationException Error Handling', () => {
     it('should not detect silent failure for successful operations', async () => {
       // Mock successful response with no failure indicators
       const mockResponse = {
-        success: true,
         message: 'Success',
+        updated: true,
         guestAnalyticsCreated: true,
         episodeRecord: { id: 'test-episode-id' },
       }
@@ -227,8 +227,8 @@ describe('ValidationException Error Handling', () => {
       mockError.name = 'ValidationException'
 
       vi.mocked(recommendationService.thumbsUp).mockRejectedValueOnce(mockError).mockResolvedValueOnce({
-        success: true,
         message: 'Success',
+        updated: true,
         guestAnalyticsCreated: true,
       })
 
@@ -274,8 +274,8 @@ describe('ValidationException Error Handling', () => {
             setTimeout(
               () =>
                 resolve({
-                  success: true,
                   message: 'Success',
+                  updated: true,
                   guestAnalyticsCreated: true,
                 }),
               100,
@@ -296,17 +296,18 @@ describe('ValidationException Error Handling', () => {
       expect(upvoteButton).toHaveAttribute('disabled')
       expect(screen.getByTestId('enhanced-upvote-button')).toHaveClass('opacity-50')
 
-      // Wait for completion
+      // Wait for completion and success state
       await waitFor(() => {
-        expect(upvoteButton).not.toHaveAttribute('disabled')
+        expect(upvoteButton).toHaveTextContent('Upvoted')
+        expect(upvoteButton).toHaveAttribute('disabled')
       })
     })
 
     it('should disable button after successful upvote', async () => {
       // Mock successful response
       vi.mocked(recommendationService.thumbsUp).mockResolvedValue({
-        success: true,
         message: 'Success',
+        updated: true,
         guestAnalyticsCreated: true,
       })
 

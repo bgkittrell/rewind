@@ -82,7 +82,7 @@ export const ErrorHandler: React.FC<ErrorHandlerProps> = ({ children }) => {
     })
   }
 
-  const handleNetworkError = (error: Error, operation: string) => {
+  const handleNetworkError = (_error: Error, operation: string) => {
     showToast({
       type: 'error',
       title: 'Network Error',
@@ -112,7 +112,7 @@ export const ErrorHandler: React.FC<ErrorHandlerProps> = ({ children }) => {
     })
   }
 
-  const handleGenericError = (error: Error, operation: string) => {
+  const handleGenericError = (_error: Error, _operation: string) => {
     showToast({
       type: 'error',
       title: 'Something went wrong',
