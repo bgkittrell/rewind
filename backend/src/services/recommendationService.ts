@@ -483,16 +483,20 @@ export class RecommendationService {
 
     const now = new Date().toISOString()
 
-    for (const guest of guests) {
-      try {
-        const normalizedGuest = guest.trim()
+    // Use provided guests directly to avoid complex episode fetching
+    // The episode fetch was causing ValidationException due to composite key requirement
+    // For analytics purposes, the provided guests are sufficient
+    let actualGuests: string[] = guests || []
 
+    // If no guests are found, create a record for the episode itself
+    // This ensures we track user interactions even for episodes without guests
+    if (actualGuests.length === 0) {
+      try {
         let updateExpression: string
         const expressionAttributeValues: Record<string, any> = {
           ':inc': 1,
           ':now': now,
           ':zero': 0,
-          ':emptySet': new Set(),
         }
 
         if (backendAction === 'listen') {
@@ -517,8 +521,78 @@ export class RecommendationService {
               averageRating = :rating,
               updatedAt = :now,
               createdAt = if_not_exists(createdAt, :now),
-              listenCount = if_not_exists(listenCount, :zero),
-              episodeIds = if_not_exists(episodeIds, :emptySet)
+              listenCount = if_not_exists(listenCount, :zero)
+          `.trim()
+
+          expressionAttributeValues[':rating'] = actualRating || 3
+        }
+
+        // Use a special guest name for episodes without guests
+        const episodeGuestName = `_episode_${episodeId}`
+
+        const command = new UpdateCommand({
+          TableName: this.guestAnalyticsTable,
+          Key: {
+            userId,
+            guestName: episodeGuestName,
+          },
+          UpdateExpression: updateExpression,
+          ExpressionAttributeValues: expressionAttributeValues,
+        })
+
+        await this.client.send(command)
+
+        logger.info(`Updated guest analytics for episode without guests: ${episodeId}`, {
+          userId,
+          episodeId,
+          action,
+          rating: actualRating,
+          backendAction,
+        })
+      } catch (error) {
+        logger.error(`Failed to update guest analytics for episode ${episodeId}:`, error)
+        // Re-throw the error to ensure it propagates to the API response
+        throw error
+      }
+      return
+    }
+
+    // Process each guest
+    const guestErrors: Error[] = []
+    for (const guest of actualGuests) {
+      try {
+        const normalizedGuest = guest.trim()
+
+        let updateExpression: string
+        const expressionAttributeValues: Record<string, any> = {
+          ':inc': 1,
+          ':now': now,
+          ':zero': 0,
+        }
+
+        if (backendAction === 'listen') {
+          updateExpression = `
+            SET 
+              listenCount = if_not_exists(listenCount, :zero) + :inc,
+              lastListenDate = :now,
+              updatedAt = :now,
+              createdAt = if_not_exists(createdAt, :now),
+              favoriteCount = if_not_exists(favoriteCount, :zero),
+              averageRating = if_not_exists(averageRating, :defaultRating)
+            ADD episodeIds :episodeId
+          `.trim()
+
+          expressionAttributeValues[':episodeId'] = new Set([episodeId])
+          expressionAttributeValues[':defaultRating'] = actualRating || 3
+        } else {
+          // backendAction === 'favorite'
+          updateExpression = `
+            SET 
+              favoriteCount = if_not_exists(favoriteCount, :zero) + :inc,
+              averageRating = :rating,
+              updatedAt = :now,
+              createdAt = if_not_exists(createdAt, :now),
+              listenCount = if_not_exists(listenCount, :zero)
           `.trim()
 
           expressionAttributeValues[':rating'] = actualRating || 3
@@ -544,8 +618,16 @@ export class RecommendationService {
         })
       } catch (error) {
         logger.error(`Error updating guest analytics for ${guest}:`, error)
-        // Don't throw the error - continue processing other guests
+        guestErrors.push(error as Error)
+        // Continue processing other guests
       }
+    }
+
+    // If all guests failed to update, throw an error
+    if (guestErrors.length > 0 && guestErrors.length === actualGuests.length) {
+      throw new Error(
+        `Failed to update guest analytics for all ${actualGuests.length} guests. Last error: ${guestErrors[guestErrors.length - 1].message}`,
+      )
     }
   }
 }

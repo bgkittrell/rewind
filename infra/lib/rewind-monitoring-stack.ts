@@ -262,6 +262,9 @@ export class RewindMonitoringStack extends cdk.Stack {
 
     // Create CloudWatch Alarms for guest extraction
     this.createGuestExtractionAlarms(successRateMetric, guestExtractionFailureMetric, bedrockApiCostMetric)
+
+    // Create DynamoDB validation error monitoring
+    this.createDynamoDbValidationMonitoring()
   }
 
   private createGuestExtractionAlarms(
@@ -302,6 +305,99 @@ export class RewindMonitoringStack extends cdk.Stack {
       comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
       evaluationPeriods: 1,
       datapointsToAlarm: 1,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    })
+  }
+
+  private createDynamoDbValidationMonitoring(): void {
+    // Create alarms for DynamoDB ValidationException errors
+
+    // Lambda function error rate alarm for ValidationException
+    const lambdaErrorMetric = new cloudwatch.Metric({
+      namespace: 'AWS/Lambda',
+      metricName: 'Errors',
+      dimensionsMap: {
+        FunctionName: 'RecommendationHandler',
+      },
+      statistic: 'Sum',
+      period: cdk.Duration.minutes(5),
+    })
+
+    const lambdaInvocationMetric = new cloudwatch.Metric({
+      namespace: 'AWS/Lambda',
+      metricName: 'Invocations',
+      dimensionsMap: {
+        FunctionName: 'RecommendationHandler',
+      },
+      statistic: 'Sum',
+      period: cdk.Duration.minutes(5),
+    })
+
+    // Calculate error rate as percentage
+    const errorRateMetric = new cloudwatch.MathExpression({
+      expression: 'errors / invocations * 100',
+      usingMetrics: {
+        errors: lambdaErrorMetric,
+        invocations: lambdaInvocationMetric,
+      },
+      label: 'Error Rate (%)',
+    })
+
+    // Alarm for high Lambda error rate (> 5%)
+    new cloudwatch.Alarm(this, 'DynamoDbValidationErrorRate', {
+      alarmName: 'Rewind-DynamoDB-Validation-Error-Rate',
+      alarmDescription: 'Lambda function error rate is above 5% (may indicate DynamoDB ValidationException)',
+      metric: errorRateMetric,
+      threshold: 5,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+      evaluationPeriods: 2,
+      datapointsToAlarm: 2,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    })
+
+    // DynamoDB table-level monitoring for failed writes
+    const dynamoDbErrorMetric = new cloudwatch.Metric({
+      namespace: 'AWS/DynamoDB',
+      metricName: 'SystemErrors',
+      dimensionsMap: {
+        TableName: 'RewindGuestAnalytics',
+      },
+      statistic: 'Sum',
+      period: cdk.Duration.minutes(5),
+    })
+
+    // Alarm for DynamoDB system errors
+    new cloudwatch.Alarm(this, 'DynamoDbSystemErrors', {
+      alarmName: 'Rewind-DynamoDB-System-Errors',
+      alarmDescription: 'DynamoDB system errors detected in GuestAnalytics table',
+      metric: dynamoDbErrorMetric,
+      threshold: 5,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+      evaluationPeriods: 1,
+      datapointsToAlarm: 1,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    })
+
+    // Rate limit service error monitoring
+    const rateLimitErrorMetric = new cloudwatch.Metric({
+      namespace: 'AWS/Lambda',
+      metricName: 'Errors',
+      dimensionsMap: {
+        FunctionName: 'RateLimitHandler',
+      },
+      statistic: 'Sum',
+      period: cdk.Duration.minutes(5),
+    })
+
+    // Alarm for rate limit service errors
+    new cloudwatch.Alarm(this, 'RateLimitServiceErrors', {
+      alarmName: 'Rewind-Rate-Limit-Service-Errors',
+      alarmDescription: 'Rate limit service experiencing high error rate',
+      metric: rateLimitErrorMetric,
+      threshold: 10,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+      evaluationPeriods: 2,
+      datapointsToAlarm: 2,
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
     })
   }

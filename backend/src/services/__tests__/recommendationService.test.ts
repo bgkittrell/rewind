@@ -562,6 +562,7 @@ describe('RecommendationService', () => {
 
   describe('updateGuestAnalytics', () => {
     it('should update guest analytics for listen action', async () => {
+      // Mock analytics update (episode fetch removed to fix ValidationException)
       mockSend.mockResolvedValueOnce({})
 
       await service.updateGuestAnalytics('user1', 'ep1', ['John Doe'], 'listen')
@@ -570,6 +571,7 @@ describe('RecommendationService', () => {
     })
 
     it('should update guest analytics for favorite action', async () => {
+      // Mock analytics update (episode fetch removed to fix ValidationException)
       mockSend.mockResolvedValueOnce({})
 
       await service.updateGuestAnalytics('user1', 'ep1', ['John Doe'], 'favorite', 5)
@@ -586,6 +588,7 @@ describe('RecommendationService', () => {
     })
 
     it('should create initial record for new guest with up action', async () => {
+      // Mock analytics update (episode fetch removed to fix ValidationException)
       mockSend.mockResolvedValueOnce({})
 
       await service.updateGuestAnalytics('user1', 'ep1', ['New Guest'], 'up', 5)
@@ -593,6 +596,18 @@ describe('RecommendationService', () => {
       expect(mockSend).toHaveBeenCalledTimes(1)
       // The main fix is that this should not throw an error when creating a new record
       // The method should complete successfully even for guests that don't exist yet
+    })
+
+    it('should create episode record when no guests are present', async () => {
+      // Mock analytics update (episode fetch removed to fix ValidationException)
+      mockSend.mockResolvedValueOnce({})
+
+      await service.updateGuestAnalytics('user1', 'ep1', [], 'up', 5)
+
+      expect(mockSend).toHaveBeenCalledTimes(1)
+
+      // The main fix is that this should not fail when no guests are present
+      // Previously this would skip creating any records, now it creates an episode record
     })
   })
 })
