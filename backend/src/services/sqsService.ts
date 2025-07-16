@@ -32,13 +32,18 @@ export class SQSService {
     }
 
     try {
-      const command = new SendMessageCommand({
+      const messageParams: any = {
         QueueUrl: this.queueUrl,
         MessageBody: JSON.stringify(message),
-        MessageGroupId: message.podcastId, // For FIFO queue (if needed)
-        MessageDeduplicationId: `${message.episodeId}-${Date.now()}`, // Prevent duplicates
-      })
+      }
 
+      // Only add FIFO queue parameters if the queue is a FIFO queue
+      if (this.queueUrl.endsWith('.fifo')) {
+        messageParams.MessageGroupId = message.podcastId
+        messageParams.MessageDeduplicationId = `${message.episodeId}-${Date.now()}`
+      }
+
+      const command = new SendMessageCommand(messageParams)
       const result = await this.client.send(command)
 
       logger.info('Guest extraction message sent to queue', {

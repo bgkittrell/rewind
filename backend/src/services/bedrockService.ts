@@ -10,7 +10,38 @@ export class BedrockService {
   constructor() {
     this.client = new BedrockRuntimeClient({
       region: process.env.AWS_REGION || 'us-east-1',
+      maxAttempts: 3,
+      retryMode: 'adaptive',
     })
+  }
+
+  /**
+   * Invoke Bedrock model with exponential backoff retry for rate limiting
+   */
+  private async invokeWithRetry(command: InvokeModelCommand, maxRetries = 3): Promise<any> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await this.client.send(command)
+      } catch (error) {
+        if (attempt === maxRetries) throw error
+
+        // Check if it's a rate limiting error
+        const errorMessage = (error as Error).message?.toLowerCase() || ''
+        const isRateLimitError =
+          errorMessage.includes('throttle') ||
+          errorMessage.includes('rate limit') ||
+          errorMessage.includes('too many requests')
+
+        if (isRateLimitError) {
+          const backoffMs = Math.min(1000 * Math.pow(2, attempt), 30000) // Max 30s
+          logger.warn(`Rate limit hit on attempt ${attempt + 1}, retrying in ${backoffMs}ms`)
+          await new Promise(resolve => setTimeout(resolve, backoffMs))
+          continue
+        }
+
+        throw error // Re-throw non-rate-limiting errors immediately
+      }
+    }
   }
 
   /**
@@ -40,7 +71,7 @@ export class BedrockService {
         accept: 'application/json',
       }
 
-      const response = await this.client.send(new InvokeModelCommand(command))
+      const response = await this.invokeWithRetry(new InvokeModelCommand(command))
 
       if (!response.body) {
         throw new Error('No response body from Bedrock')
@@ -180,8 +211,8 @@ Respond only with the JSON object, no additional text.`
   async batchExtractGuests(requests: GuestExtractionRequest[]): Promise<GuestExtractionResult[]> {
     const results: GuestExtractionResult[] = []
 
-    // Process in batches to avoid rate limiting
-    const batchSize = 5
+    // Process in smaller batches to avoid rate limiting
+    const batchSize = 2 // Reduced from 5
     for (let i = 0; i < requests.length; i += batchSize) {
       const batch = requests.slice(i, i + batchSize)
       const batchPromises = batch.map(request => this.extractGuests(request))
@@ -190,19 +221,21 @@ Respond only with the JSON object, no additional text.`
         const batchResults = await Promise.all(batchPromises)
         results.push(...batchResults)
 
-        // Add a small delay between batches to be respectful to the API
+        // Add a longer delay between batches to be respectful to the API
         if (i + batchSize < requests.length) {
-          await new Promise(resolve => setTimeout(resolve, 1000))
+          await new Promise(resolve => setTimeout(resolve, 2000)) // Increased from 1000ms
         }
       } catch (error) {
         logger.error(`Error processing batch starting at index ${i}:`, error)
         // Add empty results for failed batch
         results.push(
-          ...batch.map(() => ({
+          ...batch.map(request => ({
             guests: [],
             confidence: 0,
             reasoning: 'Batch processing failed',
             rawResponse: 'Error in batch processing',
+            success: false,
+            episodeId: request.episodeId,
           })),
         )
       }

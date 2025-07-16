@@ -8,6 +8,7 @@ import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import { Construct } from 'constructs'
 import * as path from 'path'
+import { EmergencyGuestExtractionMonitoring } from './emergency-guest-extraction-monitoring'
 
 export interface RewindBackendStackProps extends cdk.StackProps {
   tables: { [key: string]: dynamodb.Table }
@@ -212,7 +213,7 @@ export class RewindBackendStack extends cdk.Stack {
 
     const guestExtractionQueue = new sqs.Queue(this, 'GuestExtractionQueue', {
       queueName: 'guest-extraction-queue',
-      visibilityTimeout: cdk.Duration.seconds(300), // 5 minutes
+      visibilityTimeout: cdk.Duration.seconds(900), // 15 minutes - increased for retry handling
       retentionPeriod: cdk.Duration.days(14),
       receiveMessageWaitTime: cdk.Duration.seconds(20), // Long polling
       deadLetterQueue: {
@@ -226,14 +227,14 @@ export class RewindBackendStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'handler',
       entry: path.join(__dirname, '../../backend/src/handlers/guestExtractionProcessor.ts'),
-      timeout: cdk.Duration.minutes(3), // Short timeout per episode
+      timeout: cdk.Duration.minutes(5), // Increased timeout for retry handling
       memorySize: 1024,
+      reservedConcurrentExecutions: 2, // Limit concurrent executions to prevent rate limiting
       environment: {
         EPISODES_TABLE: props.tables.episodes.tableName,
         GUEST_EXTRACTION_QUEUE_URL: guestExtractionQueue.queueUrl,
         LOG_LEVEL: 'INFO',
       },
-      // Note: Using SQS batch size of 1 for throttling instead of reserved concurrency
     })
 
     // Grant permissions to guest extraction processor
@@ -280,6 +281,9 @@ export class RewindBackendStack extends cdk.Stack {
 
     // Add environment variable for guest extraction queue URL to podcast handler (needed for addPodcast)
     podcastFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
+
+    // Add environment variable for guest extraction queue URL to recommendation handler (for validation scripts)
+    recommendationFunction.addEnvironment('GUEST_EXTRACTION_QUEUE_URL', guestExtractionQueue.queueUrl)
 
     // Create Cognito authorizer for API Gateway
     const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'RewindAuthorizer', {
@@ -486,6 +490,21 @@ export class RewindBackendStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: this.apiUrl,
       description: 'API Gateway URL',
+    })
+
+    // Add emergency guest extraction monitoring
+    const emergencyMonitoring = new EmergencyGuestExtractionMonitoring(this, 'EmergencyGuestExtractionMonitoring', {
+      guestExtractionQueue: guestExtractionQueue,
+      guestExtractionDlq: guestExtractionDLQ,
+      guestExtractionProcessor: guestExtractionProcessor,
+      episodeHandler: episodeFunction,
+      podcastHandler: podcastFunction,
+    })
+
+    // Output emergency monitoring dashboard URL
+    new cdk.CfnOutput(this, 'EmergencyMonitoringDashboardUrl', {
+      value: `https://console.aws.amazon.com/cloudwatch/home?region=${this.region}#dashboards:name=EMERGENCY-Guest-Extraction-Pipeline-Monitoring`,
+      description: 'Emergency Guest Extraction Pipeline Monitoring Dashboard URL',
     })
   }
 }

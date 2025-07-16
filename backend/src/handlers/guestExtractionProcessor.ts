@@ -29,7 +29,7 @@ export const handler: SQSHandler = async (event: SQSEvent): Promise<void> => {
       })
 
       // Update episode status to processing
-      await dynamoService.updateEpisodeGuestExtraction(message.episodeId, [], 0, 'processing')
+      await dynamoService.updateEpisodeGuestExtraction(message.episodeId, [], 0, 'processing', message.podcastId)
 
       // Extract guests using Bedrock
       const extractionResult = await bedrockService.extractGuests({
@@ -45,6 +45,7 @@ export const handler: SQSHandler = async (event: SQSEvent): Promise<void> => {
           extractionResult.guests,
           extractionResult.confidence,
           'completed',
+          message.podcastId,
         )
 
         logger.info('Guest extraction completed successfully', {
@@ -54,7 +55,7 @@ export const handler: SQSHandler = async (event: SQSEvent): Promise<void> => {
         })
       } else {
         // Update episode with failed extraction
-        await dynamoService.updateEpisodeGuestExtraction(message.episodeId, [], 0, 'failed')
+        await dynamoService.updateEpisodeGuestExtraction(message.episodeId, [], 0, 'failed', message.podcastId)
 
         logger.error('Guest extraction failed', {
           episodeId: message.episodeId,
@@ -89,7 +90,7 @@ export const handler: SQSHandler = async (event: SQSEvent): Promise<void> => {
         episodeId = message.episodeId
 
         // Update episode status to failed
-        await dynamoService.updateEpisodeGuestExtraction(episodeId, [], 0, 'failed')
+        await dynamoService.updateEpisodeGuestExtraction(episodeId, [], 0, 'failed', message.podcastId)
       } catch (parseError) {
         logger.error('Failed to parse message for error handling', {
           parseError: parseError instanceof Error ? parseError.message : String(parseError),
