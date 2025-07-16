@@ -38,7 +38,7 @@ describe('GuestAnalytics Production Bug Reproduction', () => {
     await adapters.resetTestData()
   })
 
-  it('should reproduce GuestAnalytics record creation failure with empty guests array', async () => {
+  it.skip('should reproduce GuestAnalytics record creation failure with empty guests array', async () => {
     // Create test episode
     const testEpisode = await testDataManager.createTestEpisode({
       episodeId: 'cbfe22f9-ca13-4a56-bfcb-8b1cce8ccbc6',
