@@ -235,7 +235,6 @@ Core audio functionality includes playback controls (play, pause, seek, speed ad
 
 ### 7.3 Performance Optimization
 - **Audio Preloading**: Intelligent preloading of next episodes
-- **Bandwidth Management**: Adaptive quality based on connection
 - **Local Storage**: Frequently played episodes cached locally
 - **Memory Management**: Efficient audio resource cleanup
 
@@ -273,25 +272,23 @@ PWA capabilities include offline access to cached podcasts and episodes, app ins
 - **Image Storage**: Cache podcast and episode artwork
 - **Audio Storage**: Selective audio file storage for offline playback
 
-## Phase 10: Performance and Optimization
+## Phase 10: Deployment and Infrastructure
 
-### 10.1 Performance Targets
-- **Core Web Vitals**: Optimize LCP, FID, CLS metrics
-- **Load Time**: Fast initial load on slower networks
-- **Bundle Size**: Minimize JavaScript bundle size
-- **Image Optimization**: Next.js Image component for optimized images
+### 10.1 Deployment Platform
+- **Primary**: AWS with Next.js deployment
+- **Database**: Amazon RDS PostgreSQL
+- **File Storage**: Amazon S3 for images and audio assets
+- **CDN**: Amazon CloudFront for content delivery
+- **Infrastructure**: AWS CDK or CloudFormation for infrastructure as code
 
-### 10.2 Optimization Strategies
-- **Code Splitting**: Route-based and component-based code splitting
-- **Server-Side Rendering**: SSR for initial page loads
-- **Static Generation**: ISR for podcast and episode pages
-- **Database Optimization**: Query optimization and indexing
+### 10.2 Environment Configuration
+Environment setup includes local development with proper tooling, staging environment for preview deployments and testing, production environment with optimized deployment, database environments with data isolation, and secrets management through AWS Secrets Manager and environment variables.
 
-### 10.3 Monitoring and Analytics
-- **Performance Monitoring**: Real User Monitoring (RUM)
-- **Error Tracking**: Application error monitoring
-- **Usage Analytics**: User behavior and feature usage tracking
-- **Database Monitoring**: Query performance and optimization
+### 10.3 CI/CD Pipeline
+- **GitHub Actions**: Automated testing and deployment to AWS
+- **Quality Gates**: Tests must pass before deployment
+- **Database Migrations**: Automated schema migrations
+- **Rollback Strategy**: Quick rollback capability for issues
 
 ## Phase 11: Testing Strategy
 
@@ -308,38 +305,8 @@ Testing priorities include authentication flow (login, signup, password reset), 
 - **Accessibility Testing**: Screen reader and keyboard navigation
 - **Cross-browser Testing**: Chrome, Firefox, Safari compatibility
 - **Mobile Testing**: iOS Safari, Chrome Mobile, Samsung Internet
-- **Performance Testing**: Load testing and stress testing
-
-## Phase 12: Deployment and Infrastructure
-
-### 12.1 Deployment Platform
-- **Primary**: Vercel (seamless Next.js integration)
-- **Database**: Vercel Postgres or Supabase
-- **File Storage**: Vercel Blob or Cloudinary for images
-- **Monitoring**: Vercel Analytics and logging
-
-### 12.2 Environment Configuration
-Environment setup includes local development with proper tooling, staging environment for preview deployments and testing, production environment with optimized deployment, database environments with data isolation, and secrets management through environment variables.
-
-### 12.3 CI/CD Pipeline
-- **GitHub Actions**: Automated testing and deployment
-- **Quality Gates**: Tests must pass before deployment
-- **Database Migrations**: Automated schema migrations
-- **Rollback Strategy**: Quick rollback capability for issues
 
 ## Success Metrics and Validation
-
-### Performance Metrics
-- **Core Web Vitals**: Meet Google's performance standards
-- **Load Time**: Fast initial load across network conditions
-- **Bundle Size**: Optimized JavaScript delivery
-- **Database**: Fast query response times
-
-### User Experience Metrics
-- **Mobile Usability**: Touch target size compliance
-- **Accessibility**: WCAG 2.1 AA compliance
-- **PWA Score**: High Lighthouse PWA score
-- **Cross-browser**: Feature parity across target browsers
 
 ### Feature Completeness
 - **Authentication**: Complete user management system
@@ -348,6 +315,12 @@ Environment setup includes local development with proper tooling, staging enviro
 - **Search**: Fast, accurate full-text search
 - **PWA**: Offline functionality and app installation
 
+### User Experience Metrics
+- **Mobile Usability**: Touch target size compliance
+- **Accessibility**: WCAG 2.1 AA compliance
+- **PWA Score**: High Lighthouse PWA score
+- **Cross-browser**: Feature parity across target browsers
+
 ## Timeline and Resource Allocation
 
 ### Estimated Timeline (12-14 weeks)
@@ -355,7 +328,7 @@ Environment setup includes local development with proper tooling, staging enviro
 - **Weeks 3-4**: Authentication and user management
 - **Weeks 5-7**: Core API development and UI components
 - **Weeks 8-9**: Audio player and search features
-- **Weeks 10-11**: PWA implementation and optimization
+- **Weeks 10-11**: PWA implementation and AWS infrastructure
 - **Weeks 12-13**: Testing and deployment
 - **Week 14**: Go-live support and issue resolution
 
@@ -368,10 +341,10 @@ Environment setup includes local development with proper tooling, staging enviro
 ## Risk Assessment and Mitigation
 
 ### Technical Risks
-- **Performance Degradation**: Continuous performance monitoring
 - **Authentication Issues**: Comprehensive auth testing
 - **Mobile Compatibility**: Extensive device testing
 - **Audio Playback**: Cross-browser audio testing
+- **AWS Infrastructure**: Proper AWS service configuration and monitoring
 
 ### Business Risks
 - **Feature Parity**: Detailed feature comparison and testing
