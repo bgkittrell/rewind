@@ -249,62 +249,18 @@ src/app/api/
 ### 5.2 Mobile-First Layout Architecture
 
 #### App Shell Layout (375px - 414px primary)
-```
-┌─────────────────────────────────────┐
-│ Header (h-14, 56px)                 │
-│ ┌─ Menu ─┐ ┌─ Title ─┐ ┌─ Action ─┐ │
-│ │   ☰    │ │ Rewind  │ │    +     │ │
-│ └────────┘ └─────────┘ └──────────┘ │
-├─────────────────────────────────────┤
-│                                     │
-│ Main Content Area                   │
-│ (Scrollable, flex-1)                │
-│                                     │
-│ ┌─ Content Cards ──────────────────┐ │
-│ │                                 │ │
-│ │                                 │ │
-│ └─────────────────────────────────┘ │
-│                                     │
-├─────────────────────────────────────┤
-│ Floating Media Player (h-16, 64px)  │
-│ ┌─ Album ─┐ ┌─ Info ─┐ ┌─ Controls─┐│
-│ │   🎵    │ │Episode │ │  ⏸ ⏭   ││
-│ └─────────┘ └───────┘ └──────────┘│
-├─────────────────────────────────────┤
-│ Bottom Navigation (h-16, 64px)      │
-│ ┌─ Home ─┐ ┌─ Library─┐ ┌─ Search─┐ │
-│ │   🏠   │ │   📚    │ │   🔍   │ │
-│ └───────┘ └─────────┘ └───────┘ │
-└─────────────────────────────────────┘
-```
+The mobile layout follows a standard app structure with a fixed header at the top (56px height), a scrollable main content area that takes up the remaining space, a floating media player positioned above the bottom navigation (64px height), and a fixed bottom navigation bar (64px height).
+
+The header contains three sections: a hamburger menu icon on the left, the app title "Rewind" in the center, and a contextual action button (like "Add Podcast") on the right. The main content area is fully scrollable and contains cards or lists of episodes/podcasts with proper spacing between elements.
+
+The floating media player appears only when audio is playing and shows album art on the left (48x48px), episode information in the center, and playback controls on the right. The bottom navigation contains three equally-spaced tabs: Home (house icon), Library (books icon), and Search (magnifying glass icon), each with labels underneath.
 
 #### Desktop Layout (768px+)
-```
-┌─────────────────────────────────────────────────────────┐
-│ Header (h-16, 64px)                                     │
-│ ┌─ Menu ─┐ ┌─ Title ──────┐ ┌─ Profile ─┐ ┌─ Actions ─┐ │
-│ │   ☰    │ │ Rewind Home  │ │   👤     │ │    +     │ │
-│ └────────┘ └──────────────┘ └──────────┘ └──────────┘ │
-├─────────────────────────────────────────────────────────┤
-│ ┌─ Sidebar ──────┐ ┌─ Main Content ──────────────────┐  │
-│ │ Navigation      │ │                               │  │
-│ │                 │ │ ┌─ Filter Bar ──────────────┐ │  │
-│ │ • Home          │ │ │ [All] [Comedy] [Recent]   │ │  │
-│ │ • Library       │ │ └───────────────────────────┘ │  │
-│ │ • Search        │ │                               │  │
-│ │ • Settings      │ │ ┌─ Episode Grid ────────────┐ │  │
-│ │                 │ │ │ ┌─────┐ ┌─────┐ ┌─────┐   │ │  │
-│ │                 │ │ │ │ Ep1 │ │ Ep2 │ │ Ep3 │   │ │  │
-│ │                 │ │ │ └─────┘ └─────┘ └─────┘   │ │  │
-│ │                 │ │ └───────────────────────────┘ │  │
-│ └─────────────────┘ └───────────────────────────────┘  │
-├─────────────────────────────────────────────────────────┤
-│ Floating Media Player (h-20, 80px)                      │
-│ ┌─ Album Art ─┐ ┌─ Episode Info ──┐ ┌─ Progress ─┐ ┌─ Controls ─┐│
-│ │    🎵       │ │ Episode Title    │ │ ████░░░   │ │ ⏮ ⏸ ⏭ ⚙ ││
-│ └─────────────┘ └──────────────────┘ └───────────┘ └───────────┘│
-└─────────────────────────────────────────────────────────────────┘
-```
+The desktop layout expands to utilize the wider screen with a sidebar navigation on the left (approximately 240px wide) and an expanded main content area. The header increases to 64px height and includes additional elements like a user profile section and more action buttons.
+
+The sidebar contains vertical navigation links (Home, Library, Search, Settings) with proper spacing and hover states. The main content area includes a filter bar at the top with pill-shaped filter buttons, followed by a grid layout of episodes or podcasts that can display 3-4 items per row depending on screen size.
+
+The floating media player expands to 80px height with larger album art, more detailed episode information, a visible progress bar, and additional controls like previous/next track and settings.
 
 ### 5.3 Component Visual Specifications
 
@@ -325,18 +281,7 @@ src/app/api/
 - **Touch Targets**: 48px minimum for accessibility
 
 #### Episode Card
-```
-┌─────────────────────────────────────────────┐
-│ ┌─ Thumbnail ─┐ ┌─ Content ────────────────┐ │
-│ │   80x80px   │ │ Episode Title           │ │
-│ │    🎵       │ │ Podcast Name • Duration │ │
-│ │             │ │ Release Date            │ │
-│ │ [Play Btn]  │ │ ┌─ Progress Bar ──────┐ │ │
-│ └─────────────┘ │ │ ████████░░░░░       │ │ │
-│                 │ └─────────────────────┘ │ │
-│                 └─────────────────────────┘ │
-└─────────────────────────────────────────────┘
-```
+The episode card layout features a horizontal design with an 80x80px square thumbnail on the left containing the episode artwork and a play button overlay. To the right is the content area with the episode title prominently displayed, followed by podcast name and duration on the same line separated by a bullet point, the release date below that, and a progress bar at the bottom showing listening progress.
 - **Padding**: p-4
 - **Border**: border border-gray-200 rounded-lg
 - **Hover**: hover:shadow-md transition
@@ -344,21 +289,7 @@ src/app/api/
 - **Typography**: title (text-base font-medium), meta (text-sm text-gray-600)
 
 #### Podcast Card
-```
-┌─────────────────────────────────────┐
-│ ┌─ Cover Art ─────────────────────┐ │
-│ │          120x120px              │ │
-│ │            🎵                   │ │
-│ │         Podcast                 │ │
-│ │          Image                  │ │
-│ └─────────────────────────────────┘ │
-│ Podcast Title                       │
-│ 23 episodes • Updated 2 days ago    │
-│ ┌─ Action Button ─────────────────┐ │
-│ │         View Episodes           │ │
-│ └─────────────────────────────────┘ │
-└─────────────────────────────────────┐
-```
+The podcast card uses a vertical layout with a large 120x120px cover art image at the top, followed by the podcast title, episode count and last update information, and a full-width action button at the bottom labeled "View Episodes". The card has rounded corners and subtle border styling.
 - **Width**: Full width mobile, 300px desktop
 - **Padding**: p-6
 - **Border**: border-2 border-gray-100 rounded-xl
@@ -366,14 +297,7 @@ src/app/api/
 - **Typography**: title (text-lg font-semibold), meta (text-sm text-gray-500)
 
 #### Media Player (Floating)
-```
-┌─────────────────────────────────────────────────────────┐
-│ ┌─ Art ─┐ ┌─ Info ──────────┐ ┌─ Progress ─┐ ┌─ Ctrl ─┐ │
-│ │ 48x48 │ │ Episode Title   │ │ ████░░░   │ │ ⏸ ⏭   │ │
-│ │  🎵   │ │ Podcast Name    │ │ 12:34     │ │        │ │
-│ └───────┘ └─────────────────┘ └───────────┘ └───────┘ │
-└─────────────────────────────────────────────────────────┘
-```
+The floating media player spans the full width of the screen and is divided into four sections: a 48x48px album art thumbnail on the left, episode information (title and podcast name) in the center-left, a progress indicator with time display in the center-right, and playback controls (play/pause and next) on the far right.
 - **Position**: Fixed bottom, above navigation
 - **Height**: 64px
 - **Background**: White with shadow-lg
@@ -381,11 +305,7 @@ src/app/api/
 - **Padding**: px-4 py-2
 
 #### Filter Pills
-```
-┌─ Active ─┐ ┌─ Inactive ─┐ ┌─ Inactive ─┐
-│ Comedy   │ │  Recent   │ │  Guests   │
-└──────────┘ └───────────┘ └───────────┘
-```
+Filter pills are displayed horizontally as rounded buttons that users can tap to filter content. The active filter has a red background with white text, while inactive filters have a light gray background with dark text and show a hover state when users interact with them.
 - **Active**: bg-red-500 text-white
 - **Inactive**: bg-gray-100 text-gray-700 hover:bg-gray-200
 - **Padding**: px-4 py-2
