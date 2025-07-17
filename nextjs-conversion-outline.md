@@ -30,34 +30,7 @@ This document outlines the development of Rewind, a mobile-first Progressive Web
 - **Package Manager**: npm
 - **Node Version**: 18+
 
-### 1.2 Project Structure
-```
-rewind-nextjs/
-├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── (auth)/            # Authentication routes
-│   │   ├── (dashboard)/       # Main app routes
-│   │   ├── api/               # API routes
-│   │   ├── globals.css        # Global styles
-│   │   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Landing page
-│   ├── components/            # React components
-│   │   ├── layout/           # Layout components
-│   │   ├── ui/               # Base UI components
-│   │   ├── forms/            # Form components
-│   │   ├── media/            # Audio player components
-│   │   └── podcast/          # Podcast-specific components
-│   ├── lib/                   # Utilities and configurations
-│   ├── hooks/                 # Custom React hooks
-│   ├── types/                 # TypeScript type definitions
-│   └── middleware.ts          # Next.js middleware
-├── prisma/                    # Database schema and migrations
-├── public/                    # Static assets
-├── tests/                     # Test files
-└── docs/                      # Documentation
-```
-
-### 1.3 Essential Dependencies
+### 1.2 Essential Dependencies
 - **UI**: Next.js 15, React 18, Tailwind CSS
 - **Database**: Prisma ORM with PostgreSQL
 - **Authentication**: NextAuth.js v5
@@ -65,6 +38,7 @@ rewind-nextjs/
 - **Validation**: Zod
 - **Testing**: Vitest + Playwright
 - **PWA**: next-pwa
+- **Icons**: @tabler/react-icons for consistent iconography
 
 ## Phase 2: Database and Persistence Layer
 
@@ -74,79 +48,18 @@ rewind-nextjs/
 - **Connection**: Prisma connection pooling
 
 ### 2.2 Database Schema Design
-```prisma
-model User {
-  id              String   @id @default(cuid())
-  email           String   @unique
-  name            String?
-  preferences     Json?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  lastActiveAt    DateTime @default(now())
-  
-  podcasts        Podcast[]
-  listeningHistory ListeningHistory[]
-}
+Design a relational schema with the following core entities:
 
-model Podcast {
-  id              String   @id @default(cuid())
-  title           String
-  rssUrl          String   @unique
-  imageUrl        String?
-  description     String?
-  episodeCount    Int      @default(0)
-  lastSynced      DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  userId          String
-  user            User     @relation(fields: [userId], references: [id])
-  episodes        Episode[]
-}
+**User Entity**: Store user profiles with email, name, preferences, and timestamps for creation, updates, and last activity.
 
-model Episode {
-  id                        String   @id @default(cuid())
-  title                     String
-  description               String?
-  audioUrl                  String
-  duration                  String?
-  releaseDate               DateTime
-  imageUrl                  String?
-  guests                    String[] // JSON array
-  tags                      String[] // JSON array
-  extractedGuests           String[] // AI-extracted guests
-  guestExtractionStatus     String?  // 'pending' | 'completed' | 'failed'
-  guestExtractionDate       DateTime?
-  guestExtractionConfidence Float?
-  rawGuestData              String?
-  createdAt                 DateTime @default(now())
-  
-  podcastId       String
-  podcast         Podcast @relation(fields: [podcastId], references: [id])
-  listeningHistory ListeningHistory[]
-}
+**Podcast Entity**: Store podcast metadata including title, RSS URL, image, description, episode count, and sync timestamps. Each podcast belongs to a user.
 
-model ListeningHistory {
-  id                String   @id @default(cuid())
-  playbackPosition  Int      @default(0) // seconds
-  duration          Int?     // total duration in seconds
-  isCompleted       Boolean  @default(false)
-  lastPlayedAt      DateTime @default(now())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  userId            String
-  episodeId         String
-  user              User     @relation(fields: [userId], references: [id])
-  episode           Episode  @relation(fields: [episodeId], references: [id])
-  
-  @@unique([userId, episodeId])
-}
-```
+**Episode Entity**: Store episode details including title, description, audio URL, duration, release date, images, guest information, and AI extraction data. Episodes belong to podcasts.
+
+**Listening History Entity**: Track user playback progress with position, duration, completion status, and timestamps. Links users to episodes.
 
 ### 2.3 Data Access Layer
 - **Repository Pattern**: Abstract database operations
-- **Caching Strategy**: Redis or in-memory caching for frequently accessed data
 - **Connection Pooling**: Prisma connection pooling
 - **Migrations**: Automated database migrations with Prisma
 
@@ -159,28 +72,7 @@ model ListeningHistory {
 - **Database Sessions**: Store sessions in PostgreSQL
 
 ### 3.2 Authentication Flow
-```typescript
-export const authConfig = {
-  providers: [
-    CredentialsProvider({
-      // Email/password authentication
-    })
-  ],
-  pages: {
-    signIn: '/auth/signin',
-    signUp: '/auth/signup',
-    verifyRequest: '/auth/verify-email',
-  },
-  callbacks: {
-    jwt: ({ token, user }) => {
-      // JWT token customization
-    },
-    session: ({ session, token }) => {
-      // Session customization
-    }
-  }
-}
-```
+Configure NextAuth with credentials provider supporting email/password authentication. Set up custom pages for sign-in, sign-up, and email verification. Implement JWT and session callbacks for user data management.
 
 ### 3.3 User Management
 - **Registration**: Email verification workflow
@@ -191,35 +83,18 @@ export const authConfig = {
 ## Phase 4: API Layer (Next.js API Routes)
 
 ### 4.1 API Route Structure
-```
-src/app/api/
-├── auth/                      # Authentication endpoints
-│   ├── signup/route.ts
-│   ├── signin/route.ts
-│   └── verify/route.ts
-├── podcasts/                  # Podcast management
-│   ├── route.ts              # GET (list), POST (add)
-│   ├── [id]/route.ts         # GET, PUT, DELETE
-│   └── [id]/episodes/route.ts
-├── episodes/                  # Episode operations
-│   ├── route.ts
-│   ├── [id]/route.ts
-│   └── search/route.ts
-├── listening-history/         # Playback tracking
-│   ├── route.ts
-│   └── [episodeId]/route.ts
-├── recommendations/           # Episode recommendations
-│   └── route.ts
-└── sync/                      # RSS feed synchronization
-    └── route.ts
-```
+Organize API routes into logical groupings:
+- **Authentication endpoints**: signup, signin, verification
+- **Podcast management**: CRUD operations for podcasts and episodes
+- **Episode operations**: individual episode management and search
+- **Playback tracking**: listening history management
+- **Recommendations**: episode suggestion engine
+- **RSS synchronization**: feed parsing and updates
 
 ### 4.2 API Implementation Strategy
 - **Request Validation**: Zod schemas for input validation
 - **Error Handling**: Standardized error responses
-- **Rate Limiting**: Implement rate limiting for API endpoints
 - **Logging**: Structured logging for debugging and monitoring
-- **Response Caching**: Cache static/semi-static responses
 
 ### 4.3 External Service Integration
 - **RSS Feed Processing**: Server-side RSS parsing and episode extraction
@@ -234,101 +109,89 @@ src/app/api/
   - Primary Red: #eb4034
   - Secondary Red: #c72e20
   - Dark Red: #a42318
-  - Background: #ffffff
-  - Text Primary: #1a1a1a
-  - Text Secondary: #666666
-  - Border: #e5e5e5
+  - Neutral backgrounds and text colors
 - **Typography**: 
-  - Font Stack: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
-  - Headers: 600 weight
-  - Body: 400 weight
-  - Sizes: text-xs (12px), text-sm (14px), text-base (16px), text-lg (18px), text-xl (20px)
-- **Spacing Scale**: 4px base unit (4, 8, 12, 16, 20, 24, 32, 40, 48, 64px)
-- **Border Radius**: rounded-sm (2px), rounded (4px), rounded-md (6px), rounded-lg (8px), rounded-xl (12px)
+  - Font Stack: Inter with system font fallbacks
+  - Weight hierarchy for headers and body text
+  - Responsive size scale
+- **Spacing System**: Consistent spacing scale based on 4px units
+- **Border Radius**: Consistent rounding for components
 
 ### 5.2 Mobile-First Layout Architecture
 
-#### App Shell Layout (375px - 414px primary)
-The mobile layout follows a standard app structure with a fixed header at the top (56px height), a scrollable main content area that takes up the remaining space, a floating media player positioned above the bottom navigation (64px height), and a fixed bottom navigation bar (64px height).
+#### App Shell Layout
+The mobile layout follows a standard app structure with a fixed header at the top, a scrollable main content area that takes up the remaining space, a floating media player positioned above the bottom navigation, and a fixed bottom navigation bar.
 
-The header contains three sections: a hamburger menu icon on the left, the app title "Rewind" in the center, and a contextual action button (like "Add Podcast") on the right. The main content area is fully scrollable and contains cards or lists of episodes/podcasts with proper spacing between elements.
+The header contains three sections: a hamburger menu icon on the left, the app title "Rewind" in the center, and a contextual action button on the right. The main content area is fully scrollable and contains cards or lists of episodes/podcasts with proper spacing between elements.
 
-The floating media player appears only when audio is playing and shows album art on the left (48x48px), episode information in the center, and playback controls on the right. The bottom navigation contains three equally-spaced tabs: Home (house icon), Library (books icon), and Search (magnifying glass icon), each with labels underneath.
+The floating media player appears only when audio is playing and shows album art on the left, episode information in the center, and playback controls on the right. The bottom navigation contains three equally-spaced tabs: Home, Library, and Search, each with icons and labels.
 
-#### Desktop Layout (768px+)
-The desktop layout expands to utilize the wider screen with a sidebar navigation on the left (approximately 240px wide) and an expanded main content area. The header increases to 64px height and includes additional elements like a user profile section and more action buttons.
+#### Desktop Layout
+The desktop layout expands to utilize the wider screen with a sidebar navigation on the left and an expanded main content area. The header increases in height and includes additional elements like a user profile section and more action buttons.
 
-The sidebar contains vertical navigation links (Home, Library, Search, Settings) with proper spacing and hover states. The main content area includes a filter bar at the top with pill-shaped filter buttons, followed by a grid layout of episodes or podcasts that can display 3-4 items per row depending on screen size.
+The sidebar contains vertical navigation links with proper spacing and hover states. The main content area includes a filter bar at the top with pill-shaped filter buttons, followed by a grid layout of episodes or podcasts that can display multiple items per row.
 
-The floating media player expands to 80px height with larger album art, more detailed episode information, a visible progress bar, and additional controls like previous/next track and settings.
+The floating media player expands in height with larger album art, more detailed episode information, a visible progress bar, and additional controls.
 
 ### 5.3 Component Visual Specifications
 
 #### Header Component
-- **Height**: 56px mobile, 64px desktop
-- **Background**: White with red accents
-- **Typography**: text-lg font-semibold for title
-- **Icons**: 24px Heroicons, red color (#eb4034)
-- **Shadow**: shadow-sm for subtle elevation
-- **Layout**: justify-between with padding-x-4
+- Fixed height header with white background and red accents
+- Large, semibold typography for titles
+- Consistent icon sizing using @tabler/react-icons
+- Subtle shadow for elevation
+- Responsive layout with proper spacing
 
 #### Bottom Navigation
-- **Height**: 64px fixed
-- **Background**: Red gradient (#eb4034 to #c72e20)
-- **Icons**: 24px white icons with labels
-- **Typography**: text-xs white labels
-- **Active State**: Brighter icon + underline
-- **Touch Targets**: 48px minimum for accessibility
+- Fixed height with red gradient background
+- White icons with labels
+- Clear active state indication
+- Minimum touch target sizes for accessibility
 
 #### Episode Card
-The episode card layout features a horizontal design with an 80x80px square thumbnail on the left containing the episode artwork and a play button overlay. To the right is the content area with the episode title prominently displayed, followed by podcast name and duration on the same line separated by a bullet point, the release date below that, and a progress bar at the bottom showing listening progress.
-- **Padding**: p-4
-- **Border**: border border-gray-200 rounded-lg
-- **Hover**: hover:shadow-md transition
-- **Thumbnail**: 80x80px rounded-md
-- **Typography**: title (text-base font-medium), meta (text-sm text-gray-600)
+The episode card layout features a horizontal design with a square thumbnail on the left containing the episode artwork and a play button overlay. To the right is the content area with the episode title prominently displayed, followed by podcast name and duration, the release date, and a progress bar showing listening progress.
+- Consistent padding and borders
+- Hover effects and transitions
+- Rounded thumbnail images
+- Clear typography hierarchy
 
 #### Podcast Card
-The podcast card uses a vertical layout with a large 120x120px cover art image at the top, followed by the podcast title, episode count and last update information, and a full-width action button at the bottom labeled "View Episodes". The card has rounded corners and subtle border styling.
-- **Width**: Full width mobile, 300px desktop
-- **Padding**: p-6
-- **Border**: border-2 border-gray-100 rounded-xl
-- **Cover Art**: 120x120px rounded-lg shadow-sm
-- **Typography**: title (text-lg font-semibold), meta (text-sm text-gray-500)
+The podcast card uses a vertical layout with a large cover art image at the top, followed by the podcast title, episode count and last update information, and a full-width action button at the bottom. The card has rounded corners and subtle border styling.
+- Responsive width handling
+- Generous padding for touch targets
+- Subtle borders and shadows
+- Clear typography hierarchy
 
 #### Media Player (Floating)
-The floating media player spans the full width of the screen and is divided into four sections: a 48x48px album art thumbnail on the left, episode information (title and podcast name) in the center-left, a progress indicator with time display in the center-right, and playback controls (play/pause and next) on the far right.
-- **Position**: Fixed bottom, above navigation
-- **Height**: 64px
-- **Background**: White with shadow-lg
-- **Border**: border-t border-gray-200
-- **Padding**: px-4 py-2
+The floating media player spans the full width of the screen and is divided into sections: album art thumbnail on the left, episode information in the center-left, a progress indicator with time display in the center-right, and playback controls on the far right.
+- Fixed positioning above navigation
+- White background with shadow
+- Border separation from content
+- Responsive layout
 
 #### Filter Pills
 Filter pills are displayed horizontally as rounded buttons that users can tap to filter content. The active filter has a red background with white text, while inactive filters have a light gray background with dark text and show a hover state when users interact with them.
-- **Active**: bg-red-500 text-white
-- **Inactive**: bg-gray-100 text-gray-700 hover:bg-gray-200
-- **Padding**: px-4 py-2
-- **Border Radius**: rounded-full
-- **Typography**: text-sm font-medium
+- Rounded pill design
+- Clear active/inactive states
+- Proper spacing and typography
 
 ### 5.4 Responsive Breakpoints
-- **Mobile**: 0px - 767px (default)
-- **Tablet**: 768px - 1023px (md:)
-- **Desktop**: 1024px+ (lg:)
-- **Large Desktop**: 1280px+ (xl:)
+- **Mobile**: Primary experience (default)
+- **Tablet**: Medium screens with adjusted layouts
+- **Desktop**: Large screens with sidebar navigation
+- **Large Desktop**: Expanded content areas
 
 ### 5.5 Loading and Empty States
 
 #### Skeleton Loading
-- **Episode Card Skeleton**: Gray rectangles with shimmer animation
-- **Grid Skeleton**: 2x3 grid on mobile, 3x4 on desktop
-- **Animation**: pulse animation with bg-gray-200
+- Shimmer animations for loading states
+- Grid-based skeleton layouts
+- Consistent placeholder sizing
 
 #### Empty States
-- **No Podcasts**: Illustration + "Add your first podcast" CTA
-- **No Episodes**: "No episodes found" with filter reset option
-- **Search No Results**: "No episodes match your search" with suggestions
+- Helpful illustrations and messaging
+- Clear call-to-action buttons
+- Contextual suggestions for next steps
 
 ## Phase 6: User Interface Components
 
@@ -339,29 +202,13 @@ Filter pills are displayed horizontally as rounded buttons that users can tap to
 - **Accessibility**: WCAG 2.1 compliance with screen reader support
 
 ### 6.2 Core UI Components
-```typescript
-// Layout Components:
-- AppShell: Header + bottom navigation + floating player
-- Header: Navigation and contextual actions
-- BottomActionBar: Home, Library, Search navigation
-- SideMenu: User profile and app settings (desktop)
+**Layout Components**: App shell with header, navigation, and floating player sections. Desktop sidebar navigation for larger screens.
 
-// Content Components:
-- PodcastCard: Display podcast with metadata
-- EpisodeCard: Episode display with play controls
-- MediaPlayer: Audio playback with progress tracking
-- SearchInterface: Full-text search with filters
+**Content Components**: Podcast and episode cards with consistent styling and interactions. Media player with audio controls and progress tracking. Search interface with filtering capabilities.
 
-// Modal Components:
-- AddPodcastModal: RSS URL input and validation
-- AuthModals: Login, signup, email verification
-- ConfirmationDialogs: Delete confirmations
+**Modal Components**: Authentication modals for login and signup flows. Podcast addition modal with RSS input. Confirmation dialogs for destructive actions.
 
-// Form Components:
-- Input fields with validation
-- Filter pills and dropdowns
-- Audio player controls
-```
+**Form Components**: Input fields with validation states. Filter controls and dropdowns. Audio player interface elements.
 
 ### 6.3 State Management
 - **React Server Components**: Leverage server components for data fetching
@@ -384,18 +231,12 @@ Filter pills are displayed horizontally as rounded buttons that users can tap to
 - **Playlist Management**: Queue and episode progression
 
 ### 7.2 Audio Features
-```typescript
-// Core audio functionality:
-- Playback Controls: Play, pause, seek, speed adjustment
-- Background Playback: Continue playing when app is backgrounded
-- Resume Functionality: Remember playback position across sessions
-- Offline Playback: Cache audio files for offline listening
-```
+Core audio functionality includes playback controls (play, pause, seek, speed adjustment), background playback when the app is backgrounded, resume functionality that remembers playback position across sessions, and offline playback with cached audio files.
 
 ### 7.3 Performance Optimization
 - **Audio Preloading**: Intelligent preloading of next episodes
 - **Bandwidth Management**: Adaptive quality based on connection
-- **Caching Strategy**: Local storage for frequently played episodes
+- **Local Storage**: Frequently played episodes cached locally
 - **Memory Management**: Efficient audio resource cleanup
 
 ## Phase 8: Search and Discovery
@@ -407,14 +248,7 @@ Filter pills are displayed horizontally as rounded buttons that users can tap to
 - **Search History**: Recent searches and suggested queries
 
 ### 8.2 Search Features
-```typescript
-// Search capabilities:
-- Episode Search: Title, description, guest names
-- Podcast Search: Within user's library
-- Advanced Filters: Date range, completion status, favorites
-- Search Highlighting: Highlight matching terms in results
-- Instant Search: Real-time search with debouncing
-```
+Search capabilities include episode search across title, description, and guest names. Podcast search within user's library. Advanced filters for date range, completion status, and favorites. Search highlighting for matching terms in results. Instant search with debouncing for performance.
 
 ### 8.3 Recommendation Engine (Basic Implementation)
 - **Content-Based Filtering**: Similar episodes based on metadata
@@ -431,27 +265,19 @@ Filter pills are displayed horizontally as rounded buttons that users can tap to
 - **App Installation**: Native app-like installation experience
 
 ### 9.2 PWA Features
-```typescript
-// PWA capabilities:
-- Offline Access: Cached podcasts and episodes
-- App Installation: Add to home screen functionality
-- Background Sync: Update podcasts when connection restored
-- Push Notifications: New episode alerts (optional)
-- App Shortcuts: Quick actions from home screen
-- Responsive Design: Works on all screen sizes
-```
+PWA capabilities include offline access to cached podcasts and episodes, app installation with add to home screen functionality, background sync to update podcasts when connection is restored, optional push notifications for new episodes, app shortcuts for quick actions, and responsive design that works on all screen sizes.
 
-### 9.3 Caching Strategy
-- **App Shell**: Cache navigation and layout components
-- **Data Caching**: Cache podcast metadata and episode information
-- **Image Caching**: Cache podcast and episode artwork
-- **Audio Caching**: Selective audio file caching for offline playback
+### 9.3 Strategy Overview
+- **App Shell Caching**: Cache navigation and layout components
+- **Data Storage**: Cache podcast metadata and episode information
+- **Image Storage**: Cache podcast and episode artwork
+- **Audio Storage**: Selective audio file storage for offline playback
 
 ## Phase 10: Performance and Optimization
 
 ### 10.1 Performance Targets
 - **Core Web Vitals**: Optimize LCP, FID, CLS metrics
-- **Load Time**: Sub-3-second initial load on 3G networks
+- **Load Time**: Fast initial load on slower networks
 - **Bundle Size**: Minimize JavaScript bundle size
 - **Image Optimization**: Next.js Image component for optimized images
 
@@ -460,7 +286,6 @@ Filter pills are displayed horizontally as rounded buttons that users can tap to
 - **Server-Side Rendering**: SSR for initial page loads
 - **Static Generation**: ISR for podcast and episode pages
 - **Database Optimization**: Query optimization and indexing
-- **CDN Integration**: Static asset delivery optimization
 
 ### 10.3 Monitoring and Analytics
 - **Performance Monitoring**: Real User Monitoring (RUM)
@@ -477,15 +302,7 @@ Filter pills are displayed horizontally as rounded buttons that users can tap to
 - **Visual Testing**: Screenshot comparison for UI consistency
 
 ### 11.2 Test Coverage
-```typescript
-// Testing priorities:
-- Authentication Flow: Login, signup, password reset
-- Podcast Management: Add, remove, sync podcasts
-- Audio Playback: Play, pause, seek, progress tracking
-- Search Functionality: Search accuracy and performance
-- PWA Features: Offline functionality and caching
-- Mobile Experience: Touch interactions and responsive design
-```
+Testing priorities include authentication flow (login, signup, password reset), podcast management (add, remove, sync podcasts), audio playback (play, pause, seek, progress tracking), search functionality (search accuracy and performance), PWA features (offline functionality), and mobile experience (touch interactions and responsive design).
 
 ### 11.3 Quality Assurance
 - **Accessibility Testing**: Screen reader and keyboard navigation
@@ -502,14 +319,7 @@ Filter pills are displayed horizontally as rounded buttons that users can tap to
 - **Monitoring**: Vercel Analytics and logging
 
 ### 12.2 Environment Configuration
-```typescript
-// Environment setup:
-- Development: Local development with Docker Compose
-- Staging: Preview deployments for testing
-- Production: Optimized production deployment
-- Database: Separate environments with data isolation
-- Secrets Management: Environment variables for sensitive data
-```
+Environment setup includes local development with proper tooling, staging environment for preview deployments and testing, production environment with optimized deployment, database environments with data isolation, and secrets management through environment variables.
 
 ### 12.3 CI/CD Pipeline
 - **GitHub Actions**: Automated testing and deployment
@@ -520,16 +330,16 @@ Filter pills are displayed horizontally as rounded buttons that users can tap to
 ## Success Metrics and Validation
 
 ### Performance Metrics
-- **Core Web Vitals**: LCP < 2.5s, FID < 100ms, CLS < 0.1
-- **Load Time**: Initial load under 3 seconds on 3G
-- **Bundle Size**: JavaScript bundle under 200KB gzipped
-- **Database**: Query response times under 100ms average
+- **Core Web Vitals**: Meet Google's performance standards
+- **Load Time**: Fast initial load across network conditions
+- **Bundle Size**: Optimized JavaScript delivery
+- **Database**: Fast query response times
 
 ### User Experience Metrics
-- **Mobile Usability**: Touch target size compliance (48px minimum)
+- **Mobile Usability**: Touch target size compliance
 - **Accessibility**: WCAG 2.1 AA compliance
-- **PWA Score**: Lighthouse PWA score > 90
-- **Cross-browser**: 100% feature parity across target browsers
+- **PWA Score**: High Lighthouse PWA score
+- **Cross-browser**: Feature parity across target browsers
 
 ### Feature Completeness
 - **Authentication**: Complete user management system
